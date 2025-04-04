@@ -42,6 +42,8 @@
         .dark-mode .table-striped > tbody > tr:nth-of-type(odd) {
             background-color: #2c2c2c;
         }
+
+
     </style>
 
     <div class="py-12">
@@ -93,7 +95,18 @@
                                     <td>{{ ['New York', 'London', 'San Francisco', 'Tokyo', 'Edinburgh'][rand(0, 4)] }}</td>
                                     <td>{{ rand(22, 65) }}</td>
                                     <td>{{ \Carbon\Carbon::now()->subDays(rand(1000, 5000))->format('Y-m-d') }}</td>
-                                    <td>${{ number_format(rand(60000, 250000), 0, '.', ',') }}</td>
+
+                                    <td>
+                                        @php
+                                            $stars = rand(1, 5);
+                                        @endphp
+                                        <div class="text-warning">
+                                            @for ($s = 1; $s <= 5; $s++)
+                                                <i class="bi {{ $s <= $stars ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                            @endfor
+                                        </div>
+                                    </td>
+
                                 </tr>
                             @endfor
                         </tbody>

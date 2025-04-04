@@ -45,4 +45,19 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /**
+     *  Admin role things
+     *
+     *  @return bool
+     */
+
+    public function isAdmin()
+    {
+        return $this->email === 'admin@admin.com';
+    }
+
+    public function hasRole(string $role)
+    {
+        return $this->role === $role;
+    }
 }
