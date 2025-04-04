@@ -54,8 +54,11 @@
                     <h2>Welcome to the Dashboard!</h2>
                     <p>Here you can manage your projects and plants.</p>
                 </div>
-                <div class="col-md-6 text-end">
-                    <a href="#" class="btn btn-primary">Create New Project</a>
+                <div class="mb-4 text-right">
+                    <a href="{{ route('projects.create') }}"
+                       class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                        + New Project
+                    </a>
                 </div>
             </div>
 
@@ -82,6 +85,7 @@
                                 <th>Devices</th>
                                 <th>Start date</th>
                                 <th>Progress</th>
+                                <th>Actions</th>
                             </tr>
 
 
@@ -108,6 +112,18 @@
                                                 <i class="bi {{ $s <= $progress ? 'bi-star-fill' : 'bi-star' }}"></i>
                                             @endfor
                                         </div>
+                                    </td>
+                                    <td class="border px-4 py-2">
+                                        <a href="{{ route('projects.edit', $project) }}"
+                                           class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                        <form method="POST" action="{{ route('projects.destroy', $project) }}"
+                                              class="inline-block"
+                                              onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="text-sm text-red-600 hover:text-red-900">Delete</button>
+                                        </form>
                                     </td>
                                 </tr>
                             @empty
