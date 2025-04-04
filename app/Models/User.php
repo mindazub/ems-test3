@@ -60,4 +60,10 @@ class User extends Authenticatable
     {
         return $this->role === $role;
     }
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class);
+    }
+
 }

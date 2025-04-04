@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Http\Controllers;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+use App\Models\Project;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    use AuthorizesRequests;
+
+    public function index()
+    {
+        $projects = Project::withCount([
+            'companies',
+            'companies as plants_count' => fn($q) =>
+                $q->join('plants', 'companies.id', '=', 'plants.company_id'),
+            'companies as devices_count' => fn($q) =>
+                $q->join('plants', 'companies.id', '=', 'plants.company_id')
+                ->join('devices', 'plants.id', '=', 'devices.plant_id'),
+        ])->get();
+
+        return view('dashboard.index', compact('projects'));
+    }
+
+
+}
+
