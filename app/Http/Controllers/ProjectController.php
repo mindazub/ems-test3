@@ -63,7 +63,7 @@ class ProjectController extends Controller
             }
         }
 
-        return redirect()->route('dashboard.index')->with('message', 'Project created successfully!');
+        return redirect()->route('dashboard')->with('message', 'Project created successfully!');
     }
 
 
@@ -84,7 +84,7 @@ class ProjectController extends Controller
 
         $project->update($validated);
 
-        return redirect()->route('projects.index')->with('message', 'Project updated successfully!');
+        return redirect()->route('dashboard')->with('message', 'Project updated successfully!');
     }
 
     public function destroy(Project $project)
@@ -92,6 +92,6 @@ class ProjectController extends Controller
         $this->authorize('delete', $project); // Optional: add policies if needed
         $project->delete();
 
-        return redirect()->route('projects.index')->with('message', 'Project deleted successfully!');
+        return redirect()->route('dashboard')->with('message', 'Project deleted successfully!');
     }
 }

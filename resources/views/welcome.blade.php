@@ -18,7 +18,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <div class="flex items-center space-x-3">
-                <a href="{{ route('dashboard.index') }}">
+                <a href="{{ route('dashboard') }}">
                     <img src="{{ asset('images/edislab-high-resolution-logo-transparent.png') }}" alt="EDISLAB Logo" class="h-10 w-auto">
                 </a>
             </div>

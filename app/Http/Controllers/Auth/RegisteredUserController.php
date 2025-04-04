@@ -45,6 +45,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        #TODO EDITED to .index
         return redirect(route('dashboard', absolute: false));
     }
 }
