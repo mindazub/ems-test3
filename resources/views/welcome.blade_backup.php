@@ -55,24 +55,23 @@
 </section>
 
 <script>
-    // Fetch data from batteries_ok.json
-    fetch("{{ asset('batteries_ok.json') }}")
-        .then(response => response.json())
+    // ENERGY CHART
+    fetch("{{ asset('data_example.json') }}")
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP error " + response.status);
+            return response.json();
+        })
         .then(data => {
-            // Convert object with timestamp keys into array of sorted entries
-            const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
-
-            const labels = entries.map(([ts]) => {
-                const date = new Date(ts);
+            const timestamps = Object.keys(data).sort();
+            const labels = timestamps.map(ts => {
+                const date = new Date(ts * 1000);
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             });
 
-            const pvData = entries.map(([, val]) => val.pv_p);
-            const batteryData = entries.map(([, val]) => val.battery_p);
-            const gridData = entries.map(([, val]) => val.grid_p);
-            const tariffData = entries.map(([, val]) => val.tariff);
+            const pvData = timestamps.map(ts => data[ts].pv_p);
+            const gridData = timestamps.map(ts => data[ts].grid_p);
+            const batteryData = timestamps.map(ts => data[ts].battery_p);
 
-            // ENERGY CHART
             const ctx = document.getElementById('energyChart').getContext('2d');
             new Chart(ctx, {
                 type: 'line',
@@ -82,8 +81,8 @@
                         {
                             label: 'PV Production (kW)',
                             data: pvData,
-                            borderColor: 'rgba(59, 130, 246, 1)',
                             backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true,
@@ -92,8 +91,8 @@
                         {
                             label: 'Grid Power (kW)',
                             data: gridData,
-                            borderColor: 'rgba(34, 197, 94, 1)',
                             backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true,
@@ -102,8 +101,8 @@
                         {
                             label: 'Battery Power (kW)',
                             data: batteryData,
-                            borderColor: 'rgba(249, 115, 22, 1)',
                             backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                            borderColor: 'rgba(249, 115, 22, 1)',
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true,
@@ -113,23 +112,48 @@
                 },
                 options: {
                     responsive: true,
-                    interaction: { mode: 'index', intersect: false },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     stacked: false,
-                    plugins: { legend: { position: 'top' }},
                     scales: {
                         y: {
-                            title: { display: true, text: 'Power (kW)' },
+                            title: {
+                                display: true,
+                                text: 'Power (kW)'
+                            },
                             beginAtZero: true
                         },
                         x: {
-                            title: { display: true, text: 'Time' },
-                            ticks: { maxRotation: 45, minRotation: 45 }
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
                         }
                     }
                 }
             });
+        })
+        .catch(error => console.error("Error loading energy chart:", error));
 
-            // BATTERY/TARIFF CHART
+    // BATTERY + TARIFF CHART
+    fetch("{{ asset('battery_tariff_data.json') }}")
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.map(d => d.timestamp);
+            const batteryData = data.map(d => d.battery_p);
+            const tariffData = data.map(d => d.tariff);
+
             const ctx2 = document.getElementById('batteryChart').getContext('2d');
             new Chart(ctx2, {
                 type: 'line',
@@ -158,29 +182,39 @@
                 },
                 options: {
                     responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'top' }},
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     scales: {
                         yBattery: {
                             type: 'linear',
                             position: 'left',
-                            title: { display: true, text: 'Battery Power (W)' },
+                            title: {
+                                display: true,
+                                text: 'Battery Power (W)'
+                            },
                             ticks: { color: 'blue' }
                         },
                         yTariff: {
                             type: 'linear',
                             position: 'right',
-                            title: { display: true, text: 'Energy Tariffs (€ / kWh)' },
+                            title: {
+                                display: true,
+                                text: 'Energy Tariffs (€ / kWh)'
+                            },
                             grid: { drawOnChartArea: false },
                             ticks: { color: 'green' }
                         }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
                     }
                 }
             });
         })
-        .catch(error => console.error("Error loading JSON charts:", error));
+        .catch(err => console.error("Error loading battery/tariff chart:", err));
 </script>
-
 
 </body>
 </html>
