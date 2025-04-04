@@ -18,7 +18,7 @@ class ProjectController extends Controller
         }, 'companies as devices_count' => function ($query) {
             $query->join('plants', 'companies.id', '=', 'plants.company_id')
                 ->join('devices', 'plants.id', '=', 'devices.plant_id');
-        }])->where('user_id', Auth::id())->get();
+        }])->where('user_id', Auth::id())->latest()->get();
 
         return view('projects.index', compact('projects'));
     }

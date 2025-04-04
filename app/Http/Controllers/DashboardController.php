@@ -20,7 +20,7 @@ class DashboardController extends Controller
             'companies as devices_count' => fn($q) =>
                 $q->join('plants', 'companies.id', '=', 'plants.company_id')
                 ->join('devices', 'plants.id', '=', 'devices.plant_id'),
-        ])->get();
+        ])->latest()->get();
 
         return view('dashboard.index', compact('projects'));
     }
