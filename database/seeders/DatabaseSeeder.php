@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Seeder;
-use Faker\Factory as Faker;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Company;
@@ -12,8 +11,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create(); // <-- FIXED
-
         // Create Users
         $admin = User::create([
             'name' => 'Admin',
@@ -62,13 +59,17 @@ class DatabaseSeeder extends Seeder
                 ]);
 
                 for ($p = 0; $p < 2; $p++) {
+                    $plantName = $plantTypes[array_rand($plantTypes)];
+
                     $plant = $company->plants()->create([
-                        'name' => $faker->randomElement($plantTypes),
+                        'name' => $plantName,
                     ]);
 
                     for ($d = 0; $d < 3; $d++) {
+                        $deviceName = $deviceTypes[array_rand($deviceTypes)];
+
                         $plant->devices()->create([
-                            'name' => $faker->randomElement($deviceTypes),
+                            'name' => $deviceName,
                         ]);
                     }
                 }
