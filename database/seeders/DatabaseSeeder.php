@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Company;
