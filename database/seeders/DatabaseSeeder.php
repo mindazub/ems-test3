@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $faker = Faker::create();
         // Create Users
         $admin = User::create([
             'name' => 'Admin',
