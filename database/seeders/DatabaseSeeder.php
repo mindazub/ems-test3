@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create();
+        $faker = Faker::create(); // <-- FIXED
+
         // Create Users
         $admin = User::create([
             'name' => 'Admin',
@@ -62,12 +63,12 @@ class DatabaseSeeder extends Seeder
 
                 for ($p = 0; $p < 2; $p++) {
                     $plant = $company->plants()->create([
-                        'name' => fake()->randomElement($plantTypes),
+                        'name' => $faker->randomElement($plantTypes),
                     ]);
 
                     for ($d = 0; $d < 3; $d++) {
                         $plant->devices()->create([
-                            'name' => fake()->randomElement($deviceTypes),
+                            'name' => $faker->randomElement($deviceTypes),
                         ]);
                     }
                 }
