@@ -23,6 +23,16 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects'));
     }
 
+    public function show($id)
+    {
+        $project = Project::with([
+            'companies.plants.devices',
+            'companies.plants',
+        ])->findOrFail($id);
+
+        return view('projects.show', compact('project'));
+    }
+
     public function create()
     {
         return view('projects.create');

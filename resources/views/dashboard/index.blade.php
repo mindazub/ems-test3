@@ -42,11 +42,6 @@
                     <h3 class="mb-4">Projects Table</h3>
 
 
-                    {{-- Theme Toggle Switch --}}
-                    {{-- <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="themeToggle">
-                <label class="form-check-label" for="themeToggle">Dark Mode</label>
-            </div> --}}
 
                     <table id="projectTable" class="table table-striped table-bordered align-middle" style="width:100%">
                         <thead>
@@ -90,6 +85,8 @@
                                         </div>
                                     </td>
                                     <td class="border px-4 py-2">
+                                        <a href="{{ route('projects.show', $project) }}"
+                                            class="text-sm text-green-600 hover:text-green-900 mr-2">View</a>
                                         <a href="{{ route('projects.edit', $project) }}"
                                             class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
                                         <form method="POST" action="{{ route('projects.destroy', $project) }}"

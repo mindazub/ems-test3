@@ -25,6 +25,16 @@ class DashboardController extends Controller
         return view('dashboard.index', compact('projects'));
     }
 
+    public function show($id)
+    {
+        $project = Project::with([
+            'companies.plants.devices',
+            'companies.plants',
+        ])->findOrFail($id);
+
+        return view('dashboard.show', compact('project'));
+
 
 }
 
+}
