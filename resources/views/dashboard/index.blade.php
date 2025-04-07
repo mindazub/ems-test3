@@ -14,34 +14,7 @@
 
     {{-- ✅ Custom Theme Styles --}}
     <style>
-        body.dark-mode {
-            background-color: #121212;
-            color: #fff;
-        }
 
-        .dark-mode .card {
-            background-color: #1e1e1e;
-            color: #fff;
-        }
-
-        .dark-mode .form-check-label {
-            color: #fff;
-        }
-
-        .dark-mode table.dataTable {
-            color: #ccc;
-        }
-
-        .dark-mode .dataTables_wrapper .dataTables_filter input,
-        .dark-mode .dataTables_wrapper .dataTables_length select {
-            background-color: #2a2a2a;
-            color: #fff;
-            border: 1px solid #444;
-        }
-
-        .dark-mode .table-striped > tbody > tr:nth-of-type(odd) {
-            background-color: #2c2c2c;
-        }
 
 
     </style>
@@ -56,7 +29,7 @@
                 </div>
                 <div class="mb-4 text-right">
                     <a href="{{ route('projects.create') }}"
-                       class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
                         + New Project
                     </a>
                 </div>
@@ -69,8 +42,8 @@
                     <h3 class="mb-4">Projects Table</h3>
 
 
-                                                        {{-- Theme Toggle Switch --}}
-            {{-- <div class="form-check form-switch">
+                    {{-- Theme Toggle Switch --}}
+                    {{-- <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="themeToggle">
                 <label class="form-check-label" for="themeToggle">Dark Mode</label>
             </div> --}}
@@ -93,11 +66,14 @@
                         <tbody>
                             @forelse ($projects as $project)
                                 @php
-                                    $progress = round(
-                                        ($project->companies_count > 0 ? 1 : 0) +
-                                        ($project->plants_count > 0 ? 1 : 0) +
-                                        ($project->devices_count > 0 ? 1 : 0)
-                                    ) / 3 * 5;
+                                    $progress =
+                                        (round(
+                                            ($project->companies_count > 0 ? 1 : 0) +
+                                                ($project->plants_count > 0 ? 1 : 0) +
+                                                ($project->devices_count > 0 ? 1 : 0),
+                                        ) /
+                                            3) *
+                                        5;
                                 @endphp
                                 <tr>
                                     <td>{{ $project->id }}</td>
@@ -115,14 +91,14 @@
                                     </td>
                                     <td class="border px-4 py-2">
                                         <a href="{{ route('projects.edit', $project) }}"
-                                           class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                            class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
                                         <form method="POST" action="{{ route('projects.destroy', $project) }}"
-                                              class="inline-block"
-                                              onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                            class="inline-block"
+                                            onsubmit="return confirm('Are you sure you want to delete this project?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="text-sm text-red-600 hover:text-red-900">Delete</button>
+                                                class="text-sm text-red-600 hover:text-red-900">Delete</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -146,7 +122,7 @@
 
     {{-- ✅ DataTables Init --}}
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             $('#projectTable').DataTable({
                 "pageLength": 10,
                 "lengthMenu": [10, 25, 50, 100],
