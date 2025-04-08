@@ -182,10 +182,11 @@
 
                 // BATTERY/TARIFF CHART
                 new Chart(document.getElementById('batteryChart').getContext('2d'), {
-                    type: 'line',
+                    type: 'bar',
                     data: {
                         labels,
                         datasets: [{
+                                type: 'line', // Battery line
                                 label: 'Battery Power (W)',
                                 data: batteryData,
                                 borderColor: 'blue',
@@ -195,13 +196,12 @@
                                 pointRadius: 0
                             },
                             {
+                                type: 'bar', // Tariff bar
                                 label: 'Energy Tariffs (€ / kWh)',
                                 data: tariffData,
+                                backgroundColor: 'rgba(0, 128, 0, 0.5)',
                                 borderColor: 'green',
-                                backgroundColor: 'rgba(0, 128, 0, 0.1)',
-                                yAxisID: 'yTariff',
-                                tension: 0.2,
-                                pointRadius: 0
+                                yAxisID: 'yTariff'
                             }
                         ]
                     },
@@ -220,17 +220,25 @@
                             yBattery: {
                                 type: 'linear',
                                 position: 'left',
+                                suggestedMin: -15000, // ⬅️ Your custom min
+                                suggestedMax: 15000, // ⬅️ Your custom max
                                 title: {
                                     display: true,
                                     text: 'Battery Power (W)'
                                 },
                                 ticks: {
                                     color: 'blue'
+                                },
+                                grid: {
+                                    drawTicks: true,
+                                    color: '#eee'
                                 }
                             },
                             yTariff: {
                                 type: 'linear',
                                 position: 'right',
+                                suggestedMin: -0.25, // ⬅️ Your custom min
+                                suggestedMax: 0.25, // ⬅️ Your custom max
                                 title: {
                                     display: true,
                                     text: 'Energy Tariffs (€ / kWh)'
@@ -245,6 +253,8 @@
                         }
                     }
                 });
+
+
             });
 
         // Load battery savings chart from battery_savings.json
