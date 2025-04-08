@@ -7,6 +7,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes flashColor {
+            0% {
+                color: red;
+            }
+
+            33% {
+                color: green;
+            }
+
+            66% {
+                color: blue;
+            }
+
+            100% {
+                color: red;
+            }
+        }
+
+        .animate-flash {
+            animation: flashColor 1.5s infinite;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -58,7 +81,11 @@
     <!-- BATTERY SAVINGS CHART -->
     <section class="py-16 px-4 bg-gray-50">
         <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Battery Savings Over Time</h2>
+            <h2 class="text-2xl font-bold mb-2 text-center">Battery Savings Over Time</h2>
+            <p id="batteryEarningDisplay"
+                class="text-2xl font-bold mb-4 animate-flash border-4 border-gray-400 rounded-lg px-4 py-2 bg-yellow-200 shadow-md w-fit mx-auto text-center">
+                Total Earnings: calculating...
+            </p>
             <canvas id="batterySavingsChart" height="100"></canvas>
         </div>
     </section>
@@ -221,7 +248,7 @@
             });
 
         // Load battery savings chart from battery_savings.json
-        fetch("{{ asset('batteries_savings.json') }}")
+        fetch("{{ asset('battery_savings.json') }}")
             .then(response => response.json())
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
@@ -237,6 +264,10 @@
                 const batterySavingsColors = batterySavingsData.map(val =>
                     val >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'
                 );
+
+                const totalEarnings = batterySavingsData.reduce((sum, val) => sum + val, 0);
+                document.getElementById('batteryEarningDisplay').innerText =
+                    `Total Earnings: €${totalEarnings.toFixed(2)}`;
 
                 new Chart(document.getElementById('batterySavingsChart').getContext('2d'), {
                     type: 'bar',
@@ -262,7 +293,7 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.dataset.label}: €${context.parsed.y.toFixed(4)}`;
+                                        return `${context.dataset.label}: €${context.parsed.y.toFixed(2)}`;
                                     }
                                 }
                             }

@@ -5,11 +5,7 @@
     <meta charset="UTF-8">
     <title>EDISLAB | EMS Dashboard App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    {{-- Tailwind CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
-
-    {{-- Chart.js CDN --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -68,15 +64,13 @@
     </section>
 
     <script>
-        // Fetch data from batteries_ok.json
+        // Load first two charts from batteries_ok.json
         fetch("{{ asset('batteries_ok.json') }}")
             .then(response => response.json())
             .then(data => {
-                // Convert object with timestamp keys into array of sorted entries
-                const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
-
+                const entries = Object.entries(data).sort(([a], [b]) => Number(a) - Number(b));
                 const labels = entries.map(([ts]) => {
-                    const date = new Date(ts);
+                    const date = new Date(ts * 1000);
                     return date.toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit'
@@ -89,8 +83,7 @@
                 const tariffData = entries.map(([, val]) => val.tariff);
 
                 // ENERGY CHART
-                const ctx = document.getElementById('energyChart').getContext('2d');
-                new Chart(ctx, {
+                new Chart(document.getElementById('energyChart').getContext('2d'), {
                     type: 'line',
                     data: {
                         labels,
@@ -161,8 +154,7 @@
                 });
 
                 // BATTERY/TARIFF CHART
-                const ctx2 = document.getElementById('batteryChart').getContext('2d');
-                new Chart(ctx2, {
+                new Chart(document.getElementById('batteryChart').getContext('2d'), {
                     type: 'line',
                     data: {
                         labels,
@@ -226,10 +218,78 @@
                         }
                     }
                 });
-            })
-            .catch(error => console.error("Error loading JSON charts:", error));
-    </script>
+            });
 
+        // Load battery savings chart from battery_savings.json
+        fetch("{{ asset('batteries_savings.json') }}")
+            .then(response => response.json())
+            .then(data => {
+                const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
+                const labels = entries.map(([ts]) => {
+                    const date = new Date(ts);
+                    return date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                });
+
+                const batterySavingsData = entries.map(([, val]) => val.battery_savings);
+                const batterySavingsColors = batterySavingsData.map(val =>
+                    val >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                );
+
+                new Chart(document.getElementById('batterySavingsChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Battery Savings (€)',
+                            data: batterySavingsData,
+                            backgroundColor: batterySavingsColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: €${context.parsed.y.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Savings (€)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+    </script>
 
 </body>
 
