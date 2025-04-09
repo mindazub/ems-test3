@@ -97,7 +97,7 @@
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => Number(a) - Number(b));
                 const labels = entries.map(([ts]) => {
-                    const date = new Date(ts * 1000);
+                    const date = new Date(isNaN(ts) ? ts : Number(ts));
                     return date.toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit'
