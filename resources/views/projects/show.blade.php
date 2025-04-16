@@ -60,10 +60,10 @@
                         </tr>
                     </table>
 
+                    {{-- Project Plant and Device List with reveal toggle --}}
                     <div class="card mb-5">
                         <div class="card-body">
-                            <h4 class="mb-4">Project Plant and Device Overview</h4>
-
+                            <h4 class="mb-4">Project Plant and Device List</h4>
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
@@ -73,15 +73,15 @@
                                         <th>Device</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="device-table-body">
+                                    @php $rowCount = 0; @endphp
                                     @foreach ($project->companies as $company)
                                         @foreach ($company->plants as $plant)
-                                            @php
-                                                $deviceCount = $plant->devices->count();
-                                            @endphp
+                                            @php $deviceCount = $plant->devices->count(); @endphp
 
                                             @if ($deviceCount === 0)
-                                                <tr>
+                                                @php $rowCount++; @endphp
+                                                <tr class="device-row {{ $rowCount > 5 ? 'd-none more-row' : '' }}">
                                                     <td>{{ $project->name }}</td>
                                                     <td>{{ $company->name }}</td>
                                                     <td>{{ $plant->name }}</td>
@@ -89,7 +89,9 @@
                                                 </tr>
                                             @else
                                                 @foreach ($plant->devices as $device)
-                                                    <tr>
+                                                    @php $rowCount++; @endphp
+                                                    <tr
+                                                        class="device-row {{ $rowCount > 5 ? 'd-none more-row' : '' }}">
                                                         <td>{{ $project->name }}</td>
                                                         <td>{{ $company->name }}</td>
                                                         <td>{{ $plant->name }}</td>
@@ -101,8 +103,17 @@
                                     @endforeach
                                 </tbody>
                             </table>
+
+                            @if ($rowCount > 5)
+                                <div class="text-center mt-3">
+                                    <button id="reveal-button" class="btn btn-outline-primary">Show More</button>
+                                    <button id="collapse-button" class="btn btn-outline-secondary d-none">Show
+                                        Less</button>
+                                </div>
+                            @endif
                         </div>
                     </div>
+
 
 
 
@@ -457,4 +468,56 @@
                 });
             });
     </script>
+
+    <style>
+        .fade-in-row {
+            opacity: 0;
+            height: 0;
+            transition: opacity 0.4s ease-in-out, height 0.4s ease-in-out;
+            overflow: hidden;
+        }
+
+        .fade-in-row.show {
+            opacity: 1;
+            height: auto;
+        }
+    </style>
+
+    <script>
+        const revealButton = document.getElementById('reveal-button');
+        const collapseButton = document.getElementById('collapse-button');
+
+        revealButton?.addEventListener('click', function() {
+            document.querySelectorAll('.more-row').forEach((row, index) => {
+                setTimeout(() => {
+                    row.classList.remove('d-none');
+                    row.classList.add('show');
+                }, index * 50); // 100ms delay between each row
+            });
+            revealButton.classList.add('d-none');
+            collapseButton.classList.remove('d-none');
+        });
+
+        collapseButton?.addEventListener('click', function() {
+            const rows = document.querySelectorAll('.more-row');
+
+            rows.forEach((row, index) => {
+                setTimeout(() => {
+                    row.classList.remove('show');
+                    setTimeout(() => {
+                        row.classList.add('d-none');
+                    }, 400); // matches the CSS transition time
+                }, index * 50); // stagger delay
+            });
+
+            revealButton.classList.remove('d-none');
+            collapseButton.classList.add('d-none');
+        });
+    </script>
+
+
+
+
+
+
 </x-app-layout>
