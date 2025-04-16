@@ -40,33 +40,39 @@
                             <th>Devices</th>
                             <td>{{ $project->devices_count ?? ($project->devices?->count() ?? 0) }}</td>
                         </tr>
-                        <tr>
-                            <th>Progress</th>
-                            <td>
-                                @php
-                                    $progress =
-                                        (round(
-                                            ($project->companies_count > 0 ? 1 : 0) +
-                                                ($project->plants_count > 0 ? 1 : 0) +
-                                                ($project->devices_count > 0 ? 1 : 0),
-                                        ) /
-                                            3) *
-                                        5;
-                                @endphp
+                        @auth
+                            @if (auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
+                                <tr>
+                                    <th>Progress</th>
+                                    <td>
+                                        @php
+                                            $progress =
+                                                (round(
+                                                    ($project->companies_count > 0 ? 1 : 0) +
+                                                        ($project->plants_count > 0 ? 1 : 0) +
+                                                        ($project->devices_count > 0 ? 1 : 0),
+                                                ) /
+                                                    3) *
+                                                5;
+                                        @endphp
 
-                                <div class="text-warning">
-                                    @for ($s = 1; $s <= 5; $s++)
-                                        <i class="bi {{ $s <= $progress ? 'bi-star-fill' : 'bi-star' }}"></i>
-                                    @endfor
-                                </div>
-                            </td>
-                        </tr>
+                                        <div class="text-warning">
+                                            @for ($s = 1; $s <= 5; $s++)
+                                                <i class="bi {{ $s <= $progress ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                            @endfor
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endauth
+
                     </table>
 
                     <div class="mt-4 d-flex">
 
-                        <a href="{{ route('dashboard', $project) }}" class="btn btn-info me-2">
-                            <i class="bi bi-arrow-left"></i> Back</a>
+                        <a href="{{ route('dashboard') }}" class="btn btn-info me-2 btn-back-transition">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
 
                         @auth
                             @if (auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
