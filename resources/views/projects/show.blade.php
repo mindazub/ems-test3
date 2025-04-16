@@ -120,16 +120,25 @@
 
 
 
+                    @auth
 
-                    <div class="mt-4 d-flex">
-                        <a href="{{ route('projects.edit', $project) }}" class="btn btn-primary me-2">Edit Project</a>
-                        <form action="{{ route('projects.destroy', $project) }}" method="POST"
-                            onsubmit="return confirm('Are you sure you want to delete this project?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-danger">Delete Project</button>
-                        </form>
-                    </div>
+                        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
+                            <div class="mt-4 d-flex">
+                                <a href="{{ route('projects.edit', $project) }}" class="btn btn-primary me-2">Edit
+                                    Project</a>
+                                <form action="{{ route('projects.destroy', $project) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-danger">Delete Project</button>
+                                </form>
+                            </div>
+                        @endif
+
+                    @endauth
+
+
+
                 </div>
             </div>
 
@@ -256,7 +265,7 @@
             .then(res => res.json())
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => Number(a) - Number(b));
-                const labels = entries.map(([ts]) => new Date(Number(ts)).toLocaleTimeString([], {
+                const labels = entries.map(([ts]) => new Date(ts).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit'
                 }));
@@ -311,24 +320,56 @@
                             }
                         },
                         scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Power (kW)'
-                                }
-                            },
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Time'
+                                    text: 'Time',
+                                    color: '#000', // Darker text
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
                                 },
                                 ticks: {
+                                    color: '#000',
                                     maxRotation: 45,
                                     minRotation: 45
+                                },
+                                grid: {
+                                    color: '#ccc', // Optional: slightly darker grid
+                                    lineWidth: 1.5 // Thicker axis/grid lines
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#000',
+                                    width: 2 // Thicker axis line
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Power (kW)',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
+                                },
+                                ticks: {
+                                    color: '#000'
+                                },
+                                grid: {
+                                    color: '#ccc',
+                                    lineWidth: 1.5
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#000',
+                                    width: 2
                                 }
                             }
                         }
+
                     }
                 });
 
@@ -375,14 +416,24 @@
                                 suggestedMax: 15000,
                                 title: {
                                     display: true,
-                                    text: 'Battery Power (W)'
+                                    text: 'Battery Power (W)',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
                                 },
                                 ticks: {
                                     color: 'blue'
                                 },
                                 grid: {
-                                    drawTicks: true,
-                                    color: '#eee'
+                                    color: '#ccc',
+                                    lineWidth: 1.5
+                                },
+                                border: {
+                                    display: true,
+                                    color: 'blue',
+                                    width: 2
                                 }
                             },
                             yTariff: {
@@ -392,16 +443,52 @@
                                 suggestedMax: 0.25,
                                 title: {
                                     display: true,
-                                    text: 'Energy Tariffs (€ / kWh)'
+                                    text: 'Energy Tariffs (€ / kWh)',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
+                                },
+                                ticks: {
+                                    color: 'green'
                                 },
                                 grid: {
                                     drawOnChartArea: false
                                 },
+                                border: {
+                                    display: true,
+                                    color: 'green',
+                                    width: 2
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
+                                },
                                 ticks: {
-                                    color: 'green'
+                                    color: '#000',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: '#ccc',
+                                    lineWidth: 1.5
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#000',
+                                    width: 2
                                 }
                             }
                         }
+
                     }
                 });
             });
@@ -453,20 +540,53 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'Savings (€)'
+                                    text: 'Savings (€)',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
+                                },
+                                ticks: {
+                                    color: '#000'
+                                },
+                                grid: {
+                                    color: '#ccc',
+                                    lineWidth: (ctx) => ctx.tick.value === 0 ? 4 : 1.5
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#000',
+                                    width: 2
                                 }
                             },
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Time'
+                                    text: 'Time',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 14
+                                    }
                                 },
                                 ticks: {
+                                    color: '#000',
                                     maxRotation: 45,
                                     minRotation: 45
+                                },
+                                grid: {
+                                    color: '#ccc',
+                                    lineWidth: 1.5
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#000',
+                                    width: 2
                                 }
                             }
                         }
+
                     }
                 });
             });
