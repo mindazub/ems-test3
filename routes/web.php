@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+use Pest\ArchPresets\Custom;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,6 +32,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('roles', RoleController::class)
         ->only(['index', 'edit', 'update'])
         ->parameter('roles', 'user');
+
+        Route::resource('customers', CustomerController::class)
+        ->only(['index', 'show', 'edit', 'update'])
+        ->parameter('customers', 'user')
+        ->name('customers.index', 'customers');
+
 });
 
 

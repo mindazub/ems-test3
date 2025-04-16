@@ -52,10 +52,11 @@ class User extends Authenticatable
      *  @return bool
      */
 
-    public function isAdmin()
-    {
-        return $this->email === 'admin@admin.com';
-    }
+     public function isAdmin(): bool
+     {
+         return $this->role === 'admin';
+     }
+
 
     public function hasRole(string $role)
     {

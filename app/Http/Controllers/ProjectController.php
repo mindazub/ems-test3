@@ -28,7 +28,18 @@ class ProjectController extends Controller
         $project = Project::with([
             'companies.plants.devices',
             'companies.plants',
-        ])->findOrFail($id);
+        ])
+        ->withCount([
+            'companies',
+            'companies as plants_count' => function ($query) {
+                $query->join('plants', 'companies.id', '=', 'plants.company_id');
+            },
+            'companies as devices_count' => function ($query) {
+                $query->join('plants', 'companies.id', '=', 'plants.company_id')
+                    ->join('devices', 'plants.id', '=', 'devices.plant_id');
+            }
+        ])
+        ->findOrFail($id);
 
         return view('projects.show', compact('project'));
     }
