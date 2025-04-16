@@ -64,6 +64,9 @@
                     </table>
 
                     <div class="mt-4 d-flex">
+
+
+
                         <a href="{{ route('projects.edit', $project) }}" class="btn btn-primary me-2">Edit Project</a>
 
                         <form action="{{ route('projects.destroy', $project) }}" method="POST"

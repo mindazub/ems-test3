@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-    <div class="py-12">
+    <div id="page-content" class="fade-in py-12">
         <div class="container">
 
             <div class="row mb-4">
@@ -36,7 +36,8 @@
                 <div class="card-body">
                     <h3 class="mb-4">Plants Table</h3>
 
-                    <table id="projectTable" class="table table-striped table-bordered align-middle" style="width:100%">
+                    <table id="projectTable" class="table table-striped table-hover table-bordered align-middle"
+                        style="width:100%">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -72,7 +73,7 @@
                                         5;
                                 @endphp
 
-                                <tr>
+                                <tr class="clickable-row" data-href="{{ route('projects.show', $project) }}">
                                     <td>{{ $project->id }}</td>
                                     <td>{{ $project->name }}</td>
                                     <td>{{ $project->companies_count }}</td>
@@ -161,4 +162,84 @@
             });
         });
     </script>
+
+    <script>
+        $(document).ready(function() {
+            // Existing DataTable setup...
+
+            // Handle row click
+            $('#projectTable').on('click', '.clickable-row', function(e) {
+                // Prevent click if the target is inside an action (like a link or button)
+                if ($(e.target).is('a') || $(e.target).is('button') || $(e.target).closest('form').length) {
+                    return;
+                }
+                window.location = $(this).data("href");
+            });
+        });
+    </script>
+
+    <style>
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .clickable-row:hover {
+            background-color: #e7f3ff;
+            color: #0c4a6e
+        }
+    </style>
+
+
+    <style>
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.4s ease-in;
+        }
+
+        .fade-in.show {
+            opacity: 1;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.4s ease-out;
+        }
+    </style>
+
+
+
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const page = document.getElementById("page-content");
+
+            if (page) {
+                // Fade in on load
+                requestAnimationFrame(() => {
+                    page.classList.add("show");
+                });
+
+                // Intercept Back button and other links (if needed)
+                const backButton = document.querySelector(".btn-back-transition");
+
+                if (backButton) {
+                    backButton.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        page.classList.remove("show");
+                        page.classList.add("fade-out");
+
+                        setTimeout(() => {
+                            window.location = this.href;
+                        }, 400);
+                    });
+                }
+            }
+        });
+    </script>
+
+
+
 </x-app-layout>
