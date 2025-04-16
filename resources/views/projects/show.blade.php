@@ -106,9 +106,12 @@
 
                             @if ($rowCount > 5)
                                 <div class="text-center mt-3">
-                                    <button id="reveal-button" class="btn btn-outline-primary">Show More</button>
-                                    <button id="collapse-button" class="btn btn-outline-secondary d-none">Show
-                                        Less</button>
+                                    <button id="reveal-button" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-chevron-down"></i> Show More
+                                    </button>
+                                    <button id="collapse-button" class="btn btn-outline-secondary btn-sm d-none">
+                                        <i class="bi bi-chevron-up"></i> Show Less
+                                    </button>
                                 </div>
                             @endif
                         </div>
