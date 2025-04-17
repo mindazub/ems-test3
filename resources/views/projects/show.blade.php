@@ -199,7 +199,7 @@
                             <canvas id="energyChart" height="100"></canvas>
                         </div>
                         <div class="tab-pane fade" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
-                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -217,18 +217,131 @@
                     </div>
                 </div>
 
-
-                <div class="bg-white rounded shadow p-4 mb-4">
-                    <h4 class="text-center">Battery Power and Tariff</h4>
-                    <canvas id="batteryChart" height="100"></canvas>
+                {{-- Battery Power and Tariff --}}
+                <div class="card mb-5">
+                    <div class="card-header pb-0">
+                        <ul class="nav nav-tabs" id="batteryTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="battery-graph-tab" data-bs-toggle="tab"
+                                    data-bs-target="#batteryGraphTab" type="button" role="tab"
+                                    aria-controls="batteryGraphTab" aria-selected="true">Graph</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="battery-data-tab" data-bs-toggle="tab"
+                                    data-bs-target="#batteryDataTab" type="button" role="tab"
+                                    aria-controls="batteryDataTab" aria-selected="false">Data</button>
+                            </li>
+                            <li class="nav-item ms-auto" role="presentation">
+                                <div class="nav-link p-0 border-0 bg-transparent">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button" id="batteryDownloadMenu" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end"
+                                            aria-labelledby="batteryDownloadMenu">
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartImage('batteryChart')">Download PNG</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartCSV('batteryChart', batteryChart)">Download
+                                                    CSV</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartPDF('batteryChart')">Download PDF</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body tab-content" id="batteryTabContent">
+                        <div class="tab-pane fade show active" id="batteryGraphTab" role="tabpanel"
+                            aria-labelledby="battery-graph-tab">
+                            <h4 class="text-center m-3">Battery Power and Tariff</h4>
+                            <canvas id="batteryChart" height="100"></canvas>
+                        </div>
+                        <div class="tab-pane fade" id="batteryDataTab" role="tabpanel"
+                            aria-labelledby="battery-data-tab">
+                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Battery Power (W)</th>
+                                            <th>Tariff (€ / kWh)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batteryDataTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-white rounded shadow p-4">
-                    <h4 class="text-center">Battery Savings</h4>
-                    <p id="batteryEarningDisplay" class="text-center fw-bold animate-flash">Total Earnings:
-                        calculating...</p>
-                    <canvas id="batterySavingsChart" height="100"></canvas>
+
+                <div class="card mb-5">
+                    <div class="card-header pb-0">
+                        <ul class="nav nav-tabs" id="batterySavingsTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="batterySavings-graph-tab" data-bs-toggle="tab"
+                                    data-bs-target="#batterySavingsGraphTab" type="button" role="tab"
+                                    aria-controls="batterySavingsGraphTab" aria-selected="true">Graph</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="batterySavings-data-tab" data-bs-toggle="tab"
+                                    data-bs-target="#batterySavingsDataTab" type="button" role="tab"
+                                    aria-controls="batterySavingsDataTab" aria-selected="false">Data</button>
+                            </li>
+                            <li class="nav-item ms-auto" role="presentation">
+                                <div class="nav-link p-0 border-0 bg-transparent">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button" id="batterySavingsDownloadMenu" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end"
+                                            aria-labelledby="batterySavingsDownloadMenu">
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartImage('batterySavingsChart')">Download
+                                                    PNG</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartCSV('batterySavingsChart', batterySavingsChart)">Download
+                                                    CSV</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartPDF('batterySavingsChart')">Download PDF</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body tab-content" id="batterySavingsTabContent">
+                        <div class="tab-pane fade show active" id="batterySavingsGraphTab" role="tabpanel"
+                            aria-labelledby="batterySavings-graph-tab">
+                            <h4 class="text-center m-3">Battery Savings</h4>
+                            <p id="batteryEarningDisplay" class="text-center fw-bold animate-flash">Total Earnings:
+                                calculating...</p>
+                            <canvas id="batterySavingsChart" height="100"></canvas>
+                        </div>
+                        <div class="tab-pane fade" id="batterySavingsDataTab" role="tabpanel"
+                            aria-labelledby="batterySavings-data-tab">
+                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Battery Savings (€)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batterySavingsDataTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             {{-- Project Breakdown Charts --}}
@@ -467,6 +580,35 @@
                 }
 
 
+
+
+                const batteryDataBody = document.getElementById('batteryDataTableBody');
+                if (batteryDataBody) {
+                    entries.slice().reverse().forEach(([ts, val]) => {
+                        const row = document.createElement('tr');
+                        const time = new Date(isNaN(ts) ? ts : Number(ts)).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+
+                        row.innerHTML = `
+            <td>${time}</td>
+            <td>${val.battery_p.toFixed(2)}</td>
+            <td>${val.tariff.toFixed(4)}</td>
+        `;
+                        batteryDataBody.appendChild(row);
+                    });
+                }
+
+
+
+
+
+
+
+
+
+
                 new Chart(document.getElementById('batteryChart'), {
                     type: 'bar',
                     data: {
@@ -587,20 +729,48 @@
                 });
             });
 
+        let batterySavingsChart;
+
         fetch("{{ asset('battery_savings.json') }}")
             .then(res => res.json())
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
-                const labels = entries.map(([ts]) => new Date(ts).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }));
+
+                const labels = entries.map(([ts]) =>
+                    new Date(ts).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                );
+
                 const savings = entries.map(([, val]) => val.battery_savings);
-                const colors = savings.map(val => val >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)');
+                const colors = savings.map(val =>
+                    val >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'
+                );
+
                 const total = savings.reduce((sum, val) => sum + val, 0);
                 document.getElementById('batteryEarningDisplay').innerText = `Total Earnings: €${total.toFixed(2)}`;
 
-                new Chart(document.getElementById('batterySavingsChart'), {
+                // Fill the data table
+                const tableBody = document.getElementById('batterySavingsDataTableBody');
+                if (tableBody) {
+                    entries.slice().reverse().forEach(([ts, val]) => {
+                        const row = document.createElement('tr');
+                        const time = new Date(ts).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+
+                        row.innerHTML = `
+                    <td>${time}</td>
+                    <td>€${val.battery_savings.toFixed(2)}</td>
+                `;
+                        tableBody.appendChild(row);
+                    });
+                }
+
+                // Chart
+                batterySavingsChart = new Chart(document.getElementById('batterySavingsChart'), {
                     type: 'bar',
                     data: {
                         labels,
@@ -646,7 +816,7 @@
                                 },
                                 grid: {
                                     color: '#ccc',
-                                    lineWidth: (ctx) => ctx.tick.value === 0 ? 4 : 1.5
+                                    lineWidth: ctx => ctx.tick.value === 0 ? 4 : 1.5
                                 },
                                 border: {
                                     display: true,
@@ -680,7 +850,6 @@
                                 }
                             }
                         }
-
                     }
                 });
             });
