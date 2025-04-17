@@ -40,7 +40,7 @@
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-3">
                     <a href="{{ route('dashboard') }}">
-                        <img src="{{ asset('images/edislab_monitoring.png') }}" alt="EDISLAB Logo" class="h-10 w-auto">
+                        <img src="{{ asset('images/edislab_monitoring.png') }}" alt="EDISLAB Logo" class="h-8 w-auto">
                     </a>
                 </div>
                 <div class="flex space-x-4">
