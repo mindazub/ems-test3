@@ -169,7 +169,7 @@
                                     aria-selected="false">Data</button>
                             </li>
                             <li class="nav-item ms-auto" role="presentation">
-                                <div class="nav-link p-0 border-0 bg-transparent">
+                                <div class="nav-link p-0 border-1 bg-transparent">
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                             id="energyDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
@@ -317,17 +317,22 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="card-body tab-content" id="batterySavingsTabContent">
-                        <div class="tab-pane fade show active" id="batterySavingsGraphTab" role="tabpanel"
+                    <div class="card-body tab-content" id="batterySavingsTabContent" style="height: 480px;">
+                        <!-- Graph Tab -->
+                        <div class="tab-pane fade show active h-100" id="batterySavingsGraphTab" role="tabpanel"
                             aria-labelledby="batterySavings-graph-tab">
                             <h4 class="text-center m-3">Battery Savings</h4>
                             <p id="batteryEarningDisplay" class="text-center fw-bold animate-flash">Total Earnings:
                                 calculating...</p>
-                            <canvas id="batterySavingsChart" height="100"></canvas>
+                            <div style="height: calc(100% - 90px); display: flex; align-items: center;">
+                                <canvas id="batterySavingsChart" style="width: 100%; height: 100%;"></canvas>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="batterySavingsDataTab" role="tabpanel"
+
+                        <!-- Data Tab -->
+                        <div class="tab-pane fade h-100" id="batterySavingsDataTab" role="tabpanel"
                             aria-labelledby="batterySavings-data-tab">
-                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                            <div class="table-responsive h-100">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>

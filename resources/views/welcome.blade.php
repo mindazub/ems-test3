@@ -29,6 +29,18 @@
         .animate-flash {
             animation: flashColor 1.5s infinite;
         }
+
+        .tab-nav {
+            @apply flex border-b;
+        }
+
+        .tab-button {
+            @apply px-4 py-2 text-sm font-medium border border-gray-200 bg-gray-100 hover:bg-gray-200;
+        }
+
+        .tab-button-active {
+            @apply bg-white border-b-0 text-blue-600;
+        }
     </style>
 </head>
 
@@ -64,15 +76,15 @@
     <!-- ENERGY CHART -->
     <section class="py-16 px-4 bg-gray-50">
         <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Live Energy Data from JSON</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center">Live Energy Data</h2>
             <canvas id="energyChart" height="100"></canvas>
         </div>
     </section>
 
-    <!-- BATTERY/TARIFF CHART -->
+    <!-- BATTERY CHART -->
     <section class="py-16 px-4 bg-white">
         <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Battery Power and Energy Tariffs Over Time</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center">Battery Power and Energy Tariffs</h2>
             <canvas id="batteryChart" height="100"></canvas>
         </div>
     </section>
@@ -80,9 +92,9 @@
     <!-- BATTERY SAVINGS CHART -->
     <section class="py-16 px-4 bg-gray-50">
         <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-2 text-center">Battery Savings Over Time</h2>
+            <h2 class="text-2xl font-bold mb-4 text-center">Battery Savings Over Time</h2>
             <p id="batteryEarningDisplay"
-                class="text-2xl font-bold mb-4 animate-flash border-4 border-gray-400 rounded-lg px-4 py-2 bg-yellow-200 shadow-md w-fit mx-auto text-center">
+                class="text-2xl font-bold mb-6 animate-flash border-4 border-gray-400 rounded-lg px-4 py-2 bg-yellow-200 shadow-md w-fit mx-auto text-center">
                 Total Earnings: calculating...
             </p>
             <canvas id="batterySavingsChart" height="100"></canvas>
@@ -90,35 +102,31 @@
     </section>
 
     <script>
-        // Load first two charts from batteries_ok.json
+        // ENERGY + BATTERY + SAVINGS CHARTS
         fetch("{{ asset('batteries_ok.json') }}")
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => Number(a) - Number(b));
-                const labels = entries.map(([ts]) => {
-                    const date = new Date(isNaN(ts) ? ts : Number(ts));
-                    return date.toLocaleTimeString([], {
+                const labels = entries.map(([ts]) =>
+                    new Date(isNaN(ts) ? ts : Number(ts)).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit'
-                    });
-                });
-
+                    })
+                );
                 const pvData = entries.map(([, val]) => val.pv_p);
                 const batteryData = entries.map(([, val]) => val.battery_p);
                 const gridData = entries.map(([, val]) => val.grid_p);
                 const tariffData = entries.map(([, val]) => val.tariff);
 
-                // ENERGY CHART
-                new Chart(document.getElementById('energyChart').getContext('2d'), {
+                new Chart(document.getElementById('energyChart'), {
                     type: 'line',
                     data: {
                         labels,
                         datasets: [{
                                 label: 'PV Production (kW)',
                                 data: pvData,
-                                borderColor: 'rgba(59, 130, 246, 1)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                                borderWidth: 2,
+                                borderColor: 'rgba(59,130,246,1)',
+                                backgroundColor: 'rgba(59,130,246,0.2)',
                                 tension: 0.3,
                                 fill: true,
                                 pointRadius: 0
@@ -126,9 +134,8 @@
                             {
                                 label: 'Grid Power (kW)',
                                 data: gridData,
-                                borderColor: 'rgba(34, 197, 94, 1)',
-                                backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                                borderWidth: 2,
+                                borderColor: 'rgba(34,197,94,1)',
+                                backgroundColor: 'rgba(34,197,94,0.2)',
                                 tension: 0.3,
                                 fill: true,
                                 pointRadius: 0
@@ -136,9 +143,8 @@
                             {
                                 label: 'Battery Power (kW)',
                                 data: batteryData,
-                                borderColor: 'rgba(249, 115, 22, 1)',
-                                backgroundColor: 'rgba(249, 115, 22, 0.2)',
-                                borderWidth: 2,
+                                borderColor: 'rgba(249,115,22,1)',
+                                backgroundColor: 'rgba(249,115,22,0.2)',
                                 tension: 0.3,
                                 fill: true,
                                 pointRadius: 0
@@ -151,20 +157,12 @@
                             mode: 'index',
                             intersect: false
                         },
-                        stacked: false,
                         plugins: {
                             legend: {
                                 position: 'top'
                             }
                         },
                         scales: {
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Power (kW)'
-                                },
-                                beginAtZero: true
-                            },
                             x: {
                                 title: {
                                     display: true,
@@ -174,31 +172,37 @@
                                     maxRotation: 45,
                                     minRotation: 45
                                 }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Power (kW)'
+                                },
+                                beginAtZero: true
                             }
                         }
                     }
                 });
 
-                // BATTERY/TARIFF CHART
-                new Chart(document.getElementById('batteryChart').getContext('2d'), {
+                new Chart(document.getElementById('batteryChart'), {
                     type: 'bar',
                     data: {
                         labels,
                         datasets: [{
-                                type: 'line', // Battery line
+                                type: 'line',
                                 label: 'Battery Power (W)',
                                 data: batteryData,
                                 borderColor: 'blue',
-                                backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                                backgroundColor: 'rgba(0,0,255,0.1)',
                                 yAxisID: 'yBattery',
                                 tension: 0.2,
                                 pointRadius: 0
                             },
                             {
-                                type: 'bar', // Tariff bar
+                                type: 'bar',
                                 label: 'Energy Tariffs (€ / kWh)',
                                 data: tariffData,
-                                backgroundColor: 'rgba(0, 128, 0, 0.5)',
+                                backgroundColor: 'rgba(0,128,0,0.5)',
                                 borderColor: 'green',
                                 yAxisID: 'yTariff'
                             }
@@ -219,8 +223,8 @@
                             yBattery: {
                                 type: 'linear',
                                 position: 'left',
-                                suggestedMin: -15000, // ⬅️ Your custom min
-                                suggestedMax: 15000, // ⬅️ Your custom max
+                                suggestedMin: -15000,
+                                suggestedMax: 15000,
                                 title: {
                                     display: true,
                                     text: 'Battery Power (W)'
@@ -229,63 +233,70 @@
                                     color: 'blue'
                                 },
                                 grid: {
-                                    drawTicks: true,
-                                    color: '#eee'
+                                    color: '#ccc',
+                                    lineWidth: 1.5
                                 }
                             },
                             yTariff: {
                                 type: 'linear',
                                 position: 'right',
-                                suggestedMin: -0.25, // ⬅️ Your custom min
-                                suggestedMax: 0.25, // ⬅️ Your custom max
+                                suggestedMin: -0.25,
+                                suggestedMax: 0.25,
                                 title: {
                                     display: true,
                                     text: 'Energy Tariffs (€ / kWh)'
                                 },
-                                grid: {
-                                    drawOnChartArea: false
-                                },
                                 ticks: {
                                     color: 'green'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: '#ccc',
+                                    lineWidth: 1.5
                                 }
                             }
                         }
                     }
                 });
-
-
             });
 
-        // Load battery savings chart from battery_savings.json
         fetch("{{ asset('battery_savings.json') }}")
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
-                const labels = entries.map(([ts]) => {
-                    const date = new Date(ts);
-                    return date.toLocaleTimeString([], {
+                const labels = entries.map(([ts]) =>
+                    new Date(ts).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit'
-                    });
-                });
-
-                const batterySavingsData = entries.map(([, val]) => val.battery_savings);
-                const batterySavingsColors = batterySavingsData.map(val =>
-                    val >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                    })
                 );
+                const savings = entries.map(([, val]) => val.battery_savings);
+                const colors = savings.map(val =>
+                    val >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'
+                );
+                const total = savings.reduce((sum, val) => sum + val, 0);
+                document.getElementById('batteryEarningDisplay').innerText = `Total Earnings: €${total.toFixed(2)}`;
 
-                const totalEarnings = batterySavingsData.reduce((sum, val) => sum + val, 0);
-                document.getElementById('batteryEarningDisplay').innerText =
-                    `Total Earnings: €${totalEarnings.toFixed(2)}`;
-
-                new Chart(document.getElementById('batterySavingsChart').getContext('2d'), {
+                new Chart(document.getElementById('batterySavingsChart'), {
                     type: 'bar',
                     data: {
                         labels,
                         datasets: [{
                             label: 'Battery Savings (€)',
-                            data: batterySavingsData,
-                            backgroundColor: batterySavingsColors,
+                            data: savings,
+                            backgroundColor: colors,
                             borderWidth: 1
                         }]
                     },
@@ -302,7 +313,7 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.dataset.label}: €${context.parsed.y.toFixed(2)}`;
+                                        return `€${context.parsed.y.toFixed(2)}`;
                                     }
                                 }
                             }
