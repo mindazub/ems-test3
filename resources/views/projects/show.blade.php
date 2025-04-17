@@ -159,6 +159,7 @@
 
             {{-- Battery/Tariff and Energy Graphs Section --}}
             <div class="mb-5">
+                {{-- Energy Live Chart Section --}}
                 <div class="card mb-5">
                     <div class="card-header pb-0">
                         <ul class="nav nav-tabs" id="energyTab" role="tablist">
@@ -166,7 +167,6 @@
                                 <button class="nav-link active" id="graph-tab" data-bs-toggle="tab"
                                     data-bs-target="#graphTab" type="button" role="tab" aria-controls="graphTab"
                                     aria-selected="true">Graph</button>
-
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#dataTab"
@@ -174,7 +174,7 @@
                                     aria-selected="false">Data</button>
                             </li>
                             <li class="nav-item ms-auto" role="presentation">
-                                <div class="nav-link p-0 border-1 bg-transparent">
+                                <div class="nav-link p-0 border-0 bg-transparent">
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                             id="energyDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
@@ -193,18 +193,22 @@
                                     </div>
                                 </div>
                             </li>
-
                         </ul>
                     </div>
-                    <div class="card-body tab-content" id="energyTabContent">
-                        <div class="tab-pane fade show active" id="graphTab" role="tabpanel"
+
+                    <div class="card-body tab-content" id="energyTabContent" style="height: 550px;">
+                        <!-- Graph Tab -->
+                        <div class="tab-pane fade show active h-100" id="graphTab" role="tabpanel"
                             aria-labelledby="graph-tab">
                             <h4 class="text-center m-3">Energy Live Chart</h4>
-
-                            <canvas id="energyChart" height="100"></canvas>
+                            <div style="height: calc(100% - 90px); display: flex; align-items: center;">
+                                <canvas id="energyChart" style="width: 100%; height: 100%;"></canvas>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
-                            <div class="table-responsive" style="max-height: 530px; overflow-y: auto;">
+
+                        <!-- Data Tab -->
+                        <div class="tab-pane fade h-100" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
+                            <div class="table-responsive h-100">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -218,9 +222,9 @@
                                 </table>
                             </div>
                         </div>
-
                     </div>
                 </div>
+
 
                 {{-- Battery Power and Tariff --}}
                 <div class="card mb-5">
@@ -259,15 +263,21 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="card-body tab-content" id="batteryTabContent">
-                        <div class="tab-pane fade show active" id="batteryGraphTab" role="tabpanel"
+
+                    <div class="card-body tab-content" id="batteryTabContent" style="height: 550px;">
+                        <!-- Graph Tab -->
+                        <div class="tab-pane fade show active h-100" id="batteryGraphTab" role="tabpanel"
                             aria-labelledby="battery-graph-tab">
                             <h4 class="text-center m-3">Battery Power and Tariff</h4>
-                            <canvas id="batteryChart" height="100"></canvas>
+                            <div style="height: calc(100% - 90px); display: flex; align-items: center;">
+                                <canvas id="batteryChart" style="width: 100%; height: 100%;"></canvas>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="batteryDataTab" role="tabpanel"
+
+                        <!-- Data Tab -->
+                        <div class="tab-pane fade h-100" id="batteryDataTab" role="tabpanel"
                             aria-labelledby="battery-data-tab">
-                            <div class="table-responsive" style="max-height: 530px; overflow-y: auto;">
+                            <div class="table-responsive h-100">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -284,6 +294,7 @@
                 </div>
 
 
+                {{-- Battery Savings --}}
                 <div class="card mb-5">
                     <div class="card-header pb-0">
                         <ul class="nav nav-tabs" id="batterySavingsTab" role="tablist">
@@ -322,7 +333,7 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="card-body tab-content" id="batterySavingsTabContent" style="height: 530px;">
+                    <div class="card-body tab-content" id="batterySavingsTabContent" style="height: 550px;">
                         <!-- Graph Tab -->
                         <div class="tab-pane fade show active h-100" id="batterySavingsGraphTab" role="tabpanel"
                             aria-labelledby="batterySavings-graph-tab">
