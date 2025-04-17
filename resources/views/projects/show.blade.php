@@ -199,18 +199,21 @@
                             <canvas id="energyChart" height="100"></canvas>
                         </div>
                         <div class="tab-pane fade" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
-                            <table class="table table-bordered mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>PV (kW)</th>
-                                        <th>Battery (kW)</th>
-                                        <th>Grid (kW)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="energyDataTableBody"></tbody>
-                            </table>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>PV (kW)</th>
+                                            <th>Battery (kW)</th>
+                                            <th>Grid (kW)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="energyDataTableBody"></tbody>
+                                </table>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 

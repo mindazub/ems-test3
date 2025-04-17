@@ -161,17 +161,41 @@
                                 <button class="nav-link active" id="graph-tab" data-bs-toggle="tab"
                                     data-bs-target="#graphTab" type="button" role="tab" aria-controls="graphTab"
                                     aria-selected="true">Graph</button>
+
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#dataTab"
                                     type="button" role="tab" aria-controls="dataTab"
                                     aria-selected="false">Data</button>
                             </li>
+                            <li class="nav-item ms-auto" role="presentation">
+                                <div class="nav-link p-0 border-0 bg-transparent">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                            id="energyDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end"
+                                            aria-labelledby="energyDownloadMenu">
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartImage('energyChart')">Download PNG</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartCSV('energyChart', energyChart)">Download
+                                                    CSV</a></li>
+                                            <li><a class="dropdown-item" href="#"
+                                                    onclick="downloadChartPDF('energyChart')">Download PDF</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+
                         </ul>
                     </div>
                     <div class="card-body tab-content" id="energyTabContent">
                         <div class="tab-pane fade show active" id="graphTab" role="tabpanel"
                             aria-labelledby="graph-tab">
+                            <h4 class="text-center m-3">Energy Live Chart</h4>
+
                             <canvas id="energyChart" height="100"></canvas>
                         </div>
                         <div class="tab-pane fade" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
@@ -195,6 +219,7 @@
                     <h4 class="text-center">Battery Power and Tariff</h4>
                     <canvas id="batteryChart" height="100"></canvas>
                 </div>
+
                 <div class="bg-white rounded shadow p-4">
                     <h4 class="text-center">Battery Savings</h4>
                     <p id="batteryEarningDisplay" class="text-center fw-bold animate-flash">Total Earnings:
@@ -234,6 +259,9 @@
     </div>
 
     {{-- External Chart Script and Logic --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
