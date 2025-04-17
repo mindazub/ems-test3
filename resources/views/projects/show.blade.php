@@ -199,7 +199,7 @@
                             <canvas id="energyChart" height="100"></canvas>
                         </div>
                         <div class="tab-pane fade" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
-                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                            <div class="table-responsive" style="max-height: 530px; overflow-y: auto;">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -262,7 +262,7 @@
                         </div>
                         <div class="tab-pane fade" id="batteryDataTab" role="tabpanel"
                             aria-labelledby="battery-data-tab">
-                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                            <div class="table-responsive" style="max-height: 530px; overflow-y: auto;">
                                 <table class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -317,7 +317,7 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="card-body tab-content" id="batterySavingsTabContent" style="height: 480px;">
+                    <div class="card-body tab-content" id="batterySavingsTabContent" style="height: 530px;">
                         <!-- Graph Tab -->
                         <div class="tab-pane fade show active h-100" id="batterySavingsGraphTab" role="tabpanel"
                             aria-labelledby="batterySavings-graph-tab">
