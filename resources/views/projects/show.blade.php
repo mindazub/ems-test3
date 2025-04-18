@@ -46,7 +46,7 @@
 
                             @if (auth()->user()->role === 'admin')
                                 <tr>
-                                    <th>Progress</th>
+                                    <th>Activity</th>
                                     <td>
                                         @php
                                             $progress =
@@ -56,11 +56,56 @@
                                                     3) *
                                                 5;
                                         @endphp
-                                        <div class="text-warning">
+
+                                        <div class="text-warning d-flex align-items-center flex-wrap gap-2">
+                                            {{-- Star rating --}}
                                             @for ($s = 1; $s <= 5; $s++)
                                                 <i class="bi {{ $s <= $progress ? 'bi-star-fill' : 'bi-star' }}"></i>
                                             @endfor
+
+                                            {{-- Business icons with random badge numbers --}}
+                                            @php
+                                                $businessIcons = [
+                                                    'briefcase',
+                                                    'bar-chart',
+                                                    'clipboard-data',
+                                                    'graph-up',
+                                                    'people',
+                                                    'building',
+                                                    'gear',
+                                                    'shield',
+                                                    'check-circle',
+                                                    'exclamation-circle',
+                                                    'info-circle',
+                                                    'question-circle',
+                                                    'lightbulb',
+                                                    'trophy',
+                                                    'calendar',
+                                                    'clock',
+                                                    'file-earmark-text',
+                                                    'file-earmark-check',
+                                                    'file-earmark-x',
+                                                    'file-earmark-lock',
+                                                    'file-earmark-lock2',
+                                                ];
+                                            @endphp
+
+                                            @for ($i = 0; $i < 10; $i++)
+                                                @php
+                                                    $icon = $businessIcons[array_rand($businessIcons)];
+                                                    $randomCount = rand(1, 99);
+                                                @endphp
+                                                <div class="position-relative d-inline-block">
+                                                    <i class="bi bi-{{ $icon }} fs-5 text-primary"></i>
+                                                    <span
+                                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                                        style="font-size: 0.65rem;">
+                                                        {{ $randomCount }}
+                                                    </span>
+                                                </div>
+                                            @endfor
                                         </div>
+
                                     </td>
                                 </tr>
                             @endif
@@ -188,7 +233,8 @@
                                                     onclick="downloadChartCSV('energyChart', energyChart)">Download
                                                     CSV</a></li>
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartPDF('energyChart')">Download PDF</a></li>
+                                                    onclick="downloadChartPDF('energyChart', 'energyDataTable')">Download
+                                                    PDF</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -209,7 +255,7 @@
                         <!-- Data Tab -->
                         <div class="tab-pane fade h-100" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
                             <div class="table-responsive h-100">
-                                <table class="table table-bordered table-sm mb-0">
+                                <table id="energyDataTable" class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Time</th>
@@ -278,7 +324,7 @@
                         <div class="tab-pane fade h-100" id="batteryDataTab" role="tabpanel"
                             aria-labelledby="battery-data-tab">
                             <div class="table-responsive h-100">
-                                <table class="table table-bordered table-sm mb-0">
+                                <table id="batteryDataTable" class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Time</th>
@@ -324,6 +370,7 @@
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartCSV('batterySavingsChart', batterySavingsChart)">Download
                                                     CSV</a></li>
+
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartPDF('batterySavingsChart')">Download PDF</a>
                                             </li>
@@ -349,7 +396,7 @@
                         <div class="tab-pane fade h-100" id="batterySavingsDataTab" role="tabpanel"
                             aria-labelledby="batterySavings-data-tab">
                             <div class="table-responsive h-100">
-                                <table class="table table-bordered table-sm mb-0">
+                                <table id="batterySavingsDataTable" class="table table-bordered table-sm mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Time</th>
@@ -482,7 +529,7 @@
                 const gridData = entries.map(([, val]) => val.grid_p);
                 const tariffData = entries.map(([, val]) => val.tariff);
 
-                new Chart(document.getElementById('energyChart'), {
+                window.energyChart = new Chart(document.getElementById('energyChart'), {
                     type: 'line',
                     data: {
                         labels,
@@ -532,7 +579,7 @@
                                 title: {
                                     display: true,
                                     text: 'Time',
-                                    color: '#000', // Darker text
+                                    color: '#000',
                                     font: {
                                         weight: 'bold',
                                         size: 14
@@ -544,13 +591,13 @@
                                     minRotation: 45
                                 },
                                 grid: {
-                                    color: '#ccc', // Optional: slightly darker grid
-                                    lineWidth: 1.5 // Thicker axis/grid lines
+                                    color: '#ccc',
+                                    lineWidth: 1.5
                                 },
                                 border: {
                                     display: true,
                                     color: '#000',
-                                    width: 2 // Thicker axis line
+                                    width: 2
                                 }
                             },
                             y: {
@@ -577,9 +624,9 @@
                                 }
                             }
                         }
-
                     }
                 });
+
 
                 const tableBody = document.getElementById('energyDataTableBody');
                 if (tableBody) {
@@ -620,14 +667,6 @@
                         batteryDataBody.appendChild(row);
                     });
                 }
-
-
-
-
-
-
-
-
 
 
                 new Chart(document.getElementById('batteryChart'), {
@@ -922,6 +961,103 @@
         });
     </script>
 
+    <!-- Chart Download Utilities -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        // Download chart image as PNG
+        function downloadChartImage(chartId) {
+            const canvas = document.getElementById(chartId);
+            const image = canvas.toDataURL("image/png");
+
+            const link = document.createElement("a");
+            link.href = image;
+            link.download = `${chartId}.png`;
+            link.click();
+        }
+
+        // Download chart data as CSV
+        function downloadChartCSV(chartId, chartInstance) {
+            if (!chartInstance || !chartInstance.data || !chartInstance.data.labels) {
+                console.error(`Chart instance for ${chartId} not found or invalid.`);
+                return;
+            }
+
+            let csv = 'Time';
+            chartInstance.data.datasets.forEach(dataset => {
+                csv += `,${dataset.label}`;
+            });
+            csv += '\n';
+
+            chartInstance.data.labels.forEach((label, index) => {
+                let row = `"${label}"`; // quote label in case it has commas
+                chartInstance.data.datasets.forEach(dataset => {
+                    const value = dataset.data[index] !== undefined ? dataset.data[index] : '';
+                    row += `,"${value}"`;
+                });
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], {
+                type: 'text/csv;charset=utf-8;'
+            });
+            const link = document.createElement('a');
+
+            if (navigator.msSaveBlob) {
+                // For IE10+
+                navigator.msSaveBlob(blob, `${chartId}.csv`);
+            } else {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${chartId}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+
+
+        // Download chart + data table as PDF
+        function downloadChartPDF(chartId, tableId = null) {
+            const {
+                jsPDF
+            } = window.jspdf;
+            const doc = new jsPDF();
+
+            const canvas = document.getElementById(chartId);
+            const imageData = canvas.toDataURL("image/png");
+
+            doc.text("Chart Snapshot", 10, 10);
+            doc.addImage(imageData, "PNG", 10, 20, 180, 80);
+
+            if (tableId) {
+                const table = document.getElementById(tableId);
+                if (table) {
+                    const headers = [...table.querySelectorAll("thead th")].map(th => th.innerText);
+                    const body = [...table.querySelectorAll("tbody tr")].map(row => [...row.querySelectorAll("td")].map(
+                        td => td.innerText));
+
+                    doc.autoTable({
+                        startY: 110,
+                        head: [headers],
+                        body: body,
+                        theme: 'grid',
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3
+                        }
+                    });
+                }
+            }
+
+            doc.save(`${chartId}.pdf`);
+        }
+    </script>
+
+    <!-- Include AutoTable plugin for jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 
 

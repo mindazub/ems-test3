@@ -17,7 +17,7 @@
 
                 <div class="mb-4 text-right">
                     <a href="{{ route('projects.create') }}"
-                       class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
                         + New Project
                     </a>
                 </div>
@@ -31,18 +31,21 @@
                                 <th class="px-4 py-2 border">Plants</th>
                                 <th class="px-4 py-2 border">Devices</th>
                                 <th class="px-4 py-2 border">Start Date</th>
-                                <th class="px-4 py-2 border">Progress</th>
+                                <th class="px-4 py-2 border">Activity</th>
                                 <th class="px-4 py-2 border">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($projects as $project)
                                 @php
-                                    $progress = round(
-                                        ($project->companies_count > 0 ? 1 : 0) +
-                                        ($project->plants_count > 0 ? 1 : 0) +
-                                        ($project->devices_count > 0 ? 1 : 0)
-                                    ) / 3 * 5;
+                                    $progress =
+                                        (round(
+                                            ($project->companies_count > 0 ? 1 : 0) +
+                                                ($project->plants_count > 0 ? 1 : 0) +
+                                                ($project->devices_count > 0 ? 1 : 0),
+                                        ) /
+                                            3) *
+                                        5;
                                 @endphp
                                 <tr class="text-center">
                                     <td class="border px-4 py-2">{{ $project->name }}</td>
@@ -57,14 +60,14 @@
                                     </td>
                                     <td class="border px-4 py-2">
                                         <a href="{{ route('projects.edit', $project) }}"
-                                           class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                            class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
                                         <form method="POST" action="{{ route('projects.destroy', $project) }}"
-                                              class="inline-block"
-                                              onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                            class="inline-block"
+                                            onsubmit="return confirm('Are you sure you want to delete this project?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="text-sm text-red-600 hover:text-red-900">Delete</button>
+                                                class="text-sm text-red-600 hover:text-red-900">Delete</button>
                                         </form>
                                     </td>
                                 </tr>

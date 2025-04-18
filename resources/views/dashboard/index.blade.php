@@ -51,7 +51,7 @@
                                 @endif
 
                                 @if (auth()->user()->role === 'admin')
-                                    <th>Progress</th>
+                                    <th>Activity</th>
                                 @endif
 
                                 @if (in_array(auth()->user()->role, ['admin', 'manager']))
@@ -87,10 +87,65 @@
                                     @if (auth()->user()->role === 'admin')
                                         <td>
                                             <div class="text-warning">
-                                                @for ($s = 1; $s <= 5; $s++)
-                                                    <i
-                                                        class="bi {{ $s <= $progress ? 'bi-star-fill' : 'bi-star' }}"></i>
+
+
+                                                {{-- Business icons with random badge numbers --}}
+                                                @php
+                                                    $businessIcons = [
+                                                        'briefcase',
+                                                        'bar-chart',
+                                                        'clipboard-data',
+                                                        'graph-up',
+                                                        'people',
+                                                        'building',
+                                                        'gear',
+                                                        'shield',
+                                                        'check-circle',
+                                                        'exclamation-circle',
+                                                        'info-circle',
+                                                        'question-circle',
+                                                        'lightbulb',
+                                                        'trophy',
+                                                        'calendar',
+                                                        'clock',
+                                                        'file-earmark-text',
+                                                        'file-earmark-check',
+                                                        'file-earmark-x',
+                                                        'file-earmark-lock',
+                                                        'file-earmark-lock2',
+                                                    ];
+                                                @endphp
+
+                                                @php
+                                                    $businessIcons = [
+                                                        'briefcase',
+                                                        'building',
+                                                        'bar-chart',
+                                                        'people',
+                                                        'graph-up',
+                                                        'piggy-bank',
+                                                    ];
+                                                    $badgeIndexes = collect(range(0, 4))->shuffle()->take(2)->toArray(); // pick 2 unique random indexes
+                                                @endphp
+
+                                                @for ($i = 0; $i < 5; $i++)
+                                                    @php
+                                                        $icon = $businessIcons[array_rand($businessIcons)];
+                                                        $randomCount = rand(1, 99);
+                                                    @endphp
+                                                    <div class="position-relative d-inline-block me-2">
+                                                        <i class="bi bi-{{ $icon }} fs-5 text-primary"></i>
+                                                        @if (in_array($i, $badgeIndexes))
+                                                            <span
+                                                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                                                style="font-size: 0.65rem;">
+                                                                {{ $randomCount }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 @endfor
+
+
                                             </div>
                                         </td>
                                     @endif

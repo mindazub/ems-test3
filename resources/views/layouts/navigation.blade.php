@@ -10,7 +10,6 @@
                     </a>
                 </div>
 
-
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
@@ -18,53 +17,53 @@
                     </x-nav-link>
                 </div>
 
-
-
                 @auth
                     @if (auth()->user()->isAdmin())
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('roles.index')" :active="false">
+                            <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
                                 {{ __('Roles') }}
                             </x-nav-link>
                         </div>
 
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('roles.index')" :active="false">
+                            <x-nav-link>
                                 {{ __('Admin') }}
                             </x-nav-link>
                         </div>
 
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            <x-nav-link :active="request()->routeIs('companies.*')">
                                 {{ __('Companies') }}
                             </x-nav-link>
                         </div>
+
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            <x-nav-link :active="request()->routeIs('plants.*')">
                                 {{ __('Plants') }}
                             </x-nav-link>
                         </div>
+
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            <x-nav-link :active="request()->routeIs('devices.*')">
                                 {{ __('Devices') }}
                             </x-nav-link>
                         </div>
+
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                                {{ __('Progress') }}
+                            <x-nav-link :active="request()->routeIs('activity.*')">
+                                {{ __('Activity') }}
                             </x-nav-link>
                         </div>
+
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('customers.index')" :active="request()->routeIs('dashboard')">
+                            <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                                 {{ __('Customers') }}
                             </x-nav-link>
                         </div>
                     @endif
                 @endauth
-
-
-
             </div>
+
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
