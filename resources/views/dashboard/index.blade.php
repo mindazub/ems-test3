@@ -152,8 +152,8 @@
 
                                     @if (in_array(auth()->user()->role, ['admin', 'manager']))
                                         <td class="border px-4 py-2">
-                                            <a href="{{ route('projects.show', $project) }}"
-                                                class="text-sm text-green-600 hover:text-green-900 mr-2">View</a>
+                                            <a href="{{ route('projects.create') }}"
+                                                class="text-sm text-green-600 hover:text-green-900 mr-2">Create</a>
                                             <a href="{{ route('projects.edit', $project) }}"
                                                 class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
                                             <form method="POST" action="{{ route('projects.destroy', $project) }}"

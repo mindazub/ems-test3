@@ -230,7 +230,7 @@
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartImage('energyChart')">Download PNG</a></li>
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartCSV('energyChart', energyChart)">Download
+                                                    onclick="downloadChartCSV('energyChart', window.energyChart)">Download
                                                     CSV</a></li>
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartPDF('energyChart', 'energyDataTable')">Download
@@ -299,10 +299,11 @@
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartImage('batteryChart')">Download PNG</a></li>
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartCSV('batteryChart', batteryChart)">Download
+                                                    onclick="downloadChartCSV('batteryChart', window.batteryChart)">Download
                                                     CSV</a></li>
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartPDF('batteryChart')">Download PDF</a></li>
+                                                    onclick="downloadChartPDF('batteryChart', 'batteryDataTable')">Download
+                                                    PDF</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -368,11 +369,12 @@
                                                     onclick="downloadChartImage('batterySavingsChart')">Download
                                                     PNG</a></li>
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartCSV('batterySavingsChart', batterySavingsChart)">Download
+                                                    onclick="downloadChartCSV('batterySavingsChart', window.batterySavingsChart)">Download
                                                     CSV</a></li>
 
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartPDF('batterySavingsChart')">Download PDF</a>
+                                                    onclick="downloadChartPDF('batterySavingsChart', 'batterySavingsDataTable')">Download
+                                                    PDF</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -669,7 +671,7 @@
                 }
 
 
-                new Chart(document.getElementById('batteryChart'), {
+                window.batteryChart = new Chart(document.getElementById('batteryChart'), {
                     type: 'bar',
                     data: {
                         labels,
@@ -830,7 +832,8 @@
                 }
 
                 // Chart
-                batterySavingsChart = new Chart(document.getElementById('batterySavingsChart'), {
+
+                window.batterySavingsChart = new Chart(document.getElementById('batterySavingsChart'), {
                     type: 'bar',
                     data: {
                         labels,
@@ -966,15 +969,55 @@
 
     <script>
         // Download chart image as PNG
-        function downloadChartImage(chartId) {
+        function downloadChartImage(chartId, chartTitle = null) {
             const canvas = document.getElementById(chartId);
-            const image = canvas.toDataURL("image/png");
+            const ctx = canvas.getContext("2d");
 
+            // Get the chart's current width and height
+            const width = canvas.width;
+            const height = canvas.height;
+            const paddingTop = 50;
+
+            // Create a new canvas with extra space for the title
+            const tempCanvas = document.createElement("canvas");
+            const tempCtx = tempCanvas.getContext("2d");
+            tempCanvas.width = width;
+            tempCanvas.height = height + paddingTop;
+
+            // White background
+            tempCtx.fillStyle = "#ffffff";
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Use chart title from DOM if not passed
+            if (!chartTitle) {
+                const titleEl = canvas.closest('.tab-pane').querySelector('h4');
+                if (titleEl) {
+                    chartTitle = titleEl.textContent.trim();
+                } else {
+                    chartTitle = 'Chart';
+                }
+            }
+
+            // Draw the title text
+            tempCtx.fillStyle = "#000";
+            tempCtx.font = "bold 20px Arial";
+            tempCtx.textAlign = "center";
+            tempCtx.fillText(chartTitle, width / 2, 30);
+
+            // Draw the chart image below the title
+            tempCtx.drawImage(canvas, 0, paddingTop);
+
+            // Create download
+            const image = tempCanvas.toDataURL("image/png");
             const link = document.createElement("a");
             link.href = image;
             link.download = `${chartId}.png`;
             link.click();
         }
+
+
+
+
 
         // Download chart data as CSV
         function downloadChartCSV(chartId, chartInstance) {
@@ -983,14 +1026,22 @@
                 return;
             }
 
-            let csv = 'Time';
+            // Try to find title from surrounding h4
+            let chartTitle = 'Chart Data';
+            const titleEl = document.getElementById(chartId)?.closest('.tab-pane')?.querySelector('h4');
+            if (titleEl) {
+                chartTitle = titleEl.textContent.trim();
+            }
+
+            let csv = `${chartTitle}\n`;
+            csv += 'Time';
             chartInstance.data.datasets.forEach(dataset => {
                 csv += `,${dataset.label}`;
             });
             csv += '\n';
 
             chartInstance.data.labels.forEach((label, index) => {
-                let row = `"${label}"`; // quote label in case it has commas
+                let row = `"${label}"`; // in case label has commas
                 chartInstance.data.datasets.forEach(dataset => {
                     const value = dataset.data[index] !== undefined ? dataset.data[index] : '';
                     row += `,"${value}"`;
@@ -1003,19 +1054,15 @@
             });
             const link = document.createElement('a');
 
-            if (navigator.msSaveBlob) {
-                // For IE10+
-                navigator.msSaveBlob(blob, `${chartId}.csv`);
-            } else {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `${chartId}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${chartId}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
+
 
 
 
@@ -1029,8 +1076,18 @@
             const canvas = document.getElementById(chartId);
             const imageData = canvas.toDataURL("image/png");
 
-            doc.text("Chart Snapshot", 10, 10);
-            doc.addImage(imageData, "PNG", 10, 20, 180, 80);
+            // Try to find the title from DOM
+            let chartTitle = 'Chart Snapshot';
+            const titleEl = canvas?.closest('.tab-pane')?.querySelector('h4');
+            if (titleEl) {
+                chartTitle = titleEl.textContent.trim();
+            }
+
+            doc.setFontSize(14);
+            doc.text(chartTitle, 105, 15, {
+                align: 'center'
+            }); // center title
+            doc.addImage(imageData, "PNG", 10, 25, 190, 90);
 
             if (tableId) {
                 const table = document.getElementById(tableId);
@@ -1040,7 +1097,7 @@
                         td => td.innerText));
 
                     doc.autoTable({
-                        startY: 110,
+                        startY: 120,
                         head: [headers],
                         body: body,
                         theme: 'grid',
