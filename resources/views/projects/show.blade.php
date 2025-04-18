@@ -1094,28 +1094,134 @@
 
 
         // Download chart + data table as PDF
-        function downloadChartPDF(chartId, tableId = null) {
+
+
+        function downloadChartPDF(chartId, tableId = null, scale = 3) {
             const {
                 jsPDF
             } = window.jspdf;
             const doc = new jsPDF();
 
             const canvas = document.getElementById(chartId);
-            const imageData = canvas.toDataURL("image/png");
+            if (!canvas) return;
 
-            // Try to find the title from DOM
-            let chartTitle = 'Chart Snapshot';
-            const titleEl = canvas?.closest('.tab-pane')?.querySelector('h4');
-            if (titleEl) {
-                chartTitle = titleEl.textContent.trim();
-            }
+            const chartInstance = Chart.getChart(canvas);
+            if (!chartInstance) return;
 
-            doc.setFontSize(14);
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+
+            // Create high-res off-screen canvas
+            const exportCanvas = document.createElement("canvas");
+            exportCanvas.width = width * scale;
+            exportCanvas.height = height * scale;
+            const exportCtx = exportCanvas.getContext("2d");
+
+            // Deep copy chart options and enhance them
+            const enhancedOptions = JSON.parse(JSON.stringify(chartInstance.config.options));
+
+            enhancedOptions.responsive = false;
+            enhancedOptions.animation = false;
+            enhancedOptions.devicePixelRatio = scale;
+
+            // Improve legend font
+            if (!enhancedOptions.plugins) enhancedOptions.plugins = {};
+            if (!enhancedOptions.plugins.legend) enhancedOptions.plugins.legend = {};
+            if (!enhancedOptions.plugins.legend.labels) enhancedOptions.plugins.legend.labels = {};
+            enhancedOptions.plugins.legend.labels.font = {
+                size: 20 * scale
+            };
+
+            // Enhance axis settings
+            enhancedOptions.scales = enhancedOptions.scales || {};
+
+            enhancedOptions.scales.x = {
+                title: {
+                    display: true,
+                    text: 'Time',
+                    color: '#000',
+                    font: {
+                        size: 22 * scale,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    callback: function(value, index, ticks) {
+                        return index % 6 === 0 ? this.getLabelForValue(value) : '';
+                    },
+                    font: {
+                        size: 18 * scale
+                    },
+                    color: '#000'
+                },
+                grid: {
+                    color: '#ccc',
+                    lineWidth: 1.5
+                },
+                border: {
+                    display: true,
+                    color: '#000',
+                    width: 2
+                }
+            };
+
+            enhancedOptions.scales.y = {
+                title: {
+                    display: true,
+                    text: 'Power (kW)',
+                    color: '#000',
+                    font: {
+                        size: 22 * scale,
+                        weight: 'bold'
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 18 * scale
+                    },
+                    color: '#000'
+                },
+                grid: {
+                    color: '#ccc',
+                    lineWidth: 1.5
+                },
+                border: {
+                    display: true,
+                    color: '#000',
+                    width: 2
+                }
+            };
+
+            // Render chart to off-screen canvas
+            new Chart(exportCtx, {
+                type: chartInstance.config.type,
+                data: chartInstance.config.data,
+                options: enhancedOptions
+            });
+
+            const imageData = exportCanvas.toDataURL("image/png");
+
+            // Chart title
+            let chartTitle = "Chart Snapshot";
+            const titleEl = canvas.closest(".tab-pane")?.querySelector("h4");
+            if (titleEl) chartTitle = titleEl.textContent.trim();
+
+            // PDF title
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
             doc.text(chartTitle, 105, 15, {
-                align: 'center'
-            }); // center title
-            doc.addImage(imageData, "PNG", 10, 25, 190, 90);
+                align: "center"
+            });
 
+            // Insert chart image
+            const imgWidth = 180;
+            const aspectRatio = exportCanvas.height / exportCanvas.width;
+            const imgHeight = imgWidth * aspectRatio;
+            doc.addImage(imageData, "PNG", 15, 25, imgWidth, imgHeight);
+
+            let currentY = 30 + imgHeight;
+
+            // Add table if provided
             if (tableId) {
                 const table = document.getElementById(tableId);
                 if (table) {
@@ -1124,10 +1230,10 @@
                         td => td.innerText));
 
                     doc.autoTable({
-                        startY: 120,
+                        startY: currentY + 10,
                         head: [headers],
                         body: body,
-                        theme: 'grid',
+                        theme: "grid",
                         styles: {
                             fontSize: 9,
                             cellPadding: 3
@@ -1136,9 +1242,10 @@
                 }
             }
 
-            doc.save(`${chartId}.pdf`);
+            doc.save(`${chartId}_report.pdf`);
         }
     </script>
+
 
     <!-- Include AutoTable plugin for jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
