@@ -5,46 +5,21 @@
     <meta charset="UTF-8">
     <title>EDISLAB | EMS Dashboard App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @keyframes flashColor {
-            0% {
-                color: red;
-            }
 
-            33% {
-                color: green;
-            }
 
-            66% {
-                color: blue;
-            }
 
-            100% {
-                color: red;
-            }
-        }
 
-        .animate-flash {
-            animation: flashColor 1.5s infinite;
-        }
-
-        .tab-nav {
-            @apply flex border-b;
-        }
-
-        .tab-button {
-            @apply px-4 py-2 text-sm font-medium border border-gray-200 bg-gray-100 hover:bg-gray-200;
-        }
-
-        .tab-button-active {
-            @apply bg-white border-b-0 text-blue-600;
-        }
-    </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-[#fdfdfc] text-gray-800">
+
+
 
     <!-- NAVBAR -->
     <nav class="bg-white border-b border-gray-200 shadow-sm">
@@ -55,291 +30,168 @@
                         <img src="{{ asset('images/edislab_monitoring.png') }}" alt="EDISLAB Logo" class="h-8 w-auto">
                     </a>
                 </div>
-                <div class="flex space-x-4">
+                <div class="flex items-center space-x-4">
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeToggle"
+                        class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                        title="Toggle Dark Mode">
+                        <!-- Sun Icon -->
+                        <svg id="sunIcon" class="w-5 h-5 text-yellow-400 dark:hidden" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v1m0 16v1m8.66-12.34l-.7.7M4.34 4.34l-.7.7M21 12h1M2 12H1m16.24 4.24l-.7-.7M4.34 19.66l-.7-.7M12 5a7 7 0 100 14 7 7 0 000-14z" />
+                        </svg>
+                        <!-- Moon Icon -->
+                        <svg id="moonIcon" class="w-5 h-5 hidden dark:inline text-white" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                        </svg>
+                    </button>
+
+                    <!-- Auth Buttons -->
                     <a href="{{ route('login') }}"
                         class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition">Login</a>
                     <a href="{{ route('register') }}"
                         class="px-4 py-2 rounded border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition">Register</a>
                 </div>
+
             </div>
         </div>
     </nav>
 
     <!-- HERO SECTION -->
-    <section class="text-center py-20 bg-white shadow-inner">
-        <h1 class="text-4xl font-extrabold text-blue-800 mb-4">Welcome to Your EMS Dashboard!</h1>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Monitor, analyze, and optimize your renewable energy systems with real-time insights and clean dashboards.
-        </p>
-    </section>
-
-    <!-- ENERGY CHART -->
-    <section class="py-16 px-4 bg-gray-50">
-        <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Live Energy Data</h2>
-            <canvas id="energyChart" height="100"></canvas>
-        </div>
-    </section>
-
-    <!-- BATTERY CHART -->
-    <section class="py-16 px-4 bg-white">
-        <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Battery Power and Energy Tariffs</h2>
-            <canvas id="batteryChart" height="100"></canvas>
-        </div>
-    </section>
-
-    <!-- BATTERY SAVINGS CHART -->
-    <section class="py-16 px-4 bg-gray-50">
-        <div class="max-w-5xl mx-auto bg-white rounded shadow p-8">
-            <h2 class="text-2xl font-bold mb-4 text-center">Battery Savings Over Time</h2>
-            <p id="batteryEarningDisplay"
-                class="text-2xl font-bold mb-6 animate-flash border-4 border-gray-400 rounded-lg px-4 py-2 bg-yellow-200 shadow-md w-fit mx-auto text-center">
-                Total Earnings: calculating...
+    <section class="bg-blue-100 py-20 px-4">
+        <div class="max-w-6xl mx-auto text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+                Business build on <span class="text-blue-700">EDISLAB EMS</span>
+            </h1>
+            <p class="mt-6 text-lg text-gray-700">
+                Powerful energy monitoring tools to help manage solar, battery, and grid performance in one place.
             </p>
-            <canvas id="batterySavingsChart" height="100"></canvas>
+            <div class="mt-8">
+                <a href="{{ route('register') }}"
+                    class="px-6 py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition">
+                    Start Free Trial
+                </a>
+                <span class="text-sm text-gray-500 ml-4">No credit card required</span>
+            </div>
+        </div>
+
+        <!-- CHARACTERS -->
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
+            <div class="text-center">
+                <img src="{{ asset('images/energyChart_01.png') }}" alt="Char 1" class="h-32 mx-auto mb-4">
+                <p class="text-sm text-gray-700">"The EMS dashboards help us track solar ROI in real time!"</p>
+                <span class="block text-xs text-gray-500 mt-2">– Jane Doe, Energy Analyst</span>
+            </div>
+            <div class="text-center">
+                <img src="{{ asset('images/batteryChart_02.png') }}" alt="Char 2" class="h-32 mx-auto mb-4">
+                <p class="text-sm text-gray-700">"Battery efficiency optimization has never been easier."</p>
+                <span class="block text-xs text-gray-500 mt-2">– John Solar, Installer</span>
+            </div>
+            <div class="text-center">
+                <img src="{{ asset('images/batterySavingsChart_03.png') }}" alt="Char 3" class="h-32 mx-auto mb-4">
+                <p class="text-sm text-gray-700">"I can monitor multiple plants in one simple view."</p>
+                <span class="block text-xs text-gray-500 mt-2">– Alex Power, Manager</span>
+            </div>
         </div>
     </section>
+
+    <!-- FEATURE SECTION -->
+    <section class="py-20 px-4 bg-white">
+        <div class="max-w-6xl mx-auto text-center">
+            <h2 class="text-3xl font-bold mb-6">Everything you need to manage your energy systems</h2>
+            <p class="max-w-2xl mx-auto text-gray-600 mb-10">
+                EDISLAB offers real-time monitoring, historical data, smart alerts, and energy savings optimization.
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-10 text-left">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Live Energy Monitoring</h3>
+                    <p class="text-gray-600">Track PV, battery, and grid power usage with live graphs and data charts.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Battery Optimization</h3>
+                    <p class="text-gray-600">Analyze charge/discharge patterns and improve lifecycle efficiency.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Savings Reports</h3>
+                    <p class="text-gray-600">View detailed reports on energy savings and tariff-based usage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 px-4 bg-blue-900 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Ready to get started?</h2>
+        <p class="mb-6">Start using EDISLAB today to monitor, analyze, and save energy like never before.</p>
+        <a href="{{ route('register') }}"
+            class="inline-block px-6 py-3 bg-white text-blue-700 font-semibold rounded hover:bg-gray-100 transition">
+            Get Started Free
+        </a>
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-100 border-t border-gray-300 py-10 text-sm text-gray-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-8">
+            <div>
+                <h4 class="font-semibold text-gray-800 mb-2">EDISLAB</h4>
+                <p>Smart EMS tools for solar, battery, and grid energy management.</p>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800 mb-2">Platform</h4>
+                <ul class="space-y-1">
+                    <li><a href="#" class="hover:text-blue-600">Live Monitoring</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Reports</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Battery Insights</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800 mb-2">Company</h4>
+                <ul class="space-y-1">
+                    <li><a href="#" class="hover:text-blue-600">About</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Contact</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Blog</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800 mb-2">Legal</h4>
+                <ul class="space-y-1">
+                    <li><a href="#" class="hover:text-blue-600">Terms of Service</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-blue-600">Cookies</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-xs text-gray-400">
+            &copy; {{ date('Y') }} EDISLAB EMS. All rights reserved.
+        </div>
+    </footer>
+
 
     <script>
-        // ENERGY + BATTERY + SAVINGS CHARTS
-        fetch("{{ asset('batteries_ok.json') }}")
-            .then(res => res.json())
-            .then(data => {
-                const entries = Object.entries(data).sort(([a], [b]) => Number(a) - Number(b));
-                const labels = entries.map(([ts]) =>
-                    new Date(isNaN(ts) ? ts : Number(ts)).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                );
-                const pvData = entries.map(([, val]) => val.pv_p);
-                const batteryData = entries.map(([, val]) => val.battery_p);
-                const gridData = entries.map(([, val]) => val.grid_p);
-                const tariffData = entries.map(([, val]) => val.tariff);
+        const toggleBtn = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
 
-                new Chart(document.getElementById('energyChart'), {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [{
-                                label: 'PV Production (kW)',
-                                data: pvData,
-                                borderColor: 'rgba(59,130,246,1)',
-                                backgroundColor: 'rgba(59,130,246,0.2)',
-                                tension: 0.3,
-                                fill: true,
-                                pointRadius: 0
-                            },
-                            {
-                                label: 'Grid Power (kW)',
-                                data: gridData,
-                                borderColor: 'rgba(34,197,94,1)',
-                                backgroundColor: 'rgba(34,197,94,0.2)',
-                                tension: 0.3,
-                                fill: true,
-                                pointRadius: 0
-                            },
-                            {
-                                label: 'Battery Power (kW)',
-                                data: batteryData,
-                                borderColor: 'rgba(249,115,22,1)',
-                                backgroundColor: 'rgba(249,115,22,0.2)',
-                                tension: 0.3,
-                                fill: true,
-                                pointRadius: 0
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Power (kW)'
-                                },
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
+        // Init on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('dark-mode') === 'true') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+        });
 
-                new Chart(document.getElementById('batteryChart'), {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{
-                                type: 'line',
-                                label: 'Battery Power (W)',
-                                data: batteryData,
-                                borderColor: 'blue',
-                                backgroundColor: 'rgba(0,0,255,0.1)',
-                                yAxisID: 'yBattery',
-                                tension: 0.2,
-                                pointRadius: 0
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Energy Tariffs (€ / kWh)',
-                                data: tariffData,
-                                backgroundColor: 'rgba(0,128,0,0.5)',
-                                borderColor: 'green',
-                                yAxisID: 'yTariff'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            yBattery: {
-                                type: 'linear',
-                                position: 'left',
-                                suggestedMin: -15000,
-                                suggestedMax: 15000,
-                                title: {
-                                    display: true,
-                                    text: 'Battery Power (W)'
-                                },
-                                ticks: {
-                                    color: 'blue'
-                                },
-                                grid: {
-                                    color: '#ccc',
-                                    lineWidth: 1.5
-                                }
-                            },
-                            yTariff: {
-                                type: 'linear',
-                                position: 'right',
-                                suggestedMin: -0.25,
-                                suggestedMax: 0.25,
-                                title: {
-                                    display: true,
-                                    text: 'Energy Tariffs (€ / kWh)'
-                                },
-                                ticks: {
-                                    color: 'green'
-                                },
-                                grid: {
-                                    drawOnChartArea: false
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                },
-                                grid: {
-                                    color: '#ccc',
-                                    lineWidth: 1.5
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-
-        fetch("{{ asset('battery_savings.json') }}")
-            .then(res => res.json())
-            .then(data => {
-                const entries = Object.entries(data).sort(([a], [b]) => new Date(a) - new Date(b));
-                const labels = entries.map(([ts]) =>
-                    new Date(ts).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                );
-                const savings = entries.map(([, val]) => val.battery_savings);
-                const colors = savings.map(val =>
-                    val >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'
-                );
-                const total = savings.reduce((sum, val) => sum + val, 0);
-                document.getElementById('batteryEarningDisplay').innerText = `Total Earnings: €${total.toFixed(2)}`;
-
-                new Chart(document.getElementById('batterySavingsChart'), {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Battery Savings (€)',
-                            data: savings,
-                            backgroundColor: colors,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `€${context.parsed.y.toFixed(2)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Savings (€)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                }
-                            }
-                        }
-                    }
-                });
-            });
+        // Toggle on click
+        toggleBtn?.addEventListener('click', () => {
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('dark-mode', isDark);
+        });
     </script>
 
 </body>

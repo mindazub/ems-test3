@@ -10,6 +10,7 @@ class CustomerController extends Controller
     {
         // All non-admin customers
         $customers = User::where('role', '!=', 'admin')->latest()->get();
+        // $customers = User::where('role', '=', 'customer')->latest()->get();
 
         return view('customers.index', compact('customers'));
     }

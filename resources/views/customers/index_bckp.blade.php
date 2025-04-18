@@ -1,21 +1,24 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="container">
-            <h4 class="center-align">{{ __('Customers') }}</h4>
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="font-semibold text-xl leading-tight">
+                {{ __('Customers') }}
+            </h2>
         </div>
     </x-slot>
 
-    {{-- ✅ Materialize CSS CDN --}}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.materialize.min.css" rel="stylesheet">
+    {{-- ✅ CSS CDN --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-    <div id="page-content" class="fade-in section">
+    <div id="page-content" class="fade-in py-12">
         <div class="container">
             <div class="card">
-                <div class="card-content">
-                    <span class="card-title">Customer Accounts</span>
+                <div class="card-body">
+                    <h3 class="mb-4">Customer Accounts</h3>
 
-                    <table id="customersTable" class="striped highlight responsive-table">
+                    <table id="customersTable" class="table table-striped table-hover table-bordered align-middle"
+                        style="width:100%">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -36,20 +39,20 @@
                                     <td>{{ optional($customer->last_login_at)->format('Y-m-d H:i') ?? 'Never' }}</td>
                                     <td>
                                         @php
+                                            // Random status for demo (adjust to match real logic if needed)
                                             $statuses = [
-                                                'Active' => 'green',
-                                                'Suspended' => 'red',
-                                                'Pending' => 'yellow black-text',
+                                                'Active' => 'success',
+                                                'Suspended' => 'danger',
+                                                'Pending' => 'warning text-dark',
                                             ];
                                             $status = collect($statuses)->keys()->random();
                                         @endphp
-                                        <span class="new badge {{ $statuses[$status] }}"
-                                            data-badge-caption="">{{ $status }}</span>
+                                        <span class="badge bg-{{ $statuses[$status] }}">{{ $status }}</span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="center-align grey-text">No customers found.</td>
+                                    <td colspan="6" class="text-center text-muted">No customers found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -59,14 +62,14 @@
         </div>
     </div>
 
-    {{-- ✅ Materialize JS & jQuery --}}
+
+    {{-- ✅ JS CDN --}}
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-    {{-- ✅ DataTables with Materialize --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.materialize.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
+    {{-- ✅ DataTables Init --}}
     <script>
         $(document).ready(function() {
             $('#customersTable').DataTable({
@@ -106,30 +109,6 @@
                     page.classList.add("show");
                 });
             }
-        });
-    </script>
-
-
-    {{-- Material Icons --}}
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-    {{-- Updated DataTable JS --}}
-    <script>
-        $(document).ready(function() {
-            $('#customersTable').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [10, 25, 50, 100],
-                "language": {
-                    "search": "Search:",
-                    "lengthMenu": "Show _MENU_ entries",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                    "paginate": {
-                        "previous": "<i class='material-icons'>chevron_left</i>",
-                        "next": "<i class='material-icons'>chevron_right</i>"
-                    }
-                },
-                "pagingType": "simple" // or "simple_numbers"
-            });
         });
     </script>
 </x-app-layout>

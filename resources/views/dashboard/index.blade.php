@@ -34,7 +34,17 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h3 class="mb-4">Plants Table</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Plants Table</h3>
+
+                        @auth
+                            @if (auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
+                                <a href="{{ route('projects.create') }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Create
+                                </a>
+                            @endif
+                        @endauth
+                    </div>
 
                     <table id="projectTable" class="table table-striped table-hover table-bordered align-middle"
                         style="width:100%">
@@ -152,8 +162,7 @@
 
                                     @if (in_array(auth()->user()->role, ['admin', 'manager']))
                                         <td class="border px-4 py-2">
-                                            <a href="{{ route('projects.create') }}"
-                                                class="text-sm text-green-600 hover:text-green-900 mr-2">Create</a>
+
                                             <a href="{{ route('projects.edit', $project) }}"
                                                 class="text-sm text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
                                             <form method="POST" action="{{ route('projects.destroy', $project) }}"
