@@ -228,7 +228,9 @@
                                         <ul class="dropdown-menu dropdown-menu-end"
                                             aria-labelledby="energyDownloadMenu">
                                             <li><a class="dropdown-item" href="#"
-                                                    onclick="downloadChartImage('energyChart')">Download PNG</a></li>
+                                                    onclick="downloadChartImage('energyChart', null,2)">Download PNG
+                                                    (High-Res)</a>
+                                            </li>
                                             <li><a class="dropdown-item" href="#"
                                                     onclick="downloadChartCSV('energyChart', window.energyChart)">Download
                                                     CSV</a></li>
@@ -969,51 +971,76 @@
 
     <script>
         // Download chart image as PNG
-        function downloadChartImage(chartId, chartTitle = null) {
+        function downloadChartImage(chartId, chartTitle = null, scale = 2) {
             const canvas = document.getElementById(chartId);
-            const ctx = canvas.getContext("2d");
+            if (!canvas) return;
 
-            // Get the chart's current width and height
-            const width = canvas.width;
-            const height = canvas.height;
-            const paddingTop = 50;
+            const chartInstance = Chart.getChart(canvas); // Get Chart.js instance
+            if (!chartInstance) return;
 
-            // Create a new canvas with extra space for the title
+            const originalConfig = chartInstance.config;
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+
+            // Create a new off-screen canvas
+            const exportCanvas = document.createElement("canvas");
+            exportCanvas.width = width * scale;
+            exportCanvas.height = height * scale;
+
+            // Create a new Chart on the off-screen canvas
+            new Chart(exportCanvas.getContext("2d"), {
+                type: chartInstance.config.type,
+                data: chartInstance.config.data,
+                options: {
+                    ...chartInstance.config.options,
+                    responsive: false,
+                    animation: false,
+                    devicePixelRatio: scale,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 7 * scale // upscale font for clarity
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Add custom title
             const tempCanvas = document.createElement("canvas");
+            const paddingTop = 80;
+            tempCanvas.width = exportCanvas.width;
+            tempCanvas.height = exportCanvas.height + paddingTop;
             const tempCtx = tempCanvas.getContext("2d");
-            tempCanvas.width = width;
-            tempCanvas.height = height + paddingTop;
 
-            // White background
             tempCtx.fillStyle = "#ffffff";
             tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-            // Use chart title from DOM if not passed
-            if (!chartTitle) {
-                const titleEl = canvas.closest('.tab-pane').querySelector('h4');
-                if (titleEl) {
-                    chartTitle = titleEl.textContent.trim();
-                } else {
-                    chartTitle = 'Chart';
-                }
-            }
+            chartTitle = chartTitle || canvas.closest('.tab-pane')?.querySelector('h4')?.textContent.trim() || 'Chart';
 
-            // Draw the title text
             tempCtx.fillStyle = "#000";
-            tempCtx.font = "bold 20px Arial";
+
+            // Make title font bigger and bolder
+            const titleFontSize = 28 * scale;
+            tempCtx.font = `bold ${titleFontSize}px Arial`;
             tempCtx.textAlign = "center";
-            tempCtx.fillText(chartTitle, width / 2, 30);
 
-            // Draw the chart image below the title
-            tempCtx.drawImage(canvas, 0, paddingTop);
+            // Adjust Y position to match new font size
+            tempCtx.fillText(chartTitle, tempCanvas.width / 2, titleFontSize + 10);
 
-            // Create download
+            // Draw the chart below the title (leave enough space)
+            tempCtx.drawImage(exportCanvas, 0, titleFontSize + 30);
+
+            // Trigger download
             const image = tempCanvas.toDataURL("image/png");
             const link = document.createElement("a");
             link.href = image;
-            link.download = `${chartId}.png`;
+            link.download = `${chartId}_hires.png`;
             link.click();
         }
+
 
 
 
