@@ -18,4 +18,10 @@ class Plant extends Model
         return $this->hasMany(Device::class);
     }
 
+    public function mainFeeds()
+    {
+        return $this->hasMany(MainFeed::class);
+    }
+
+
 }

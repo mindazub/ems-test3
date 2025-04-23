@@ -1,17 +1,21 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Company;
 use App\Models\Plant;
+use App\Models\MainFeed;
 use App\Models\Device;
+use Illuminate\Support\Facades\File;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create Users
+        // === Seed Users ===
         $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
@@ -40,37 +44,68 @@ class DatabaseSeeder extends Seeder
             'role' => 'customer',
         ]);
 
-        // Define labels
-        $companyNames = ['Solar Energy', 'Wind Power', 'Hydro Dynamics'];
-        $plantTypes = ['Solar', 'Wind', 'Thermal', 'Gas Turbine', 'Hydro'];
-        $deviceTypes = ['Raspberry Pi', 'Arduino', 'MODBUS', 'iPhone', 'Android'];
+        // === Import JSON Plant Data ===
+        $jsonPath = database_path('seeders/generated_plant_data.json');
+        if (!File::exists($jsonPath)) {
+            $this->command->error('JSON file not found: plant_view_data.json');
+            return;
+        }
 
-        // Create 50 projects for Manager
-        for ($i = 1; $i <= 50; $i++) {
-            $project = Project::create([
-                'user_id' => $manager->id,
-                'name' => "Project #$i",
-                'start_date' => now()->subDays(rand(100, 1000)),
+        $json = File::get($jsonPath);
+        $jsonData = json_decode($json, true);
+
+        $plantCounter = 1;
+
+        foreach ($jsonData as $entry) {
+            if (!isset($entry['plant_id'])) continue;
+
+            // Create Plant
+            $plant = Plant::create([
+                'name' => "Plant #$plantCounter",
+                'owner_email' => $entry['plant_owner'],
+                'status' => $entry['plant_status'],
+                'capacity' => $entry['plant_capacity'],
+                'latitude' => $entry['latitude'],
+                'longitude' => $entry['longitude'],
+                'last_updated' => $entry['last_updated'],
             ]);
 
-            foreach ($companyNames as $companyName) {
-                $company = $project->companies()->create([
-                    'name' => $companyName,
+            $plantCounter++;
+
+            if (!isset($entry['main_feeds'])) continue;
+
+            foreach ($entry['main_feeds'] as $feedData) {
+                $mainFeed = $plant->mainFeeds()->create([
+                    'import_power' => $feedData['import_power'],
+                    'export_power' => $feedData['export_power'],
                 ]);
 
-                for ($p = 0; $p < 2; $p++) {
-                    $plantName = $plantTypes[array_rand($plantTypes)];
+                if (!isset($feedData['devices'])) continue;
 
-                    $plant = $company->plants()->create([
-                        'name' => $plantName,
+                foreach ($feedData['devices'] as $deviceData) {
+                    // Create parent device
+                    $device = $mainFeed->devices()->create([
+                        'device_type' => $deviceData['device_type'],
+                        'manufacturer' => $deviceData['manufacturer'],
+                        'device_model' => $deviceData['device_model'],
+                        'device_status' => $deviceData['device_status'],
+                        'parent_device' => true,
+                        'parameters' => $deviceData['parameters'] ?? [],
                     ]);
 
-                    for ($d = 0; $d < 3; $d++) {
-                        $deviceName = $deviceTypes[array_rand($deviceTypes)];
-
-                        $plant->devices()->create([
-                            'name' => $deviceName,
-                        ]);
+                    // Handle assigned devices (children)
+                    if (isset($deviceData['assigned_devices'])) {
+                        foreach ($deviceData['assigned_devices'] as $assigned) {
+                            $mainFeed->devices()->create([
+                                'device_type' => $assigned['device_type'],
+                                'manufacturer' => $assigned['manufacturer'],
+                                'device_model' => $assigned['device_model'],
+                                'device_status' => $assigned['device_status'],
+                                'parent_device' => false,
+                                'parent_device_id' => $device->id,
+                                'parameters' => $assigned['parameters'] ?? [],
+                            ]);
+                        }
                     }
                 }
             }

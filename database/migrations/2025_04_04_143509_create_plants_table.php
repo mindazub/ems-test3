@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::create('plants', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->foreignId('company_id')->nullable()->constrained()->onDelete('set null');
             $table->string('name');
+            $table->string('owner_email');
+            $table->string('status');
+            $table->decimal('capacity', 12, 2);
+            $table->decimal('latitude', 10, 6);
+            $table->decimal('longitude', 10, 6);
+            $table->unsignedBigInteger('last_updated')->nullable(); // timestamp as INT
             $table->timestamps();
         });
     }

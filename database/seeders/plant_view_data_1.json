@@ -1,0 +1,1233 @@
+[
+    {
+        "plant_id": "1",
+        "latitude": 54.93381,
+        "longitude": 23.86181,
+        "plant_owner": "mantas@viasolis.eu",
+        "plant_status": "Working",
+        "plant_capacity": 2500000,
+        "last_updated": "1745301600"
+    },
+    {
+        "main_feeds": [
+            {
+                "main_feed_id": "1",
+                "import_power": 500000,
+                "export_power": 150000,
+                "devices": [
+                    {
+                        "device_id": "1",
+                        "device_type": "Meter",
+                        "manufacturer": "Eastron",
+                        "device_model": "SDM630MCT-2T V2",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "role": "Grid",
+                            "communication_type": "Modbus RTU",
+                            "communication": {
+                                "baudrate": 9600,
+                                "parity": "None",
+                                "stopbits": 1,
+                                "databits": 8,
+                                "address": 1
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "2",
+                        "device_type": "Meter",
+                        "manufacturer": "Eastron",
+                        "device_model": "SDM630MCT-2T V2",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "role": "Battery",
+                            "communication_type": "Modbus RTU",
+                            "communication": {
+                                "baudrate": 9600,
+                                "parity": "None",
+                                "stopbits": 1,
+                                "databits": 8,
+                                "address": 2
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "3",
+                        "device_type": "Inverter",
+                        "manufacturer": "Kehua",
+                        "device_model": "BCS500K-A",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.201",
+                                "port": 502,
+                                "unit_id": 2
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "4",
+                        "device_type": "BMS",
+                        "manufacturer": "N/A",
+                        "device_model": "N/A",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.101",
+                                "port": 502,
+                                "unit_id": 1
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "5",
+                        "device_type": "PV Logger",
+                        "manufacturer": "Huawei",
+                        "device_model": "SmartLogger3000",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.13",
+                                "port": 502,
+                                "unit_id": 1
+                            }
+                        },
+                        "assigned_devices": [
+                            {
+                                "device_id": "10",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 14
+                                }
+                            },
+                            {
+                                "device_id": "11",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 15
+                                }
+                            },
+                            {
+                                "device_id": "12",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 16
+                                }
+                            },
+                            {
+                                "device_id": "13",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 17
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "main_feed_id": "2",
+                "import_power": 500000,
+                "export_power": 150000,
+                "devices": [
+                    {
+                        "device_id": "6",
+                        "device_type": "Meter",
+                        "manufacturer": "Eastron",
+                        "device_model": "SDM630MCT-2T V2",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "role": "Grid",
+                            "communication_type": "Modbus RTU",
+                            "communication": {
+                                "baudrate": 9600,
+                                "parity": "None",
+                                "stopbits": 1,
+                                "databits": 8,
+                                "address": 3
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "7",
+                        "device_type": "Meter",
+                        "manufacturer": "Eastron",
+                        "device_model": "SDM630MCT V2",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "role": "Battery",
+                            "communication_type": "Modbus RTU",
+                            "communication": {
+                                "baudrate": 9600,
+                                "parity": "None",
+                                "stopbits": 1,
+                                "databits": 8,
+                                "address": 4
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "8",
+                        "device_type": "Inverter",
+                        "manufacturer": "Kehua",
+                        "device_model": "BCS500K-A",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.200",
+                                "port": 502,
+                                "unit_id": 1
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "9",
+                        "device_type": "BMS",
+                        "manufacturer": "N/A",
+                        "device_model": "N/A",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.100",
+                                "port": 502,
+                                "unit_id": 1
+                            }
+                        }
+                    },
+                    {
+                        "device_id": "5",
+                        "device_type": "PV Logger",
+                        "manufacturer": "Huawei",
+                        "device_model": "SmartLogger3000",
+                        "device_status": "Working",
+                        "last_updated": "1745301600",
+                        "parameters": {
+                            "communication_type": "Modbus TCP/IP",
+                            "communication": {
+                                "ip": "192.168.2.13",
+                                "port": 502,
+                                "unit_id": 1
+                            }
+                        },
+                        "assigned_devices": [
+                            {
+                                "device_id": "14",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 12
+                                }
+                            },
+                            {
+                                "device_id": "15",
+                                "device_type": "Inverter",
+                                "manufacturer": "Huawei",
+                                "device_model": "SUN2000-50KTL-M3",
+                                "device_status": "Working",
+                                "last_updated": "1745301600",
+                                "parameters": {
+                                    "slave_id": 13
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "1743627600": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 17304.8,
+            "load_p": 17304.8,
+            "price": 0.07319,
+            "battery_savings": 0.0
+        },
+        "1743628500": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 22630.8,
+            "load_p": 22630.8,
+            "price": 0.07319,
+            "battery_savings": 0.0
+        },
+        "1743629400": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 17530.6,
+            "load_p": 17530.6,
+            "price": 0.07319,
+            "battery_savings": 0.0
+        },
+        "1743630300": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 21518.6,
+            "load_p": 21518.6,
+            "price": 0.07319,
+            "battery_savings": 0.0
+        },
+        "1743631200": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.15,
+            "grid_p": 42326.2,
+            "load_p": 17326.2,
+            "price": 0.06573,
+            "battery_savings": -0.4108125
+        },
+        "1743632100": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.275,
+            "grid_p": 45389.2,
+            "load_p": 20389.2,
+            "price": 0.06573,
+            "battery_savings": -0.4108125
+        },
+        "1743633000": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.4,
+            "grid_p": 43765.0,
+            "load_p": 18765.0,
+            "price": 0.06573,
+            "battery_savings": -0.4108125
+        },
+        "1743633900": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.525,
+            "grid_p": 45532.6,
+            "load_p": 20532.6,
+            "price": 0.06573,
+            "battery_savings": -0.4108125
+        },
+        "1743634800": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.65,
+            "grid_p": 47149.2,
+            "load_p": 22149.2,
+            "price": 0.06587,
+            "battery_savings": -0.4116875
+        },
+        "1743635700": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.775,
+            "grid_p": 43196.8,
+            "load_p": 18196.8,
+            "price": 0.06587,
+            "battery_savings": -0.4116875
+        },
+        "1743636600": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -20000.0,
+            "battery_soc": 0.9,
+            "grid_p": 38148.2,
+            "load_p": 18148.2,
+            "price": 0.06587,
+            "battery_savings": -0.32935
+        },
+        "1743637500": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 20082.6,
+            "load_p": 20082.6,
+            "price": 0.06587,
+            "battery_savings": 0.0
+        },
+        "1743638400": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 18262.8,
+            "load_p": 18262.8,
+            "price": 0.06589,
+            "battery_savings": 0.0
+        },
+        "1743639300": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 19959.8,
+            "load_p": 19959.8,
+            "price": 0.06589,
+            "battery_savings": 0.0
+        },
+        "1743640200": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 53310.6,
+            "load_p": 53310.6,
+            "price": 0.06589,
+            "battery_savings": 0.0
+        },
+        "1743641100": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 61759.8,
+            "load_p": 61759.8,
+            "price": 0.06589,
+            "battery_savings": 0.0
+        },
+        "1743642000": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 66890.4,
+            "load_p": 66890.4,
+            "price": 0.06785,
+            "battery_savings": 0.0
+        },
+        "1743642900": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 65994.0,
+            "load_p": 65994.0,
+            "price": 0.06785,
+            "battery_savings": 0.0
+        },
+        "1743643800": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 52985.4,
+            "load_p": 52985.4,
+            "price": 0.06785,
+            "battery_savings": 0.0
+        },
+        "1743644700": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 68743.8,
+            "load_p": 68743.8,
+            "price": 0.06785,
+            "battery_savings": 0.0
+        },
+        "1743645600": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 51328.8,
+            "load_p": 51328.8,
+            "price": 0.06987,
+            "battery_savings": 0.0
+        },
+        "1743646500": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 56127.0,
+            "load_p": 56127.0,
+            "price": 0.06987,
+            "battery_savings": 0.0
+        },
+        "1743647400": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 65583.0,
+            "load_p": 65583.0,
+            "price": 0.06987,
+            "battery_savings": 0.0
+        },
+        "1743648300": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 68057.4,
+            "load_p": 68057.4,
+            "price": 0.06987,
+            "battery_savings": 0.0
+        },
+        "1743649200": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 55107.6,
+            "load_p": 55107.6,
+            "price": 0.10769,
+            "battery_savings": 0.0
+        },
+        "1743650100": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 60003.0,
+            "load_p": 60003.0,
+            "price": 0.10769,
+            "battery_savings": 0.0
+        },
+        "1743651000": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 78188.25,
+            "load_p": 78188.25,
+            "price": 0.10769,
+            "battery_savings": 0.0
+        },
+        "1743651900": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 63794.25,
+            "load_p": 63794.25,
+            "price": 0.10769,
+            "battery_savings": 0.0
+        },
+        "1743652800": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 1.0,
+            "grid_p": 60749.0,
+            "load_p": 85749.0,
+            "price": 0.13743,
+            "battery_savings": 0.8589375
+        },
+        "1743653700": {
+            "pv_p": 1509.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.875,
+            "grid_p": 50820.5,
+            "load_p": 77329.5,
+            "price": 0.13743,
+            "battery_savings": 0.8589375
+        },
+        "1743654600": {
+            "pv_p": 4477.5,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.75,
+            "grid_p": 40776.5,
+            "load_p": 70254.0,
+            "price": 0.13743,
+            "battery_savings": 0.8589375
+        },
+        "1743655500": {
+            "pv_p": 10458.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.625,
+            "grid_p": 45917.75,
+            "load_p": 81375.75,
+            "price": 0.13743,
+            "battery_savings": 0.8589375
+        },
+        "1743656400": {
+            "pv_p": 14895.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.5,
+            "grid_p": 30989.0,
+            "load_p": 70884.0,
+            "price": 0.16431,
+            "battery_savings": 1.0269375
+        },
+        "1743657300": {
+            "pv_p": 19500.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.375,
+            "grid_p": 32781.5,
+            "load_p": 77281.5,
+            "price": 0.16431,
+            "battery_savings": 1.0269375
+        },
+        "1743658200": {
+            "pv_p": 18000.0,
+            "wind_p": 0,
+            "battery_p": 20000.0,
+            "battery_soc": 0.25,
+            "grid_p": 34066.75,
+            "load_p": 72066.75,
+            "price": 0.16431,
+            "battery_savings": 0.82155
+        },
+        "1743659100": {
+            "pv_p": 13365.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 65243.25,
+            "load_p": 78608.25,
+            "price": 0.16431,
+            "battery_savings": 0.0
+        },
+        "1743660000": {
+            "pv_p": 12096.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 64443.75,
+            "load_p": 76539.75,
+            "price": 0.106,
+            "battery_savings": 0.0
+        },
+        "1743660900": {
+            "pv_p": 15135.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 50139.0,
+            "load_p": 65274.0,
+            "price": 0.106,
+            "battery_savings": 0.0
+        },
+        "1743661800": {
+            "pv_p": 22432.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 63198.0,
+            "load_p": 85630.5,
+            "price": 0.106,
+            "battery_savings": 0.0
+        },
+        "1743662700": {
+            "pv_p": 28414.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 31065.08,
+            "load_p": 59479.58,
+            "price": 0.106,
+            "battery_savings": 0.0
+        },
+        "1743663600": {
+            "pv_p": 38961.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 13751.72,
+            "load_p": 52712.72,
+            "price": 0.06966,
+            "battery_savings": 0.0
+        },
+        "1743664500": {
+            "pv_p": 57228.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 3319.94,
+            "load_p": 60547.94,
+            "price": 0.06966,
+            "battery_savings": 0.0
+        },
+        "1743665400": {
+            "pv_p": 74161.5,
+            "wind_p": 0,
+            "battery_p": -16837.2,
+            "battery_soc": 0.15,
+            "grid_p": 0.0,
+            "load_p": 57324.3,
+            "price": 0.06966,
+            "battery_savings": 0.0
+        },
+        "1743666300": {
+            "pv_p": 105541.5,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.234186,
+            "grid_p": -14313.04,
+            "load_p": 66228.46,
+            "price": 0.06966,
+            "battery_savings": 0.0
+        },
+        "1743667200": {
+            "pv_p": 133188.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.359186,
+            "grid_p": -58523.76,
+            "load_p": 49664.24,
+            "price": 0.0371,
+            "battery_savings": 0.0
+        },
+        "1743668100": {
+            "pv_p": 138523.5,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.484186,
+            "grid_p": -48130.82,
+            "load_p": 65392.68,
+            "price": 0.0371,
+            "battery_savings": 0.0
+        },
+        "1743669000": {
+            "pv_p": 144481.5,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.609186,
+            "grid_p": -61613.16,
+            "load_p": 57868.34,
+            "price": 0.0371,
+            "battery_savings": 0.0
+        },
+        "1743669900": {
+            "pv_p": 143136.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.734186,
+            "grid_p": -54070.36,
+            "load_p": 64065.64,
+            "price": 0.0371,
+            "battery_savings": 0.0
+        },
+        "1743670800": {
+            "pv_p": 147906.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.859186,
+            "grid_p": -61611.02,
+            "load_p": 61294.98,
+            "price": -0.00025,
+            "battery_savings": 0.0
+        },
+        "1743671700": {
+            "pv_p": 146664.0,
+            "wind_p": 0,
+            "battery_p": -3162.8,
+            "battery_soc": 0.984186,
+            "grid_p": -86718.04,
+            "load_p": 56783.16,
+            "price": -0.00025,
+            "battery_savings": 0.0
+        },
+        "1743672600": {
+            "pv_p": 138663.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -75738.8,
+            "load_p": 62924.2,
+            "price": -0.00025,
+            "battery_savings": 0.0
+        },
+        "1743673500": {
+            "pv_p": 148029.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -83965.1,
+            "load_p": 64063.9,
+            "price": -0.00025,
+            "battery_savings": 0.0
+        },
+        "1743674400": {
+            "pv_p": 149400.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -93900.96,
+            "load_p": 55499.04,
+            "price": -0.00146,
+            "battery_savings": 0.0
+        },
+        "1743675300": {
+            "pv_p": 147163.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -84028.76,
+            "load_p": 63134.74,
+            "price": -0.00146,
+            "battery_savings": 0.0
+        },
+        "1743676200": {
+            "pv_p": 148650.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -87957.64,
+            "load_p": 60692.36,
+            "price": -0.00146,
+            "battery_savings": 0.0
+        },
+        "1743677100": {
+            "pv_p": 151200.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -88909.16,
+            "load_p": 62290.84,
+            "price": -0.00146,
+            "battery_savings": 0.0
+        },
+        "1743678000": {
+            "pv_p": 148945.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -85905.88,
+            "load_p": 63039.62,
+            "price": -0.00809,
+            "battery_savings": 0.0
+        },
+        "1743678900": {
+            "pv_p": 147735.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -84143.22,
+            "load_p": 63591.78,
+            "price": -0.00809,
+            "battery_savings": 0.0
+        },
+        "1743679800": {
+            "pv_p": 144481.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -93225.74,
+            "load_p": 51255.76,
+            "price": -0.00809,
+            "battery_savings": 0.0
+        },
+        "1743680700": {
+            "pv_p": 149700.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -64648.58,
+            "load_p": 85051.42,
+            "price": -0.00809,
+            "battery_savings": 0.0
+        },
+        "1743681600": {
+            "pv_p": 150000.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -73060.1,
+            "load_p": 76939.9,
+            "price": -0.00538,
+            "battery_savings": 0.0
+        },
+        "1743682500": {
+            "pv_p": 144918.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -46913.26,
+            "load_p": 98004.74,
+            "price": -0.00538,
+            "battery_savings": 0.0
+        },
+        "1743683400": {
+            "pv_p": 135810.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -57388.32,
+            "load_p": 78421.68,
+            "price": -0.00538,
+            "battery_savings": 0.0
+        },
+        "1743684300": {
+            "pv_p": 143782.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -46779.66,
+            "load_p": 97002.84,
+            "price": -0.00538,
+            "battery_savings": 0.0
+        },
+        "1743685200": {
+            "pv_p": 145152.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -71523.96,
+            "load_p": 73628.04,
+            "price": -0.00058,
+            "battery_savings": 0.0
+        },
+        "1743686100": {
+            "pv_p": 148500.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -57586.82,
+            "load_p": 90913.18,
+            "price": -0.00058,
+            "battery_savings": 0.0
+        },
+        "1743687000": {
+            "pv_p": 146265.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -67425.36,
+            "load_p": 78839.64,
+            "price": -0.00058,
+            "battery_savings": 0.0
+        },
+        "1743687900": {
+            "pv_p": 143712.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -69149.14,
+            "load_p": 74562.86,
+            "price": -0.00058,
+            "battery_savings": 0.0
+        },
+        "1743688800": {
+            "pv_p": 144288.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -66451.12,
+            "load_p": 77836.88,
+            "price": 0.01689,
+            "battery_savings": 0.0
+        },
+        "1743689700": {
+            "pv_p": 138690.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -63168.24,
+            "load_p": 75521.76,
+            "price": 0.01689,
+            "battery_savings": 0.0
+        },
+        "1743690600": {
+            "pv_p": 136350.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -49526.98,
+            "load_p": 86823.02,
+            "price": 0.01689,
+            "battery_savings": 0.0
+        },
+        "1743691500": {
+            "pv_p": 127372.5,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -46950.46,
+            "load_p": 80422.04,
+            "price": 0.01689,
+            "battery_savings": 0.0
+        },
+        "1743692400": {
+            "pv_p": 128613.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -30278.88,
+            "load_p": 98334.12,
+            "price": 0.06061,
+            "battery_savings": 0.0
+        },
+        "1743693300": {
+            "pv_p": 119400.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -31974.12,
+            "load_p": 87425.88,
+            "price": 0.06061,
+            "battery_savings": 0.0
+        },
+        "1743694200": {
+            "pv_p": 93930.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": -29907.56,
+            "load_p": 64022.44,
+            "price": 0.06061,
+            "battery_savings": 0.0
+        },
+        "1743695100": {
+            "pv_p": 51204.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 10983.24,
+            "load_p": 62187.24,
+            "price": 0.06061,
+            "battery_savings": 0.0
+        },
+        "1743696000": {
+            "pv_p": 30000.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 1.0,
+            "grid_p": 33866.2,
+            "load_p": 63866.2,
+            "price": 0.14282,
+            "battery_savings": 0.0
+        },
+        "1743696900": {
+            "pv_p": 18144.0,
+            "wind_p": 0,
+            "battery_p": 20000.0,
+            "battery_soc": 1.0,
+            "grid_p": 21581.84,
+            "load_p": 59725.84,
+            "price": 0.14282,
+            "battery_savings": 0.7141
+        },
+        "1743697800": {
+            "pv_p": 11880.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.9,
+            "grid_p": 26854.14,
+            "load_p": 63734.14,
+            "price": 0.14282,
+            "battery_savings": 0.892625
+        },
+        "1743698700": {
+            "pv_p": 5946.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.775,
+            "grid_p": 32606.48,
+            "load_p": 63552.48,
+            "price": 0.14282,
+            "battery_savings": 0.892625
+        },
+        "1743699600": {
+            "pv_p": 1498.5,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.65,
+            "grid_p": 28854.48,
+            "load_p": 55352.98,
+            "price": 0.22511,
+            "battery_savings": 1.4069375
+        },
+        "1743700500": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.525,
+            "grid_p": 31336.3,
+            "load_p": 56336.3,
+            "price": 0.22511,
+            "battery_savings": 1.4069375
+        },
+        "1743701400": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.4,
+            "grid_p": 44190.76,
+            "load_p": 69190.76,
+            "price": 0.22511,
+            "battery_savings": 1.4069375
+        },
+        "1743702300": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 25000.0,
+            "battery_soc": 0.275,
+            "grid_p": 29155.76,
+            "load_p": 54155.76,
+            "price": 0.22511,
+            "battery_savings": 1.4069375
+        },
+        "1743703200": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 55974.84,
+            "load_p": 55974.84,
+            "price": 0.08501,
+            "battery_savings": 0.0
+        },
+        "1743704100": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 67252.64,
+            "load_p": 67252.64,
+            "price": 0.08501,
+            "battery_savings": 0.0
+        },
+        "1743705000": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 63727.32,
+            "load_p": 63727.32,
+            "price": 0.08501,
+            "battery_savings": 0.0
+        },
+        "1743705900": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 22516.25,
+            "load_p": 22516.25,
+            "price": 0.08501,
+            "battery_savings": 0.0
+        },
+        "1743706800": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 25535.5,
+            "load_p": 25535.5,
+            "price": 0.08503,
+            "battery_savings": 0.0
+        },
+        "1743707700": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 27827.25,
+            "load_p": 27827.25,
+            "price": 0.08503,
+            "battery_savings": 0.0
+        },
+        "1743708600": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 23996.0,
+            "load_p": 23996.0,
+            "price": 0.08503,
+            "battery_savings": 0.0
+        },
+        "1743709500": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": 0.0,
+            "battery_soc": 0.15,
+            "grid_p": 24672.75,
+            "load_p": 24672.75,
+            "price": 0.08503,
+            "battery_savings": 0.0
+        },
+        "1743710400": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.15,
+            "grid_p": 47512.2,
+            "load_p": 22512.2,
+            "price": 0.03802,
+            "battery_savings": -0.237625
+        },
+        "1743711300": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.275,
+            "grid_p": 46850.0,
+            "load_p": 21850.0,
+            "price": 0.03802,
+            "battery_savings": -0.237625
+        },
+        "1743712200": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.4,
+            "grid_p": 46310.4,
+            "load_p": 21310.4,
+            "price": 0.03802,
+            "battery_savings": -0.237625
+        },
+        "1743713100": {
+            "pv_p": 0.0,
+            "wind_p": 0,
+            "battery_p": -25000.0,
+            "battery_soc": 0.525,
+            "grid_p": 45597.2,
+            "load_p": 20597.2,
+            "price": 0.03802,
+            "battery_savings": -0.237625
+        }
+    }
+]
