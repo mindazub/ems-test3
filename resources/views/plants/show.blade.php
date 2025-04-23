@@ -9,15 +9,25 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
 
-                <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-2">General Info</h3>
-                    <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
-                    <p><strong>Status:</strong> {{ $plant->status }}</p>
-                    <p><strong>Capacity:</strong> {{ $plant->capacity }} W</p>
-                    <p><strong>Location:</strong> Lat {{ $plant->latitude }}, Lng {{ $plant->longitude }}</p>
-                    <p><strong>Last Updated:</strong>
-                        {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
-                    </p>
+                <div class="mb-6 flex flex-wrap gap-6">
+                    <!-- General Info -->
+                    <div class="w-full lg:w-1/2 space-y-2">
+                        <h3 class="text-lg font-semibold mb-2">General Info</h3>
+                        <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
+                        <p><strong>Status:</strong> {{ $plant->status }}</p>
+                        <p><strong>Capacity:</strong> {{ $plant->capacity }} W</p>
+                        <p><strong>Location:</strong> Lat {{ $plant->latitude }}, Lng {{ $plant->longitude }}</p>
+                        <p><strong>Last Updated:</strong>
+                            {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
+                        </p>
+                    </div>
+
+                    <!-- Map -->
+                    <div class="w-full lg:w-1/3">
+                        <h3 class="text-lg font-semibold mb-2">Map Location</h3>
+                        <div id="map" class="rounded shadow border" style="height: 200px; min-height: 200px;">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mb-6">
@@ -55,7 +65,6 @@
                             <table class="table-auto w-full mt-4 border">
                                 <thead class="bg-gray-100">
                                     <tr>
-                                        <th class="px-4 py-2 border">Device ID</th>
                                         <th class="px-4 py-2 border">Type</th>
                                         <th class="px-4 py-2 border">Manufacturer</th>
                                         <th class="px-4 py-2 border">Model</th>
@@ -67,7 +76,6 @@
                                 <tbody>
                                     @forelse ($feed->devices as $device)
                                         <tr>
-                                            <td class="border px-4 py-2">{{ $device->id }}</td>
                                             <td class="border px-4 py-2">{{ $device->device_type }}</td>
                                             <td class="border px-4 py-2">{{ $device->manufacturer }}</td>
                                             <td class="border px-4 py-2">{{ $device->device_model }}</td>
@@ -107,8 +115,28 @@
                         class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to
                         Plants</a>
                 </div>
-
             </div>
         </div>
     </div>
+
+    {{-- Leaflet Map JS --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const lat = {{ $plant->latitude }};
+            const lng = {{ $plant->longitude }};
+
+            const map = L.map('map').setView([lat, lng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup(`Plant: {{ $plant->name }}`)
+                .openPopup();
+        });
+    </script>
 </x-app-layout>
