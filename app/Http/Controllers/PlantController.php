@@ -79,7 +79,8 @@ class PlantController extends Controller
 
     public function show(Plant $plant)
     {
-        $plant->load('mainFeeds.devices');
+        $plant->load('mainFeeds.devices'); // Eager load to prevent N+1 and ensure data is available
         return view('plants.show', compact('plant'));
     }
+
 }

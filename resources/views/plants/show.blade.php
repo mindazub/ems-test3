@@ -5,10 +5,14 @@
         </h2>
     </x-slot>
 
+    {{-- Bootstrap for Collapse + Tooltip --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
-
+                <!-- Map and General Info Side-by-side -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <!-- General Info -->
                     <div class="w-full lg:w-1/2 space-y-2">
@@ -23,7 +27,7 @@
                     </div>
 
                     <!-- Map -->
-                    <div class="w-full lg:w-1/3">
+                    <div class="w-full lg:w-1/2">
                         <h3 class="text-lg font-semibold mb-2">Map Location</h3>
                         <div id="map" class="rounded shadow border" style="height: 200px; min-height: 200px;">
                         </div>
@@ -31,26 +35,9 @@
                 </div>
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Devices Summary</h3>
-                    <p>Total Main Feeds: <strong>{{ $plant->mainFeeds->count() }}</strong></p>
-                    <p>Total Devices: <strong>{{ $plant->mainFeeds->flatMap->devices->count() }}</strong></p>
-                    <p class="mt-2">
-                        @php
-                            $types = $plant->mainFeeds->flatMap->devices->groupBy('device_type');
-                        @endphp
-                        @foreach ($types as $type => $group)
-                            <span
-                                class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded">
-                                <i class="bi bi-cpu me-1"></i>{{ $type }} ({{ $group->count() }})
-                            </span>
-                        @endforeach
-                    </p>
-                </div>
-
-                <div>
                     <h3 class="text-lg font-semibold mb-4">Devices by Feed</h3>
 
-                    @forelse ($plant->mainFeeds as $feed)
+                    @foreach ($plant->mainFeeds as $feed)
                         <div class="mb-6 border rounded p-4">
                             <div class="flex justify-between items-center mb-2">
                                 <h4 class="font-semibold text-blue-600">Main Feed ID: {{ $feed->id }}</h4>
@@ -59,9 +46,6 @@
                                     <i class="bi bi-printer"></i> Export PDF
                                 </button>
                             </div>
-                            <p><strong>Import Power:</strong> {{ $feed->import_power }} W</p>
-                            <p><strong>Export Power:</strong> {{ $feed->export_power }} W</p>
-
                             <table class="table-auto w-full mt-4 border">
                                 <thead class="bg-gray-100">
                                     <tr>
@@ -74,46 +58,65 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($feed->devices as $device)
-                                        <tr>
-                                            <td class="border px-4 py-2">{{ $device->device_type }}</td>
-                                            <td class="border px-4 py-2">{{ $device->manufacturer }}</td>
-                                            <td class="border px-4 py-2">{{ $device->device_model }}</td>
+                                    @foreach ($feed->devices->where('parent_device', true) as $parent)
+                                        <tr class="bg-gray-100">
+                                            <td class="border px-4 py-2">{{ $parent->device_type }}</td>
+                                            <td class="border px-4 py-2">{{ $parent->manufacturer }}</td>
                                             <td class="border px-4 py-2">
-                                                @if ($device->device_status === 'Working')
-                                                    <span class="text-green-600 font-semibold"><i
-                                                            class="bi bi-check-circle-fill"></i>
-                                                        {{ $device->device_status }}</span>
-                                                @else
-                                                    <span class="text-red-600 font-semibold"><i
-                                                            class="bi bi-exclamation-circle-fill"></i>
-                                                        {{ $device->device_status }}</span>
-                                                @endif
+                                                <button class="btn btn-sm btn-link p-0" type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#parent-{{ $parent->id }}">
+                                                    <i class="bi bi-caret-down-fill"></i> {{ $parent->device_model }}
+                                                </button>
                                             </td>
-                                            <td class="border px-4 py-2">{{ $device->parent_device ? 'Yes' : 'No' }}
-                                            </td>
+                                            <td class="border px-4 py-2">{{ $parent->device_status }}</td>
+                                            <td class="border px-4 py-2">Yes</td>
                                             <td class="border px-4 py-2">
-                                                <pre class="text-xs">{{ json_encode($device->parameters, JSON_PRETTY_PRINT) }}</pre>
+                                                <i class="bi bi-eye-fill text-blue-500" tabindex="0"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    title="{{ json_encode($parent->parameters, JSON_PRETTY_PRINT) }}"></i>
                                             </td>
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center border py-2">No devices in this feed.
+                                        <tr class="collapse" id="parent-{{ $parent->id }}">
+                                            <td colspan="6" class="p-0">
+                                                <table class="w-full">
+                                                    <tbody>
+                                                        @foreach ($feed->devices->where('parent_device', false) as $child)
+                                                            @if ($child->main_feed_id === $parent->main_feed_id)
+                                                                <tr>
+                                                                    <td class="border px-4 py-2">
+                                                                        {{ $child->device_type }}</td>
+                                                                    <td class="border px-4 py-2">
+                                                                        {{ $child->manufacturer }}</td>
+                                                                    <td class="border px-4 py-2">
+                                                                        {{ $child->device_model }}</td>
+                                                                    <td class="border px-4 py-2">
+                                                                        {{ $child->device_status }}</td>
+                                                                    <td class="border px-4 py-2">No</td>
+                                                                    <td class="border px-4 py-2">
+                                                                        <i class="bi bi-eye-fill text-blue-500"
+                                                                            tabindex="0" data-bs-toggle="tooltip"
+                                                                            data-bs-placement="top"
+                                                                            title="{{ json_encode($child->parameters, JSON_PRETTY_PRINT) }}"></i>
+                                                                    </td>
+                                                                </tr>
+                                                            @endif
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
                                             </td>
                                         </tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
-                    @empty
-                        <p>No main feeds found for this plant.</p>
-                    @endforelse
-                </div>
+                    @endforeach
 
-                <div class="mt-6">
-                    <a href="{{ route('plants.index') }}"
-                        class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to
-                        Plants</a>
+                    <div class="mt-6">
+                        <a href="{{ route('plants.index') }}"
+                            class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to
+                            Plants</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,19 +127,27 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const lat = {{ $plant->latitude }};
-            const lng = {{ $plant->longitude }};
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                const lat = {{ $plant->latitude }};
+                const lng = {{ $plant->longitude }};
 
-            const map = L.map('map').setView([lat, lng], 13);
+                const map = L.map('map').setView([lat, lng], 13);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
 
-            L.marker([lat, lng]).addTo(map)
-                .bindPopup(`Plant: {{ $plant->name }}`)
-                .openPopup();
+                L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`Plant: {{ $plant->name }}`)
+                    .openPopup();
+            }
+
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
     </script>
 </x-app-layout>
