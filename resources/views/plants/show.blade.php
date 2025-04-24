@@ -12,9 +12,7 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
-                <!-- Map and General Info Side-by-side -->
                 <div class="mb-6 flex flex-wrap gap-6">
-                    <!-- General Info -->
                     <div class="w-full lg:w-1/2 space-y-2">
                         <h3 class="text-lg font-semibold mb-2">General Info</h3>
                         <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
@@ -25,8 +23,6 @@
                             {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
                         </p>
                     </div>
-
-                    <!-- Map -->
                     <div class="w-full lg:w-1/2">
                         <h3 class="text-lg font-semibold mb-2">Map Location</h3>
                         <div id="map" class="rounded shadow border" style="height: 200px; min-height: 200px;">
@@ -36,7 +32,6 @@
 
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold mb-4">Devices by Feed</h3>
-
                     @foreach ($plant->mainFeeds as $feed)
                         <div class="mb-6 border rounded p-4">
                             <div class="flex justify-between items-center mb-2">
@@ -59,14 +54,15 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($feed->devices->where('parent_device', true) as $parent)
+                                        @php $parentKey = 'parent-' . $parent->id; @endphp
                                         <tr class="bg-gray-100">
                                             <td class="border px-4 py-2">{{ $parent->device_type }}</td>
                                             <td class="border px-4 py-2">{{ $parent->manufacturer }}</td>
                                             <td class="border px-4 py-2">
-                                                <button class="btn btn-sm btn-link p-0" type="button"
-                                                    data-bs-toggle="collapse"
-                                                    data-bs-target="#parent-{{ $parent->id }}">
-                                                    <i class="bi bi-caret-down-fill"></i> {{ $parent->device_model }}
+                                                <button class="btn btn-sm btn-link p-0 toggle-btn" type="button"
+                                                    data-toggle="collapse-row" data-target="#{{ $parentKey }}">
+                                                    <i class="bi bi-caret-right-fill toggle-icon"></i>
+                                                    {{ $parent->device_model }}
                                                 </button>
                                             </td>
                                             <td class="border px-4 py-2">{{ $parent->device_status }}</td>
@@ -77,7 +73,7 @@
                                                     title="{{ json_encode($parent->parameters, JSON_PRETTY_PRINT) }}"></i>
                                             </td>
                                         </tr>
-                                        <tr class="collapse" id="parent-{{ $parent->id }}">
+                                        <tr class="slave-row" id="{{ $parentKey }}" style="display: none">
                                             <td colspan="6" class="p-0">
                                                 <table class="w-full">
                                                     <tbody>
@@ -111,7 +107,6 @@
                             </table>
                         </div>
                     @endforeach
-
                     <div class="mt-6">
                         <a href="{{ route('plants.index') }}"
                             class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to
@@ -133,20 +128,33 @@
                 const lng = {{ $plant->longitude }};
 
                 const map = L.map('map').setView([lat, lng], 13);
-
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 }).addTo(map);
-
-                L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`Plant: {{ $plant->name }}`)
-                    .openPopup();
+                L.marker([lat, lng]).addTo(map).bindPopup(`Plant: {{ $plant->name }}`).openPopup();
             }
 
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            document.querySelectorAll('.toggle-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const rowId = button.getAttribute('data-target');
+                    const row = document.querySelector(rowId);
+                    const icon = button.querySelector('.toggle-icon');
+                    if (row.style.display === 'none') {
+                        row.style.display = 'table-row';
+                        icon.classList.remove('bi-caret-right-fill');
+                        icon.classList.add('bi-caret-down-fill');
+                    } else {
+                        row.style.display = 'none';
+                        icon.classList.remove('bi-caret-down-fill');
+                        icon.classList.add('bi-caret-right-fill');
+                    }
+                });
             });
         });
     </script>
