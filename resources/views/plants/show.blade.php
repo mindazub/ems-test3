@@ -1,4 +1,3 @@
-<!-- Full Blade File with Fixed JavaScript for Chart.js integration -->
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -26,7 +25,7 @@
                             {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
                         </p>
                     </div>
-                    <div class="w-full lg:w-1/2">
+                    <div class="w-full lg:w-1/3">
                         <h3 class="text-lg font-semibold mb-2">Map Location</h3>
                         <div id="map" class="rounded shadow border" style="height: 200px;"></div>
                     </div>
@@ -35,79 +34,12 @@
                 <!-- STACKED CHARTS EACH WITH OWN TABS -->
                 @include('plants.partials.plant-chart')
 
-                <!-- DEVICES SECTION -->
-                <div class="mb-6 mt-6">
-                    <h3 class="text-lg font-semibold mb-4">Devices by Feed</h3>
-                    @foreach ($plant->mainFeeds as $feed)
-                        <div class="mb-6 border rounded p-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold text-blue-600">Main Feed ID: {{ $feed->id }}</h4>
-                                <button onclick="window.print()"
-                                    class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                                    <i class="bi bi-printer"></i> Export PDF
-                                </button>
-                            </div>
-                            <table class="table-auto w-full mt-4 border">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="px-4 py-2 border">Type</th>
-                                        <th class="px-4 py-2 border">Manufacturer</th>
-                                        <th class="px-4 py-2 border">Model</th>
-                                        <th class="px-4 py-2 border">Status</th>
-                                        <th class="px-4 py-2 border">Parent</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($feed->devices->where('parent_device', true) as $parent)
-                                        @php $parentKey = 'parent-' . $parent->id; @endphp
-                                        <tr class="bg-gray-100">
-                                            <td class="border px-4 py-2">{{ $parent->device_type }}</td>
-                                            <td class="border px-4 py-2">{{ $parent->manufacturer }}</td>
-                                            <td class="border px-4 py-2">
-                                                <button class="btn btn-sm btn-link p-0 toggle-btn" type="button"
-                                                    data-toggle="collapse-row" data-target="#{{ $parentKey }}">
-                                                    <i class="bi bi-caret-right-fill toggle-icon"></i>
-                                                    {{ $parent->device_model }}
-                                                </button>
-                                            </td>
-                                            <td class="border px-4 py-2">{{ $parent->device_status }}</td>
-                                            <td class="border px-4 py-2">Yes</td>
-                                        </tr>
-                                        <tr class="slave-row" id="{{ $parentKey }}" style="display: none">
-                                            <td colspan="6" class="p-0">
-                                                <table class="w-full">
-                                                    <tbody>
-                                                        @foreach ($feed->devices->where('parent_device', false) as $child)
-                                                            @if ($child->main_feed_id === $parent->main_feed_id)
-                                                                <tr>
-                                                                    <td class="border px-4 py-2">
-                                                                        {{ $child->device_type }}</td>
-                                                                    <td class="border px-4 py-2">
-                                                                        {{ $child->manufacturer }}</td>
-                                                                    <td class="border px-4 py-2">
-                                                                        {{ $child->device_model }}</td>
-                                                                    <td class="border px-4 py-2">
-                                                                        {{ $child->device_status }}</td>
-                                                                    <td class="border px-4 py-2">No</td>
-                                                                </tr>
-                                                            @endif
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endforeach
-                    <div class="mt-6">
-                        <a href="{{ route('plants.index') }}"
-                            class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to
-                            Plants</a>
-                    </div>
-                </div>
+                @include('plants.partials.devices-list')
+
+
             </div>
+
+
         </div>
     </div>
 
