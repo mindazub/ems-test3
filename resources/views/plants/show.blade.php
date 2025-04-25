@@ -1,3 +1,4 @@
+<!-- Full Blade File with Fixed JavaScript for Chart.js integration -->
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -5,13 +6,15 @@
         </h2>
     </x-slot>
 
-    {{-- Bootstrap for Collapse + Tooltip --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
+                <!-- PLANT INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
                         <h3 class="text-lg font-semibold mb-2">General Info</h3>
@@ -25,11 +28,14 @@
                     </div>
                     <div class="w-full lg:w-1/2">
                         <h3 class="text-lg font-semibold mb-2">Map Location</h3>
-                        <div id="map" class="rounded shadow border" style="height: 200px; min-height: 200px;">
-                        </div>
+                        <div id="map" class="rounded shadow border" style="height: 200px;"></div>
                     </div>
                 </div>
 
+                <!-- INCLUDE FIXED CHART SECTION -->
+                @include('plants.partials.plant-chart')
+
+                <!-- DEVICES SECTION -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold mb-4">Devices by Feed</h3>
                     @foreach ($plant->mainFeeds as $feed)
@@ -49,7 +55,6 @@
                                         <th class="px-4 py-2 border">Model</th>
                                         <th class="px-4 py-2 border">Status</th>
                                         <th class="px-4 py-2 border">Parent</th>
-                                        <th class="px-4 py-2 border">Parameters</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -67,11 +72,6 @@
                                             </td>
                                             <td class="border px-4 py-2">{{ $parent->device_status }}</td>
                                             <td class="border px-4 py-2">Yes</td>
-                                            <td class="border px-4 py-2">
-                                                <i class="bi bi-eye-fill text-blue-500" tabindex="0"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="{{ json_encode($parent->parameters, JSON_PRETTY_PRINT) }}"></i>
-                                            </td>
                                         </tr>
                                         <tr class="slave-row" id="{{ $parentKey }}" style="display: none">
                                             <td colspan="6" class="p-0">
@@ -89,12 +89,6 @@
                                                                     <td class="border px-4 py-2">
                                                                         {{ $child->device_status }}</td>
                                                                     <td class="border px-4 py-2">No</td>
-                                                                    <td class="border px-4 py-2">
-                                                                        <i class="bi bi-eye-fill text-blue-500"
-                                                                            tabindex="0" data-bs-toggle="tooltip"
-                                                                            data-bs-placement="top"
-                                                                            title="{{ json_encode($child->parameters, JSON_PRETTY_PRINT) }}"></i>
-                                                                    </td>
                                                                 </tr>
                                                             @endif
                                                         @endforeach
@@ -117,7 +111,6 @@
         </div>
     </div>
 
-    {{-- Leaflet Map JS --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
