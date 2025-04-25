@@ -32,11 +32,11 @@
                     </div>
                 </div>
 
-                <!-- INCLUDE FIXED CHART SECTION -->
+                <!-- STACKED CHARTS EACH WITH OWN TABS -->
                 @include('plants.partials.plant-chart')
 
                 <!-- DEVICES SECTION -->
-                <div class="mb-6">
+                <div class="mb-6 mt-6">
                     <h3 class="text-lg font-semibold mb-4">Devices by Feed</h3>
                     @foreach ($plant->mainFeeds as $feed)
                         <div class="mb-6 border rounded p-4">
