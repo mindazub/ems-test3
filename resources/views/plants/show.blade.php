@@ -115,4 +115,30 @@
     </script>
 
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing collapse logic...
+
+            // --- LEAFLET MAP INIT ---
+            const lat = {{ $plant->latitude }};
+            const lng = {{ $plant->longitude }};
+
+            const map = L.map('map').setView([lat, lng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([lat, lng])
+                .addTo(map)
+                .bindPopup(
+                    "<strong>{{ $plant->name }}</strong><br>Lat: {{ $plant->latitude }}<br>Lng: {{ $plant->longitude }}"
+                    )
+                .openPopup();
+        });
+    </script>
+
+
+
 </x-app-layout>
