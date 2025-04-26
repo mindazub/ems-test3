@@ -27,7 +27,7 @@
                                 @foreach ($feed->devices->where('parent_device', true) as $parent)
                                     @php $parentKey = 'parent-' . $parent->id; @endphp
                                     <tr class="bg-light parent-row clickable-row" style="cursor: pointer"
-                                        onclick="window.location='{{ url('/device/' . $parent->id) }}'">
+                                        onclick="window.location='{{ url('/devices/' . $parent->id) }}'">
                                         <td class="text-center">
                                             <button class="btn btn-sm p-0 toggle-btn" type="button"
                                                 data-toggle="collapse-row" data-target="#{{ $parentKey }}"
@@ -47,7 +47,7 @@
                                                     @foreach ($feed->devices->where('parent_device', false) as $child)
                                                         @if ($child->main_feed_id === $parent->main_feed_id)
                                                             <tr class="clickable-row" style="cursor: pointer"
-                                                                onclick="window.location='{{ url('/device/' . $child->id) }}'">
+                                                                onclick="window.location='{{ url('/devices/' . $child->id) }}'">
                                                                 <td class="text-center"><i
                                                                         class="bi bi-arrow-right"></i></i>
                                                                 </td>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\PlantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('projects', ProjectController::class);
     Route::resource('plants', PlantController::class);
+    Route::resource('devices', DeviceController::class);
 
 
 });
