@@ -9,7 +9,7 @@ class PlantController extends Controller
 {
     public function index()
     {
-        $plants = Plant::with('mainFeeds.devices')->paginate();
+        $plants = Plant::with('mainFeeds.devices')->get();
         return view('plants.index', compact('plants'));
     }
 
@@ -24,12 +24,12 @@ class PlantController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'owner_email' => 'required|email',
-            'status' => 'required|string',
-            'capacity' => 'required|numeric',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'status' => 'required|string|max:255',
+            'capacity' => 'required|numeric|min:0',
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
             'last_updated' => 'nullable|date',
         ]);
 
@@ -40,13 +40,14 @@ class PlantController extends Controller
             'capacity' => $request->capacity,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'company_id' => $request->company_id,
-            'last_updated' => $request->last_updated ? \Carbon\Carbon::parse($request->last_updated)->timestamp : null,
+            'last_updated' => $request->last_updated
+                ? \Carbon\Carbon::parse($request->last_updated)->timestamp
+                : null,
         ]);
-
 
         return redirect()->route('plants.index')->with('message', 'Plant created successfully.');
     }
+
 
     public function edit(Plant $plant)
     {
@@ -84,7 +85,7 @@ class PlantController extends Controller
     public function destroy(Plant $plant)
     {
         $plant->delete();
-        return redirect()->route('plants.index')->with('message', 'Plant deleted.');
+        return redirect()->route('plants.index')->with('message', 'Plant deleted successfully.');
     }
 
     public function show(Plant $plant)

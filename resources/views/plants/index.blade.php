@@ -7,6 +7,8 @@
         </div>
     </x-slot>
 
+
+
     {{-- ✅ CSS CDN --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -15,12 +17,23 @@
         <div class="container">
             <div class="card">
                 <div class="card-body">
+
+                    @if (session('message'))
+                        <div id="success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('message') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3 class="mb-0">Plants Table</h3>
                         <a href="{{ route('plants.create') }}" class="btn btn-primary">
                             <i class="bi bi-plus-circle"></i> New Plant
                         </a>
                     </div>
+
+
 
                     <table id="plantsTable" class="table table-striped table-hover table-bordered align-middle"
                         style="width:100%">
@@ -121,4 +134,25 @@
             transition: opacity 0.4s ease-out;
         }
     </style>
+
+    <style>
+        #success-alert.fade-out {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alert = document.getElementById('success-alert');
+            if (alert) {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => alert.remove(), 1000); // remove after fade-out completes
+                }, 2300); // wait 3s before fading out
+            }
+        });
+    </script>
+
+
 </x-app-layout>

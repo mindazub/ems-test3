@@ -33,16 +33,28 @@ class DeviceController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
             'main_feed_id' => 'required|exists:main_feeds,id',
-            'parent_id' => 'nullable|exists:devices,id',
+            'parent_device_id' => 'nullable|exists:devices,id',
+            'device_type' => 'required|string|max:255',
+            'manufacturer' => 'required|string|max:255',
+            'device_model' => 'required|string|max:255',
+            'device_status' => 'required|string|max:255',
+            'parent_device' => 'nullable|boolean',
+            'parameters' => 'nullable|json',
         ]);
 
-        Device::create($validatedData);
+        // Convert parameters string to array if filled
+        if (!empty($validated['parameters'])) {
+            $validated['parameters'] = json_decode($validated['parameters'], true);
+        }
 
-        return redirect()->route('devices.index')->with('success', 'Device created successfully.');
+        Device::create($validated);
+
+        return redirect()->route('devices.index')->with('message', 'Device created successfully.');
     }
+
+
 
     public function edit(Device $device)
     {
@@ -68,13 +80,13 @@ class DeviceController extends Controller
 
         $device->update($validatedData);
 
-        return redirect()->route('devices.index')->with('success', 'Device updated successfully.');
+        return redirect()->route('devices.index')->with('message', 'Device updated successfully.');
     }
 
     public function destroy(Device $device)
     {
         $device->delete();
 
-        return redirect()->route('devices.index')->with('success', 'Device deleted successfully.');
+        return redirect()->route('devices.index')->with('message', 'Device deleted successfully.');
     }
 }

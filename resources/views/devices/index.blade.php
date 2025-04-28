@@ -18,6 +18,17 @@
         <div class="container">
             <div class="card">
                 <div class="card-body">
+
+
+                    @if (session('message'))
+                        <div id="success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('message') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+
+
                     <h3 class="mb-0">Devices Table</h3>
                     <table id="devicesTable" class="table table-striped table-hover table-bordered align-middle"
                         style="width:100%">
@@ -101,4 +112,24 @@
             color: #0c4a6e;
         }
     </style>
+
+    <style>
+        #success-alert.fade-out {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alert = document.getElementById('success-alert');
+            if (alert) {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => alert.remove(), 1000); // remove after fade-out completes
+                }, 2300); // wait 2.3s before fading out
+            }
+        });
+    </script>
+
 </x-app-layout>

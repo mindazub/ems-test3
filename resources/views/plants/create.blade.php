@@ -68,24 +68,28 @@
 
                         {{-- Latitude --}}
                         <div class="mb-3">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" name="latitude" step="any"
-                                class="form-control @error('latitude') is-invalid @enderror"
+                            <label for="latitude" class="form-label">Latitude</label>
+                            <input type="number" name="latitude" id="latitude" step="0.00001" min="-90"
+                                max="90" class="form-control @error('latitude') is-invalid @enderror"
                                 value="{{ old('latitude') }}" required>
                             @error('latitude')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text">Format: two digits before the dot, five digits after (e.g. 54.93381)
+                            </div>
                         </div>
 
                         {{-- Longitude --}}
                         <div class="mb-3">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" name="longitude" step="any"
-                                class="form-control @error('longitude') is-invalid @enderror"
+                            <label for="longitude" class="form-label">Longitude</label>
+                            <input type="number" name="longitude" id="longitude" step="0.00001" min="-180"
+                                max="180" class="form-control @error('longitude') is-invalid @enderror"
                                 value="{{ old('longitude') }}" required>
                             @error('longitude')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text">Format: two digits before the dot, five digits after (e.g. 23.86181)
+                            </div>
                         </div>
 
                         {{-- Last Updated --}}
