@@ -199,12 +199,21 @@
         }
     });
 
-    function renderCharts(batteryOkData, batterySavingsData) {
-        const entries = Object.entries(batteryOkData).sort(([a], [b]) => Number(a) - Number(b));
-        const labels = entries.map(([ts]) => new Date(Number(ts)).toLocaleTimeString([], {
+
+    function formatLabelDate(ts) {
+        const date = isNaN(ts) ? new Date(ts) : new Date(Number(ts));
+        return date.toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
-        }));
+        });
+    }
+
+
+
+    function renderCharts(batteryOkData, batterySavingsData) {
+        const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
+
+        const labels = entries.map(([ts]) => formatLabelDate(ts));
         const pvData = entries.map(([, v]) => v.pv_p);
         const batteryData = entries.map(([, v]) => v.battery_p);
         const gridData = entries.map(([, v]) => v.grid_p);
@@ -247,7 +256,7 @@
         const energyTable = document.querySelector('#energyDataTable tbody');
         entries.forEach(([ts, val]) => {
             energyTable.innerHTML +=
-                `<tr><td>${new Date(Number(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td><td>${val.pv_p.toFixed(2)}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.grid_p.toFixed(2)}</td></tr>`;
+                `<tr><td>${formatLabelDate(ts)}</td><td>${val.pv_p.toFixed(2)}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.grid_p.toFixed(2)}</td></tr>`;
         });
 
         new Chart(document.getElementById('batteryChart'), {
@@ -279,14 +288,11 @@
         const batteryTable = document.querySelector('#batteryDataTable tbody');
         entries.forEach(([ts, val]) => {
             batteryTable.innerHTML +=
-                `<tr><td>${new Date(Number(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.tariff.toFixed(4)}</td></tr>`;
+                `<tr><td>${formatLabelDate(ts)}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.tariff.toFixed(4)}</td></tr>`;
         });
 
         const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const savingsLabels = savingsEntries.map(([ts]) => new Date(ts).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        }));
+        const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
         const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
         const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
 
@@ -313,7 +319,7 @@
         const savingsTable = document.querySelector('#batterySavingsDataTable tbody');
         savingsEntries.forEach(([ts, val]) => {
             savingsTable.innerHTML +=
-                `<tr><td>${new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td><td>€${val.battery_savings.toFixed(2)}</td></tr>`;
+                `<tr><td>${formatLabelDate(ts)}</td><td>€${val.battery_savings.toFixed(2)}</td></tr>`;
         });
     }
 </script>
