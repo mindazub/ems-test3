@@ -6,12 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Plant extends Model
 {
-    protected $fillable = ['name', 'company_id'];
+    protected $fillable = [
+        'name',
+        'owner_email',
+        'status',
+        'capacity',
+        'latitude',
+        'longitude',
+        'last_updated',
+    ];
 
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function devices()
     {

@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Project;
-use App\Models\Company;
 use App\Models\Plant;
 use App\Models\MainFeed;
 use App\Models\Device;

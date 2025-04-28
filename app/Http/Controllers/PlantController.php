@@ -15,18 +15,22 @@ class PlantController extends Controller
 
     public function create()
     {
-        return view('plants.create');
+        return view('plants.create', [
+            'companies' => \App\Models\Company::all(), // optional if companies exist
+        ]);
     }
+
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string',
             'owner_email' => 'required|email',
             'status' => 'required|string',
             'capacity' => 'required|numeric',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'last_updated' => 'nullable|date',
         ]);
 
         Plant::create([
@@ -36,8 +40,10 @@ class PlantController extends Controller
             'capacity' => $request->capacity,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'last_updated' => now()->timestamp,
+            'company_id' => $request->company_id,
+            'last_updated' => $request->last_updated ? \Carbon\Carbon::parse($request->last_updated)->timestamp : null,
         ]);
+
 
         return redirect()->route('plants.index')->with('message', 'Plant created successfully.');
     }
@@ -50,12 +56,13 @@ class PlantController extends Controller
     public function update(Request $request, Plant $plant)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string',
             'owner_email' => 'required|email',
             'status' => 'required|string',
             'capacity' => 'required|numeric',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'last_updated' => 'nullable|date',
         ]);
 
         $plant->update([
@@ -65,11 +72,14 @@ class PlantController extends Controller
             'capacity' => $request->capacity,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'last_updated' => now()->timestamp,
+            'last_updated' => $request->last_updated
+                ? \Carbon\Carbon::parse($request->last_updated)->timestamp
+                : null,
         ]);
 
         return redirect()->route('plants.index')->with('message', 'Plant updated successfully.');
     }
+
 
     public function destroy(Plant $plant)
     {

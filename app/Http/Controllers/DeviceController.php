@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\MainFeed;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
@@ -24,8 +25,10 @@ class DeviceController extends Controller
 
     public function create()
     {
-        $devices = Device::all();
-        return view('devices.create', compact('devices'));
+        return view('devices.create', [
+            'mainFeeds' => MainFeed::all(),
+            'parentDevices' => Device::where('parent_device', true)->get(),
+        ]);
     }
 
     public function store(Request $request)
@@ -43,9 +46,17 @@ class DeviceController extends Controller
 
     public function edit(Device $device)
     {
-        $devices = Device::all();
-        return view('devices.edit', compact('device', 'devices'));
+        // All MainFeeds for the dropdown
+        $mainFeeds = \App\Models\MainFeed::with('plant')->get();
+
+        // All possible parent devices (excluding this device itself to prevent circular parenting)
+        $parentDevices = \App\Models\Device::where('parent_device', true)
+                            ->where('id', '!=', $device->id)
+                            ->get();
+
+        return view('devices.edit', compact('device', 'mainFeeds', 'parentDevices'));
     }
+
 
     public function update(Request $request, Device $device)
     {
