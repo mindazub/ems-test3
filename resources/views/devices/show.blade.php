@@ -27,7 +27,7 @@
                         <p><strong>Parent Device ID:</strong> {{ $device->parent?->id ?? '—' }}</p>
                         <p><strong>Is Parent:</strong> {{ $device->parent_device ? 'Yes' : 'No' }}</p>
                         <div class="mt-4">
-                            <a href="{{ route('devices.index') }}" class="btn btn-sm btn-primary">Back</a>
+                            <a href="{{ url()->previous() }}" class="btn btn-sm btn-primary">Back</a>
                         </div>
                     </div>
                 </div>
@@ -70,6 +70,29 @@
             </div>
         </div>
     </div>
+
+
+    <script>
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                sessionStorage.setItem('scrollPosition', window.scrollY);
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollPos = sessionStorage.getItem('scrollPosition');
+            if (scrollPos !== null) {
+                window.scrollTo({
+                    top: parseInt(scrollPos),
+                    behavior: 'smooth'
+                });
+                sessionStorage.removeItem('scrollPosition');
+            }
+        });
+    </script>
+
 
     {{-- JavaScript Libraries --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
