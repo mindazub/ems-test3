@@ -10,28 +10,28 @@
         </div>
     </x-slot>
 
-    {{-- ✅ CSS CDN --}}
+    {{-- ✅ Bootstrap CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/scroller/2.2.0/css/scroller.bootstrap5.min.css" rel="stylesheet">
 
     <div id="page-content" class="py-12">
         <div class="container">
             <div class="card">
                 <div class="card-body">
 
-
+                    {{-- ✅ Success Message --}}
                     @if (session('message'))
                         <div id="success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('message') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
 
+                    {{-- ✅ Table --}}
+                    <h3 class="mb-4">Devices Table</h3>
 
-                    <h3 class="mb-0">Devices Table</h3>
-                    <table id="devicesTable" class="table table-striped table-hover table-bordered align-middle"
-                        style="width:100%">
+                    <table id="devicesTable" class="table table-striped table-hover table-bordered align-middle" style="width:100%">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -55,10 +55,8 @@
                                     <td>{{ $device->mainFeed->id ?? 'N/A' }}</td>
                                     <td>{{ $device->parent?->id ?? '—' }}</td>
                                     <td>
-                                        <a href="{{ route('devices.edit', $device) }}"
-                                            class="btn btn-sm btn-outline-primary">Edit</a>
-                                        <form method="POST" action="{{ route('devices.destroy', $device) }}"
-                                            class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <a href="{{ route('devices.edit', $device) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        <form method="POST" action="{{ route('devices.destroy', $device) }}" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -68,30 +66,39 @@
                             @endforeach
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ✅ JS CDN --}}
+    
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script>
 
-    {{-- ✅ DataTables Init --}}
+    
     <script>
         $(document).ready(function() {
             $('#devicesTable').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [10, 25, 50, 100],
-                "language": {
-                    "search": "Search:",
-                    "lengthMenu": "Show _MENU_ entries",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ entries"
+                processing: true,
+                deferRender: true,
+
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    zeroRecords: "No matching devices found",
+                    infoEmpty: "No devices available",
+                    infoFiltered: "(filtered from _MAX_ total records)"
                 }
             });
 
+            // Make rows clickable
             $('#devicesTable').on('click', '.clickable-row', function(e) {
                 if ($(e.target).is('a') || $(e.target).is('button') || $(e.target).closest('form').length) {
                     return;
@@ -101,33 +108,31 @@
         });
     </script>
 
+    {{-- ✅ Styling --}}
     <style>
         .clickable-row {
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
         }
-
         .clickable-row:hover {
             background-color: #e7f3ff;
             color: #0c4a6e;
         }
-    </style>
-
-    <style>
         #success-alert.fade-out {
             opacity: 0;
             transition: opacity 1s ease-out;
         }
     </style>
 
+    {{-- ✅ Success Alert Fade Out --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const alert = document.getElementById('success-alert');
             if (alert) {
                 setTimeout(() => {
                     alert.classList.add('fade-out');
-                    setTimeout(() => alert.remove(), 1000); // remove after fade-out completes
-                }, 2300); // wait 2.3s before fading out
+                    setTimeout(() => alert.remove(), 1000);
+                }, 2300);
             }
         });
     </script>

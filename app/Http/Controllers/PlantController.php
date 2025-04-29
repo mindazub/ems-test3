@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Plant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PlantController extends Controller
 {
     public function index()
     {
-        $plants = Plant::with('mainFeeds.devices')->get();
+        $plants = Cache::remember('plants.with.mainFeeds.devices', now()->addMinutes(10), function () {
+            return Plant::with('mainFeeds.devices')->get();
+        });
+
         return view('plants.index', compact('plants'));
     }
 
@@ -45,6 +49,8 @@ class PlantController extends Controller
                 : null,
         ]);
 
+        Cache::forget('plants.with.mainFeeds.devices');
+
         return redirect()->route('plants.index')->with('message', 'Plant created successfully.');
     }
 
@@ -77,14 +83,15 @@ class PlantController extends Controller
                 ? \Carbon\Carbon::parse($request->last_updated)->timestamp
                 : null,
         ]);
-
+        Cache::forget('plants.with.mainFeeds.devices');
         return redirect()->route('plants.index')->with('message', 'Plant updated successfully.');
     }
 
 
     public function destroy(Plant $plant)
-    {
+    {    
         $plant->delete();
+        Cache::forget('plants.with.mainFeeds.devices');
         return redirect()->route('plants.index')->with('message', 'Plant deleted successfully.');
     }
 
