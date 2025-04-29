@@ -1,10 +1,6 @@
 <x-app-layout>
 
 
-   
-
-
-
     <x-slot name="header">
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="font-semibold text-xl leading-tight">
@@ -72,9 +68,8 @@
                             @endforeach
                         </tbody>
                     </table>
-                    <div class="mt-3">
-                        {{ $devices->links() }}
-                    </div>                    
+
+                                      
                 </div>
             </div>
         </div>
@@ -92,14 +87,16 @@
         $(document).ready(function() {
             $(document).ready(function() {
                 $('#devicesTable').DataTable({
-                    paging: false, // disable DataTables client paging
-                    info: false,   // hide "Showing x to y of z entries"
+                    paging: true,
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    info: true,
                     language: {
                         search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
                         zeroRecords: "No matching devices found",
                     },
-                    //
-                    searching: true,
                     ordering: true
                 });
             });
