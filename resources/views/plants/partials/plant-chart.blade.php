@@ -230,9 +230,7 @@
                             display: true,
                             text: 'Power (kW)'
                         },
-                        ticks: {
-                            font: { weight: 'normal' }
-                        },
+
                         grid: {
                             lineWidth: 1,
                             color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
@@ -241,12 +239,8 @@
                     x: {
 
                         ticks: {
-                            font: { weight: 'bold' }
+                            font: { weight: 'normal' }
                         },
-                        grid: {
-                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
                     }
                 }
             }
