@@ -79,7 +79,16 @@ class DownloadController extends Controller
             default => null,
         };
 
-        $image = public_path("charts/{$plant->id}_{$chart}.png");
+
+        $imagePath = public_path("charts/{$plant->id}_{$chart}.png");
+
+        if (!file_exists($imagePath)) {
+            return back()->with('error', 'Chart image not found.');
+        }
+
+        $imageData = base64_encode(file_get_contents($imagePath));
+        $image = 'data:image/png;base64,' . $imageData;
+
 
         if (!$dataFile || !file_exists($dataFile)) {
             return back()->with('error', 'Chart data not found.');

@@ -15,11 +15,7 @@
 <body>
     <h2>{{ ucfirst($chart) }} Report - {{ $plant->name }}</h2>
 
-    @if(file_exists($image))
-        <img src="{{ $image }}" alt="Chart Image">
-    @else
-        <p><em>Chart image not found.</em></p>
-    @endif
+    <img src="{{ $image }}" alt="Chart Image">
 
     <table>
         <thead>
