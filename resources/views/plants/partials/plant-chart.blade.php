@@ -151,6 +151,7 @@
         <div class="tab-pane fade show active h-100" id="savingsGraphTab" role="tabpanel"
             aria-labelledby="savings-graph-tab">
             <h4 class="text-center m-3">Battery Savings</h4>
+            <p id="batterySavingsTotal" class="text-center text-success fw-semibold"></p>
             <div style="height: calc(100% - 90px); display: flex; align-items: center;">
                 <canvas id="savingsChart" style="width: 100%; height: 100%;"></canvas>
             </div>
@@ -301,6 +302,11 @@
     const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
     const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
     const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
+
+    // --- Calculate total savings ---
+    const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
+    document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
+
 
     window.batterySavingsChart = new Chart(document.getElementById('savingsChart'), {
         type: 'bar',

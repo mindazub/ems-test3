@@ -23,7 +23,7 @@
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
                         <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
                         <p><strong>Status:</strong> {{ $plant->status }}</p>
-                        <p><strong>Capacity:</strong> {{ $plant->capacity }} W</p>
+                        <p><strong>Battery Capacity:</strong> {{ number_format($plant->capacity / 1000, 2) }} kW</p>
                         <p><strong>Location:</strong> Lat {{ $plant->latitude }}, Lng {{ $plant->longitude }}</p>
                         <p><strong>Last Updated:</strong>
                             {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
@@ -141,7 +141,7 @@
     </script>
 
 <script>
-    
+
 function uploadChartImage(chartId, chartInstance, plantId) {
     const canvas = document.getElementById(chartId);
 
