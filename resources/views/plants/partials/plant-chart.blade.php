@@ -329,7 +329,7 @@
     });
 
     // Upload savings chart
-    setTimeout(() => uploadChartImage('batterySavingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
+    setTimeout(() => uploadChartImage('savingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
     // Additional functionality can be added here if needed
     // You can add more charts or data processing functions below this line
 }
