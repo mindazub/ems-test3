@@ -79,17 +79,22 @@ class DownloadController extends Controller
             default => null,
         };
 
+
         $imagePath = public_path("charts/{$plant->id}_{$chart}.png");
 
+        if (!file_exists($imagePath)) {
+            return back()->with('error', 'Chart image not found.');
+        }
+
+        $imageData = base64_encode(file_get_contents($imagePath));
+        $image = 'data:image/png;base64,' . $imageData;
+
+
         if (!$dataFile || !file_exists($dataFile)) {
-            return back()->with('error', 'Chart data or image not found.');
+            return back()->with('error', 'Chart data not found.');
         }
 
         $data = json_decode(file_get_contents($dataFile), true);
-
-        // Convert chart PNG to base64 for embedding in PDF
-        $imageData = base64_encode(file_get_contents($imagePath));
-        $image = 'data:image/png;base64,' . $imageData;
 
         return PDF::loadView("plants.exports.pdf", [
             'plant' => $plant,
