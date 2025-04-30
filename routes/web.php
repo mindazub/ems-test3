@@ -5,10 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\PlantController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
-use Pest\ArchPresets\Custom;
+use App\Http\Controllers\DownloadController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,6 +28,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('plants', PlantController::class);
     Route::resource('devices', DeviceController::class);
 
+    // Download PNG, CSV, PDF
+    Route::get('/plants/{plant}/download/{chart}/{type}', [DownloadController::class, 'download'])
+    ->name('plants.download');
+    Route::post('/charts/upload', [\App\Http\Controllers\ChartUploadController::class, 'store'])
+    ->name('charts.upload');
 
 });
 

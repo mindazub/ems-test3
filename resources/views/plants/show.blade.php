@@ -140,6 +140,51 @@
         });
     </script>
 
+<script>
+    
+function uploadChartImage(chartId, chartInstance, plantId) {
+    const canvas = document.getElementById(chartId);
+
+    const scale = 2;
+    const originalWidth = canvas.width;
+    const originalHeight = canvas.height;
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = originalWidth * scale;
+    tempCanvas.height = originalHeight * scale;
+
+    const ctx = tempCanvas.getContext("2d");
+
+    // Fill white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Scale and draw original chart into temp canvas
+    ctx.scale(scale, scale);
+    ctx.drawImage(canvas, 0, 0);
+
+    const imageData = tempCanvas.toDataURL("image/png");
+
+    fetch("{{ route('charts.upload') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').getAttribute("content")
+        },
+        body: JSON.stringify({
+            plant_id: plantId,
+            chart: chartId.replace('Chart', '').toLowerCase(),
+            image: imageData
+        })
+    })
+    .then(res => res.json())
+    .then(res => console.log("✅ Uploaded high-res:", chartId))
+    .catch(err => console.error("❌ Upload failed:", err));
+}
+
+
+
+    </script>
 
 
 </x-app-layout>

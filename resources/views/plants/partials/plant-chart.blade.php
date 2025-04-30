@@ -19,17 +19,10 @@
                                 <i class="bi bi-download"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="energyDownloadMenu">
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartImage('energyChart', null,2)">Download PNG
-                                        (High-Res)</a>
-                                </li>
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartCSV('energyChart', window.energyChart)">Download
-                                        CSV</a></li>
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartPDF('energyChart', 'energyDataTable')">Download
-                                        PDF</a></li>
-                            </ul>
+                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'png']) }}">Download PNG</a></li>
+                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a></li>
+                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'pdf']) }}">Download PDF</a></li>
+                                                            </ul>
                         </div>
                     </div>
                 </li>
@@ -84,15 +77,11 @@
                                 id="batteryDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-download"></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="batteryDownloadMenu">
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartImage('batteryChart')">Download PNG</a></li>
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartCSV('batteryChart', window.batteryChart)">Download
-                                        CSV</a></li>
-                                <li><a class="dropdown-item" href="#"
-                                        onclick="downloadChartPDF('batteryChart', 'batteryDataTable')">Download
-                                        PDF</a></li>
+{{-- BATTERY Chart Buttons --}}
+<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="batteryPowerDownloadMenu">
+<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'png']) }}">Download PNG</a></li>
+<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a></li>
+<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'pdf']) }}">Download PDF</a></li>
                             </ul>
                         </div>
                     </div>
@@ -147,15 +136,12 @@
                             <i class="bi bi-download"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="savingsDownloadMenu">
-                            <li><a class="dropdown-item" href="#"
-                                    onclick="downloadChartImage('batterySavingsChart')">Download PNG</a></li>
-                            <li><a class="dropdown-item" href="#"
-                                    onclick="downloadChartCSV('batterySavingsChart', window.batterySavingsChart)">Download
-                                    CSV</a></li>
-                            <li><a class="dropdown-item" href="#"
-                                    onclick="downloadChartPDF('batterySavingsChart', 'batterySavingsDataTable')">Download
-                                    PDF</a></li>
-                        </ul>
+{{-- SAVINGS Chart Buttons --}}
+
+    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'png']) }}">Download PNG</a></li>
+    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a></li>
+    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'pdf']) }}">Download PDF</a></li>
+                                </ul>
                     </div>
                 </div>
             </li>
@@ -166,7 +152,7 @@
             aria-labelledby="savings-graph-tab">
             <h4 class="text-center m-3">Battery Savings</h4>
             <div style="height: calc(100% - 90px); display: flex; align-items: center;">
-                <canvas id="batterySavingsChart" style="width: 100%; height: 100%;"></canvas>
+                <canvas id="savingsChart" style="width: 100%; height: 100%;"></canvas>
             </div>
         </div>
         <div class="tab-pane fade h-100" id="savingsDataTab" role="tabpanel" aria-labelledby="savings-data-tab">
@@ -190,7 +176,7 @@
     document.addEventListener("DOMContentLoaded", async function() {
         try {
             const [batteryOkRes, batterySavingsRes] = await Promise.all([
-                fetch("{{ asset('batteries_ok.json') }}").then(res => res.json()),
+                fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
                 fetch("{{ asset('battery_savings.json') }}").then(res => res.json()),
             ]);
             renderCharts(batteryOkRes, batterySavingsRes);
@@ -211,115 +197,143 @@
 
 
     function renderCharts(batteryOkData, batterySavingsData) {
-        const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const labels = entries.map(([ts]) => formatLabelDate(ts));
 
-        const labels = entries.map(([ts]) => formatLabelDate(ts));
-        const pvData = entries.map(([, v]) => v.pv_p);
-        const batteryData = entries.map(([, v]) => v.battery_p);
-        const gridData = entries.map(([, v]) => v.grid_p);
-        const tariffData = entries.map(([, v]) => v.tariff);
+    const pvData = entries.map(([, v]) => v.pv_p);
+    const batteryData = entries.map(([, v]) => v.battery_p);
+    const gridData = entries.map(([, v]) => v.grid_p);
+    const tariffData = entries.map(([, v]) => v.tariff);
 
-        new Chart(document.getElementById('energyChart'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                        label: 'PV',
-                        data: pvData,
-                        borderColor: 'blue',
-                        fill: false
-                    },
-                    {
-                        label: 'Battery',
-                        data: batteryData,
-                        borderColor: 'orange',
-                        fill: false
-                    },
-                    {
-                        label: 'Grid',
-                        data: gridData,
-                        borderColor: 'green',
-                        fill: false
-                    },
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
+    // --- Energy Chart ---
+    window.energyChart = new Chart(document.getElementById('energyChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'PV', data: pvData, borderColor: 'blue', fill: false },
+                { label: 'Battery', data: batteryData, borderColor: 'orange', fill: false },
+                { label: 'Grid', data: gridData, borderColor: 'green', fill: false },
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+
+    // Populate Energy Table
+    const energyTable = document.querySelector('#energyDataTableBody');
+    entries.forEach(([ts, val]) => {
+        energyTable.innerHTML += `
+            <tr>
+                <td>${formatLabelDate(ts)}</td>
+                <td>${val.pv_p.toFixed(2)}</td>
+                <td>${val.battery_p.toFixed(2)}</td>
+                <td>${val.grid_p.toFixed(2)}</td>
+            </tr>`;
+    });
+
+    // Upload energy chart
+    setTimeout(() => uploadChartImage('energyChart', window.energyChart, {{ $plant->id }}), 800);
+
+    // --- Battery Chart ---
+    window.batteryChart = new Chart(document.getElementById('batteryChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Battery Power',
+                    data: batteryData,
+                    backgroundColor: 'rgba(0,123,255,0.5)',
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'Tariff',
+                    data: tariffData,
+                    backgroundColor: 'rgba(40,167,69,0.5)',
+                    yAxisID: 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    min: -30000,
+                    max: 30000,
+                    ticks: { callback: v => v.toLocaleString() },
+                    title: { display: true, text: 'Battery Power (W)' }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    min: -0.25,
+                    max: 0.25,
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Tariff (€ / kWh)' }
                 }
             }
-        });
+        }
+    });
 
-        const energyTable = document.querySelector('#energyDataTable tbody');
-        entries.forEach(([ts, val]) => {
-            energyTable.innerHTML +=
-                `<tr><td>${formatLabelDate(ts)}</td><td>${val.pv_p.toFixed(2)}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.grid_p.toFixed(2)}</td></tr>`;
-        });
+    // Populate Battery Table
+    const batteryTable = document.querySelector('#batteryDataTableBody');
+    entries.forEach(([ts, val]) => {
+        batteryTable.innerHTML += `
+            <tr>
+                <td>${formatLabelDate(ts)}</td>
+                <td>${val.battery_p.toFixed(2)}</td>
+                <td>${val.tariff.toFixed(4)}</td>
+            </tr>`;
+    });
 
-        new Chart(document.getElementById('batteryChart'), {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                        label: 'Battery Power',
-                        data: batteryData,
-                        backgroundColor: 'rgba(0,123,255,0.5)'
-                    },
-                    {
-                        label: 'Tariff',
-                        data: tariffData,
-                        backgroundColor: 'rgba(40,167,69,0.5)'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                }
-            }
-        });
+    // Upload battery chart
+    setTimeout(() => uploadChartImage('batteryChart', window.batteryChart, {{ $plant->id }}), 800);
 
-        const batteryTable = document.querySelector('#batteryDataTable tbody');
-        entries.forEach(([ts, val]) => {
-            batteryTable.innerHTML +=
-                `<tr><td>${formatLabelDate(ts)}</td><td>${val.battery_p.toFixed(2)}</td><td>${val.tariff.toFixed(4)}</td></tr>`;
-        });
+    // --- Battery Savings Chart ---
+    const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
+    const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
+    const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
 
-        const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
-        const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
-        const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
+    window.batterySavingsChart = new Chart(document.getElementById('savingsChart'), {
+        type: 'bar',
+        data: {
+            labels: savingsLabels,
+            datasets: [{
+                label: 'Battery Savings',
+                data: savingsData,
+                backgroundColor: savingsColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
 
-        new Chart(document.getElementById('batterySavingsChart'), {
-            type: 'bar',
-            data: {
-                labels: savingsLabels,
-                datasets: [{
-                    label: 'Battery Savings',
-                    data: savingsData,
-                    backgroundColor: savingsColors
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+    // Populate Battery Savings Table
+    const savingsTable = document.querySelector('#batterySavingsDataTableBody');
+    savingsEntries.forEach(([ts, val]) => {
+        savingsTable.innerHTML += `
+            <tr>
+                <td>${formatLabelDate(ts)}</td>
+                <td>${val.battery_savings.toFixed(2)}</td>
+            </tr>`;
+    });
 
-        const savingsTable = document.querySelector('#batterySavingsDataTable tbody');
-        savingsEntries.forEach(([ts, val]) => {
-            savingsTable.innerHTML +=
-                `<tr><td>${formatLabelDate(ts)}</td><td>€${val.battery_savings.toFixed(2)}</td></tr>`;
-        });
-    }
+    // Upload savings chart
+    setTimeout(() => uploadChartImage('batterySavingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
+    // Additional functionality can be added here if needed
+    // You can add more charts or data processing functions below this line
+}
+
+
+
+
 </script>
