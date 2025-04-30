@@ -174,7 +174,7 @@
 
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function() {
+    document.addEventListener("DOMContentLoaded", async function () {
         try {
             const [batteryOkRes, batterySavingsRes] = await Promise.all([
                 fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
@@ -186,7 +186,6 @@
         }
     });
 
-
     function formatLabelDate(ts) {
         const date = isNaN(ts) ? new Date(ts) : new Date(Number(ts));
         return date.toLocaleTimeString([], {
@@ -195,152 +194,254 @@
         });
     }
 
-
-
     function renderCharts(batteryOkData, batterySavingsData) {
-    const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
-    const labels = entries.map(([ts]) => formatLabelDate(ts));
+        const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
+        const labels = entries.map(([ts]) => formatLabelDate(ts));
 
-    const pvData = entries.map(([, v]) => v.pv_p);
-    const batteryData = entries.map(([, v]) => v.battery_p);
-    const gridData = entries.map(([, v]) => v.grid_p);
-    const tariffData = entries.map(([, v]) => v.tariff);
+        const pvData = entries.map(([, v]) => v.pv_p);
+        const batteryData = entries.map(([, v]) => v.battery_p);
+        const gridData = entries.map(([, v]) => v.grid_p);
+        const tariffData = entries.map(([, v]) => v.tariff);
 
-    // --- Energy Chart ---
-    window.energyChart = new Chart(document.getElementById('energyChart'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                { label: 'PV', data: pvData, borderColor: 'blue', fill: false },
-                { label: 'Battery', data: batteryData, borderColor: 'orange', fill: false },
-                { label: 'Grid', data: gridData, borderColor: 'green', fill: false },
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } }
-        }
-    });
+        // --- Energy Chart ---
+        const pvDataKW = pvData.map(v => v / 1000);
+        const batteryDataKW00 = batteryData.map(v => v / 1000);
+        const gridDataKW = gridData.map(v => v / 1000);
 
-    // Populate Energy Table
-    const energyTable = document.querySelector('#energyDataTableBody');
-    entries.forEach(([ts, val]) => {
-        energyTable.innerHTML += `
-            <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${val.pv_p.toFixed(2)}</td>
-                <td>${val.battery_p.toFixed(2)}</td>
-                <td>${val.grid_p.toFixed(2)}</td>
-            </tr>`;
-    });
 
-    // Upload energy chart
-    setTimeout(() => uploadChartImage('energyChart', window.energyChart, {{ $plant->id }}), 800);
-
-    // --- Battery Chart ---
-    window.batteryChart = new Chart(document.getElementById('batteryChart'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: 'Battery Power',
-                    data: batteryData,
-                    backgroundColor: 'rgba(0,123,255,0.5)',
-                    yAxisID: 'y',
+        window.energyChart = new Chart(document.getElementById('energyChart'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'PV (kW)', data: pvDataKW, borderColor: 'blue', fill: false },
+                    { label: 'Battery (kW)', data: batteryDataKW00, borderColor: 'orange', fill: false },
+                    { label: 'Grid (kW)', data: gridDataKW, borderColor: 'green', fill: false },
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
                 },
-                {
-                    label: 'Tariff',
-                    data: tariffData,
-                    backgroundColor: 'rgba(40,167,69,0.5)',
-                    yAxisID: 'y1',
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } },
-            scales: {
-                y: {
-                    type: 'linear',
-                    position: 'left',
-                    min: -30000,
-                    max: 30000,
-                    ticks: { callback: v => v.toLocaleString() },
-                    title: { display: true, text: 'Battery Power (W)' }
-                },
-                y1: {
-                    type: 'linear',
-                    position: 'right',
-                    min: -0.25,
-                    max: 0.25,
-                    grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'Tariff (€ / kWh)' }
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Power (kW)'
+                        },
+                        ticks: {
+                            font: { weight: 'normal' }
+                        },
+                        grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    },
+                    x: {
+
+                        ticks: {
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    }
                 }
             }
-        }
-    });
-
-    // Populate Battery Table
-    const batteryTable = document.querySelector('#batteryDataTableBody');
-    entries.forEach(([ts, val]) => {
-        batteryTable.innerHTML += `
-            <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${val.battery_p.toFixed(2)}</td>
-                <td>${val.tariff.toFixed(4)}</td>
-            </tr>`;
-    });
+        });
 
 
-    // Upload battery chart
-    setTimeout(() => uploadChartImage('batteryChart', window.batteryChart, {{ $plant->id }}), 800);
+        const energyTable = document.querySelector('#energyDataTableBody');
+        entries.forEach(([ts, val]) => {
+            energyTable.innerHTML += `
+                <tr>
+                    <td>${formatLabelDate(ts)}</td>
+                    <td>${val.pv_p.toFixed(2)}</td>
+                    <td>${val.battery_p.toFixed(2)}</td>
+                    <td>${val.grid_p.toFixed(2)}</td>
+                </tr>`;
+        });
 
-    // --- Battery Savings Chart ---
-    const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
-    const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
-    const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
-    const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
+        setTimeout(() => uploadChartImage('energyChart', window.energyChart, {{ $plant->id }}), 800);
 
-    // --- Calculate total savings ---
-    const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
-    document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
+        // --- Battery Chart ---
+        const batteryDataKW = batteryData.map(v => v / 1000);
+
+        window.batteryChart = new Chart(document.getElementById('batteryChart'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Battery Power',
+                        data: batteryDataKW,
+                        backgroundColor: 'rgba(0,123,255,0.5)',
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Tariff',
+                        data: tariffData,
+                        backgroundColor: 'rgba(40,167,69,0.5)',
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        min: -30,
+                        max: 30,
+                        ticks: {
+                            callback: v => v.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+                            font: { weight: 'bold' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Battery Power (kW)'
+                        },
+                        grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        min: -0.25,
+                        max: 0.25,
+                        grid: { drawOnChartArea: false },
+                        title: {
+                            display: true,
+                            text: 'Tariff (€ / kWh)'
+                        },
+                        ticks: {
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    }
+                }
+            }
+        });
+
+        const batteryTable = document.querySelector('#batteryDataTableBody');
+        entries.forEach(([ts, val]) => {
+            batteryTable.innerHTML += `
+                <tr>
+                    <td>${formatLabelDate(ts)}</td>
+                    <td>${val.battery_p.toFixed(2)}</td>
+                    <td>${val.tariff.toFixed(4)}</td>
+                </tr>`;
+        });
+
+        setTimeout(() => uploadChartImage('batteryChart', window.batteryChart, {{ $plant->id }}), 800);
+
+        // --- Battery Savings Chart ---
+        const savingsEntries = Object.entries(batterySavingsData).sort(([a, b]) => new Date(a) - new Date(b));
+        const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
+        const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
+        const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
+        const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
+        document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
+
+        window.batterySavingsChart = new Chart(document.getElementById('savingsChart'), {
+            type: 'bar',
+            data: {
+                labels: savingsLabels,
+                datasets: [{
+                    label: 'Battery Savings',
+                    data: savingsData,
+                    backgroundColor: savingsColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        ticks: {
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Battery Savings (€)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    }
+                }
+            }
+        });
+
+        const savingsTable = document.querySelector('#batterySavingsDataTableBody');
+        savingsEntries.forEach(([ts, val]) => {
+            savingsTable.innerHTML += `
+                <tr>
+                    <td>${formatLabelDate(ts)}</td>
+                    <td>${val.battery_savings.toFixed(2)}</td>
+                </tr>`;
+        });
+
+        setTimeout(() => uploadChartImage('savingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
+    }
+
+    function uploadChartImage(chartId, chartInstance, plantId) {
+        const canvas = document.getElementById(chartId);
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+
+        const ctx = tempCanvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+
+        const imageData = tempCanvas.toDataURL("image/png");
+
+        fetch("{{ route('charts.upload') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+            },
+            body: JSON.stringify({
+                plant_id: plantId,
+                chart: chartId.replace('Chart', '').toLowerCase(),
+                image: imageData
+            })
+        })
+            .then(res => res.json())
+            .then(res => console.log("✅ Uploaded high-res:", chartId))
+            .catch(err => console.error("❌ Upload failed:", err));
+    }
+    </script>
 
 
-    window.batterySavingsChart = new Chart(document.getElementById('savingsChart'), {
-        type: 'bar',
-        data: {
-            labels: savingsLabels,
-            datasets: [{
-                label: 'Battery Savings',
-                data: savingsData,
-                backgroundColor: savingsColors
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-        }
-    });
-
-    // Populate Battery Savings Table
-    const savingsTable = document.querySelector('#batterySavingsDataTableBody');
-    savingsEntries.forEach(([ts, val]) => {
-        savingsTable.innerHTML += `
-            <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${val.battery_savings.toFixed(2)}</td>
-            </tr>`;
-    });
-
-    // Upload savings chart
-    setTimeout(() => uploadChartImage('savingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
-    // Additional functionality can be added here if needed
-    // You can add more charts or data processing functions below this line
-}
-
-
-
-
-</script>
