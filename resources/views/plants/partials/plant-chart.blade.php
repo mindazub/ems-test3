@@ -292,6 +292,7 @@
             </tr>`;
     });
 
+
     // Upload battery chart
     setTimeout(() => uploadChartImage('batteryChart', window.batteryChart, {{ $plant->id }}), 800);
 
