@@ -91,7 +91,7 @@
         <div class="card-body tab-content" id="batteryTabContent" style="height: 550px;">
             <div class="tab-pane fade show active h-100" id="batteryGraphTab" role="tabpanel"
                 aria-labelledby="battery-graph-tab">
-                <h4 class="text-center m-3">Battery Power and Tariff</h4>
+                <h4 class="text-center m-3">Battery Power and Energy Price</h4>
                 <div style="height: calc(100% - 90px); display: flex; align-items: center;">
                     <canvas id="batteryChart" style="width: 100%; height: 100%;"></canvas>
                 </div>
@@ -102,8 +102,8 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Time</th>
-                                <th>Battery Power (W)</th>
-                                <th>Tariff (€ / kWh)</th>
+                                <th>Battery Power (kW)</th>
+                                <th>Energy Price (€ / kWh)</th>
                             </tr>
                         </thead>
                         <tbody id="batteryDataTableBody"></tbody>
@@ -269,13 +269,13 @@
                 labels,
                 datasets: [
                     {
-                        label: 'Battery Power',
+                        label: 'Battery Power (kWh)',
                         data: batteryDataKW,
                         backgroundColor: 'rgba(0,123,255,0.5)',
                         yAxisID: 'y',
                     },
                     {
-                        label: 'Tariff',
+                        label: 'Energy Price (€ / kWh)',
                         data: tariffData,
                         backgroundColor: 'rgba(40,167,69,0.5)',
                         yAxisID: 'y1',
@@ -312,7 +312,7 @@
                         grid: { drawOnChartArea: false },
                         title: {
                             display: true,
-                            text: 'Tariff (€ / kWh)'
+                            text: 'Energy Price (€ / kWh)'
                         },
                         ticks: {
                             font: { weight: 'bold' }
@@ -360,7 +360,7 @@
             data: {
                 labels: savingsLabels,
                 datasets: [{
-                    label: 'Battery Savings',
+                    label: 'Battery Savings (€)',
                     data: savingsData,
                     backgroundColor: savingsColors
                 }]
