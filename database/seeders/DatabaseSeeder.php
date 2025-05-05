@@ -7,106 +7,165 @@ use App\Models\User;
 use App\Models\Plant;
 use App\Models\MainFeed;
 use App\Models\Device;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // === Seed Users ===
-        $admin = User::create([
+        $this->cleanDatabase();
+        $this->createUsers();
+
+        // 1️⃣ PREPARE DEVICE DATA (DO NOT CREATE YET)
+
+        $parentDevicesData = [];
+        for ($i = 1; $i <= 40; $i++) {
+            $parentDevicesData[] = [
+                'device_type' => 'Meter',
+                'manufacturer' => 'Generic Inc.',
+                'device_model' => 'ParentModel-' . $i,
+                'device_status' => 'Ready',
+                'parent_device' => true,
+                'parameters' => [
+                    'communication_type' => 'Modbus TCP/IP',
+                    'ip' => '192.168.1.' . $i,
+                    'port' => 502,
+                ],
+            ];
+        }
+
+        $slaveDevicesData = [];
+        for ($i = 1; $i <= 300; $i++) {
+            $slaveDevicesData[] = [
+                'device_type' => 'Inverter',
+                'manufacturer' => 'Huawei',
+                'device_model' => 'SlaveModel-' . $i,
+                'device_status' => 'Ready',
+                'parent_device' => false,
+                'parameters' => [
+                    'slave_id' => $i,
+                ],
+            ];
+        }
+
+        // Shuffle the arrays so selection is random
+        shuffle($parentDevicesData);
+        shuffle($slaveDevicesData);
+
+        $slaveIndex = 0;
+        $parentIndex = 0;
+
+        // 2️⃣ CREATE PLANTS, MAINFEEDS, AND ASSIGN DEVICES
+
+        for ($plantNum = 1; $plantNum <= 50; $plantNum++) {
+
+            $plant = Plant::create([
+                'name' => 'Plant #' . $plantNum,
+                'owner_email' => 'owner' . $plantNum . '@example.com',
+                'status' => 'Working',
+                'capacity' => rand(100000, 500000),
+                'latitude' => 50 + rand(0, 10),
+                'longitude' => 20 + rand(0, 10),
+                'last_updated' => now(),
+            ]);
+
+            // Each plant gets 1 to 4 feeds
+            $feedCount = rand(1, 4);
+
+            for ($feedNum = 1; $feedNum <= $feedCount; $feedNum++) {
+
+                // Stop if we run out of parent devices
+                if ($parentIndex >= count($parentDevicesData)) {
+                    break 2; // exit both loops if no more parents
+                }
+
+                $mainFeed = $plant->mainFeeds()->create([
+                    'import_power' => rand(50000, 150000),
+                    'export_power' => rand(20000, 100000),
+                ]);
+
+                // --- Create parent device assigned to this feed
+                $parentData = $parentDevicesData[$parentIndex];
+                $parentDevice = $mainFeed->devices()->create($parentData);
+
+                $parentIndex++;
+
+                // Assign 2 to 5 slave devices
+                $slaveCount = rand(2, 5);
+
+                for ($i = 1; $i <= $slaveCount; $i++) {
+
+                    // Stop if we run out of slaves
+                    if ($slaveIndex >= count($slaveDevicesData)) {
+                        break;
+                    }
+
+                    $slaveData = $slaveDevicesData[$slaveIndex];
+                    // Add relation fields
+                    $slaveData['main_feed_id'] = $mainFeed->id;
+                    $slaveData['parent_device_id'] = $parentDevice->id;
+
+                    // Create slave device
+                    Device::create($slaveData);
+
+                    $slaveIndex++;
+                }
+            }
+        }
+
+        $this->command->info('✅ Plants, feeds, and pre-prepared devices assigned successfully!');
+    }
+
+    private function cleanDatabase(): void
+    {
+        $connection = DB::getDriverName();
+
+        if ($connection === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } elseif ($connection === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        }
+
+        Device::truncate();
+        MainFeed::truncate();
+        Plant::truncate();
+        User::truncate();
+
+        if ($connection === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } elseif ($connection === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        }
+    }
+
+    private function createUsers(): void
+    {
+        User::create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
             'password' => bcrypt('admin000'),
             'role' => 'admin',
         ]);
 
-        $manager = User::create([
+        User::create([
             'name' => 'Manager',
             'email' => 'manager@demo.com',
             'password' => bcrypt('manager000'),
             'role' => 'manager',
         ]);
 
-        $installer = User::create([
+        User::create([
             'name' => 'Installer',
             'email' => 'installer@demo.com',
             'password' => bcrypt('installer000'),
             'role' => 'installer',
         ]);
 
-        $customer = User::create([
+        User::create([
             'name' => 'Customer',
             'email' => 'customer@demo.com',
             'password' => bcrypt('customer000'),
             'role' => 'customer',
         ]);
-
-        // === Import JSON Plant Data ===
-        $jsonPath = database_path('seeders/generated_plant_data.json');
-        if (!File::exists($jsonPath)) {
-            $this->command->error('JSON file not found: plant_view_data.json');
-            return;
-        }
-
-        $json = File::get($jsonPath);
-        $jsonData = json_decode($json, true);
-
-        $plantCounter = 1;
-
-        foreach ($jsonData as $entry) {
-            if (!isset($entry['plant_id'])) continue;
-
-            // Create Plant
-            $plant = Plant::create([
-                'name' => "Plant #$plantCounter",
-                'owner_email' => $entry['plant_owner'],
-                'status' => $entry['plant_status'],
-                'capacity' => $entry['plant_capacity'],
-                'latitude' => $entry['latitude'],
-                'longitude' => $entry['longitude'],
-                'last_updated' => $entry['last_updated'],
-            ]);
-
-            $plantCounter++;
-
-            if (!isset($entry['main_feeds'])) continue;
-
-            foreach ($entry['main_feeds'] as $feedData) {
-                $mainFeed = $plant->mainFeeds()->create([
-                    'import_power' => $feedData['import_power'],
-                    'export_power' => $feedData['export_power'],
-                ]);
-
-                if (!isset($feedData['devices'])) continue;
-
-                foreach ($feedData['devices'] as $deviceData) {
-                    // Create parent device
-                    $device = $mainFeed->devices()->create([
-                        'device_type' => $deviceData['device_type'],
-                        'manufacturer' => $deviceData['manufacturer'],
-                        'device_model' => $deviceData['device_model'],
-                        'device_status' => $deviceData['device_status'],
-                        'parent_device' => true,
-                        'parameters' => $deviceData['parameters'] ?? [],
-                    ]);
-
-                    // Handle assigned devices (children)
-                    if (isset($deviceData['assigned_devices'])) {
-                        foreach ($deviceData['assigned_devices'] as $assigned) {
-                            $mainFeed->devices()->create([
-                                'device_type' => $assigned['device_type'],
-                                'manufacturer' => $assigned['manufacturer'],
-                                'device_model' => $assigned['device_model'],
-                                'device_status' => $assigned['device_status'],
-                                'parent_device' => false,
-                                'parent_device_id' => $device->id,
-                                'parameters' => $assigned['parameters'] ?? [],
-                            ]);
-                        }
-                    }
-                }
-            }
-        }
     }
 }

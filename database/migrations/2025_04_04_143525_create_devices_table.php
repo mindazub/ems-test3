@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
-            // $table->foreignId('plant_id')->constrained()->onDelete('cascade');
             $table->foreignId('main_feed_id')->constrained()->onDelete('cascade');
             $table->foreignId('parent_device_id')->nullable()->constrained('devices')->onDelete('set null');
             $table->string('device_type');
