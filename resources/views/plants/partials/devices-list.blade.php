@@ -39,16 +39,18 @@
                 <div class="table-responsive">
                     <table class="table table-hover table-bordered table-fixed mb-0">
                         <colgroup>
-                            <col style="width:48px">   {{-- toggle / arrow --}}
+                            <col style="width:54px">   {{-- toggle / arrow --}}
+                            <col style="width:10%">    {{-- ID --}}
                             <col style="width:18%">    {{-- Type --}}
                             <col style="width:27%">    {{-- Manufacturer --}}
                             <col style="width:27%">    {{-- Model --}}
-                            <col style="width:18%">    {{-- Status --}}
+                            <col style="width:27%">    {{-- Status --}}
                         </colgroup>
 
                         <thead class="table-light">
                             <tr>
                                 <th></th>
+                                <th>ID</th>
                                 <th>Type</th>
                                 <th>Manufacturer</th>
                                 <th>Model</th>
@@ -69,6 +71,7 @@
                                         <i class="bi bi-plus-circle fs-5 toggle-icon"></i>
                                     </button>
                                 </td>
+                                <td>{{ $parent->id }} </td>
                                 <td class="ps-3">{{ $parent->device_type }}</td>
                                 <td>{{ $parent->manufacturer }}</td>
                                 <td>{{ $parent->device_model }}</td>
@@ -85,6 +88,7 @@
                                     <td class="text-center ps-4">
                                         <i class="bi bi-arrow-right"></i>
                                     </td>
+                                    <td>{{ $child->id }}</td>
                                     <td>{{ $child->device_type }}</td>
                                     <td>{{ $child->manufacturer }}</td>
                                     <td>{{ $child->device_model }}</td>
