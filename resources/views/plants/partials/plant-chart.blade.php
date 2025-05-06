@@ -201,6 +201,7 @@ const verticalLinePlugin = {
     }
 };
 
+// Register the verticalLinePlugin for all charts
 Chart.register(verticalLinePlugin);
 
 </script>
@@ -351,16 +352,19 @@ Chart.register(verticalLinePlugin);
                 labels,
                 datasets: [
                     {
-                        type: 'line', // ✅ Change this!
+                        type: 'line',
                         label: 'Battery Power (kW)',
                         data: batteryDataKW,
                         borderColor: 'rgba(0,123,255,0.8)',
-                        backgroundColor: 'rgba(0,123,255,0.3)',
-                        fill: false,
+                        backgroundColor: 'rgba(0,123,255,0.15)',
+                        fill: true,
                         yAxisID: 'y',
+                        pointRadius: 4,
+                        pointHoverRadius: 8,
+                        tension: 0.2
                     },
                     {
-                        type: 'bar', // ✅ Keep bar
+                        type: 'bar',
                         label: 'Energy Price (€ / kWh)',
                         data: tariffData,
                         backgroundColor: 'rgba(40,167,69,0.5)',
@@ -370,7 +374,17 @@ Chart.register(verticalLinePlugin);
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'top' } },
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                hover: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     y: {
                         type: 'linear',
