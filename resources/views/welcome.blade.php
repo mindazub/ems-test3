@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>EDISLAB | EMS Dashboard App</title>
+    <title>EDIS Lab | EMS Dashboard App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         tailwind.config = {
