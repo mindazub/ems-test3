@@ -258,32 +258,35 @@ Chart.register(verticalLinePlugin);
                     {
                         label: 'PV (kW)',
                         data: pvDataKW,
-                        borderColor: 'blue',
-                        fill: false,
-                        pointRadius: 2,        // <-- Make points bigger
-                        pointHoverRadius: 12   // <-- Make points bigger on hover
+                        borderColor: 'rgba(0,123,255,1)',         // blue line
+                        backgroundColor: 'rgba(0,123,255,0.15)',  // light blue fill
+                        fill: true,                               // fill area under line
+                        pointRadius: 2,
+                        pointHoverRadius: 12
                     },
                     {
                         label: 'Battery (kW)',
                         data: batteryDataKW00,
-                        borderColor: 'orange',
-                        fill: false,
+                        borderColor: 'rgba(220,53,69,1)',         // red line
+                        backgroundColor: 'rgba(220,53,69,0.12)',  // light red fill
+                        fill: true,
                         pointRadius: 2,
                         pointHoverRadius: 12
                     },
                     {
                         label: 'Grid (kW)',
                         data: gridDataKW,
-                        borderColor: 'green',
-                        fill: false,
+                        borderColor: 'rgba(40,167,69,1)',         // green line
+                        backgroundColor: 'rgba(40,167,69,0.12)',  // light green fill
+                        fill: true,
                         pointRadius: 2,
                         pointHoverRadius: 12
                     },
                 ]
             },
             options: {
-                responsive: true, // <-- set to true
-                maintainAspectRatio: false, // <-- add this for full height
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
                     tooltip: {
@@ -301,8 +304,8 @@ Chart.register(verticalLinePlugin);
                 },
                 elements: {
                     point: {
-                        radius: 4,         // Default point size
-                        hoverRadius: 8    // Point size on hover
+                        radius: 4,
+                        hoverRadius: 8
                     }
                 },
                 scales: {
@@ -311,14 +314,12 @@ Chart.register(verticalLinePlugin);
                             display: true,
                             text: 'Power (kW)'
                         },
-
                         grid: {
                             lineWidth: 1,
                             color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
                         }
                     },
                     x: {
-
                         ticks: {
                             font: { weight: 'normal' }
                         },
