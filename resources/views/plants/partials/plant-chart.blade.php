@@ -350,12 +350,16 @@ Chart.register(verticalLinePlugin);
                 labels,
                 datasets: [
                     {
+                        type: 'line', // ✅ Change this!
                         label: 'Battery Power (kW)',
                         data: batteryDataKW,
-                        backgroundColor: 'rgba(0,123,255,0.5)',
+                        borderColor: 'rgba(0,123,255,0.8)',
+                        backgroundColor: 'rgba(0,123,255,0.3)',
+                        fill: false,
                         yAxisID: 'y',
                     },
                     {
+                        type: 'bar', // ✅ Keep bar
                         label: 'Energy Price (€ / kWh)',
                         data: tariffData,
                         backgroundColor: 'rgba(40,167,69,0.5)',
