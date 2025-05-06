@@ -57,15 +57,17 @@ class DatabaseSeeder extends Seeder
 
         // 2️⃣ CREATE PLANTS, MAINFEEDS, AND ASSIGN DEVICES
 
+        $faker = \Faker\Factory::create();
+
         for ($plantNum = 1; $plantNum <= 50; $plantNum++) {
 
             $plant = Plant::create([
-                'name' => 'Plant #' . $plantNum,
-                'owner_email' => 'owner' . $plantNum . '@example.com',
+                'name' => 'Plant ' . $faker->city . ' ' . ucfirst(collect(explode(' ', $faker->catchPhrase))->take(2)->implode(' ')),
+                'owner_email' => strtolower($faker->firstName . '.' . $faker->lastName) . '@example.com',
                 'status' => 'Working',
                 'capacity' => rand(100000, 500000),
-                'latitude' => 50 + rand(0, 10),
-                'longitude' => 20 + rand(0, 10),
+                'latitude' => round(50 + mt_rand(0, 1000000) / 100000, 5),
+                'longitude' => round(20 + mt_rand(0, 1000000) / 100000, 5),
                 'last_updated' => now(),
             ]);
 

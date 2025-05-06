@@ -17,7 +17,7 @@
                 <!-- DEVICE INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
-                        <h1>{{ $device->device_model }} Details</h1>
+                        <h1><span class="text-muted italic">#ID&nbsp{{ $device->id }}&nbsp&nbsp</span>{{ $device->device_model }} Details</h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
                         <p><strong>Type:</strong> {{ $device->device_type }}</p>
                         <p><strong>Manufacturer:</strong> {{ $device->manufacturer }}</p>
@@ -35,14 +35,34 @@
                 @if (!empty($device->parameters))
                     <div class="mb-4">
                         <h3 class="text-lg font-semibold mb-2">Parameters</h3>
-                        <pre class="bg-light p-3 rounded">{{ json_encode($device->parameters, JSON_PRETTY_PRINT) }}</pre>
+                        <ul class="list-group">
+                            @foreach ($device->parameters as $key => $value)
+                                <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">{{ $key }}</span>
+                                    <span>
+                                        @if(is_array($value))
+                                            <ul class="mb-0 ps-3">
+                                                @foreach ($value as $subKey => $subValue)
+                                                    <li>
+                                                        <span class="fw-semibold">{{ $subKey }}:</span>
+                                                        <span>{{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}</span>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @else
+                                            {{ $value }}
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
 
                 @if ($device->assignedDevices->count())
                     <div class="mt-4">
                         <h3 class="text-lg font-semibold mb-2">Assigned Devices</h3>
-                        <table class="table table-sm table-bordered">
+                        <table class="table table-sm table-bordered table-hover">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -54,7 +74,7 @@
                             </thead>
                             <tbody>
                                 @foreach ($device->assignedDevices as $child)
-                                    <tr>
+                                    <tr class="align-middle">
                                         <td>{{ $child->id }}</td>
                                         <td>{{ $child->device_type }}</td>
                                         <td>{{ $child->manufacturer }}</td>

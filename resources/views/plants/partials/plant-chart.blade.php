@@ -33,8 +33,8 @@
             <!-- Graph Tab -->
             <div class="tab-pane fade show active h-100" id="graphTab" role="tabpanel" aria-labelledby="graph-tab">
                 <h4 class="text-center m-3">Energy Live Chart</h4>
-                <div style="height: calc(100% - 90px); display: flex; align-items: center;">
-                    <canvas id="energyChart" style="width: 100%; height: 100%;"></canvas>
+                <div style="height: calc(100% - 90px); display: flex; align-items: center; width: 100%;">
+                    <canvas id="energyChart" style="width: 100%; height: 400px;"></canvas>
                 </div>
             </div>
 
@@ -172,9 +172,44 @@
     </div>
 </div>
 
+<!-- Load Chart.js FIRST -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <script>
+
+// Crosshair plugin for Chart.js
+const verticalLinePlugin = {
+    id: 'verticalLine',
+    afterDraw(chart) {
+        // Only draw if tooltip is active and chartArea is defined
+        if (chart.tooltip?._active?.length && chart.chartArea) {
+            const x = chart.tooltip._active[0].element.x;
+            const ctx = chart.ctx;
+            const topY = chart.chartArea.top;
+            const bottomY = chart.chartArea.bottom;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = 3; // Thicker line for visibility
+            ctx.strokeStyle = 'rgba(255,0,0,0.9)';
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+};
+
+Chart.register(verticalLinePlugin);
+
+</script>
+
+<script>
+
     document.addEventListener("DOMContentLoaded", async function () {
+
+
         try {
             const [batteryOkRes, batterySavingsRes] = await Promise.all([
                 fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
@@ -194,6 +229,9 @@
         });
     }
 
+
+
+
     function renderCharts(batteryOkData, batterySavingsData) {
         const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
         const labels = entries.map(([ts]) => formatLabelDate(ts));
@@ -202,6 +240,9 @@
         const batteryData = entries.map(([, v]) => v.battery_p);
         const gridData = entries.map(([, v]) => v.grid_p);
         const tariffData = entries.map(([, v]) => v.tariff);
+
+
+
 
         // --- Energy Chart ---
         const pvDataKW = pvData.map(v => v / 1000);
@@ -214,15 +255,55 @@
             data: {
                 labels,
                 datasets: [
-                    { label: 'PV (kW)', data: pvDataKW, borderColor: 'blue', fill: false },
-                    { label: 'Battery (kW)', data: batteryDataKW00, borderColor: 'orange', fill: false },
-                    { label: 'Grid (kW)', data: gridDataKW, borderColor: 'green', fill: false },
+                    {
+                        label: 'PV (kW)',
+                        data: pvDataKW,
+                        borderColor: 'blue',
+                        fill: false,
+                        pointRadius: 2,        // <-- Make points bigger
+                        pointHoverRadius: 12   // <-- Make points bigger on hover
+                    },
+                    {
+                        label: 'Battery (kW)',
+                        data: batteryDataKW00,
+                        borderColor: 'orange',
+                        fill: false,
+                        pointRadius: 2,
+                        pointHoverRadius: 12
+                    },
+                    {
+                        label: 'Grid (kW)',
+                        data: gridDataKW,
+                        borderColor: 'green',
+                        fill: false,
+                        pointRadius: 2,
+                        pointHoverRadius: 12
+                    },
                 ]
             },
             options: {
-                responsive: true,
+                responsive: true, // <-- set to true
+                maintainAspectRatio: false, // <-- add this for full height
                 plugins: {
-                    legend: { position: 'top' }
+                    legend: { position: 'top' },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                hover: {
+                    mode: 'index',
+                    intersect: false
+                },
+                elements: {
+                    point: {
+                        radius: 4,         // Default point size
+                        hoverRadius: 8    // Point size on hover
+                    }
                 },
                 scales: {
                     y: {
@@ -436,6 +517,9 @@
             .then(res => console.log("✅ Uploaded high-res:", chartId))
             .catch(err => console.error("❌ Upload failed:", err));
     }
+
+
+
     </script>
 
 

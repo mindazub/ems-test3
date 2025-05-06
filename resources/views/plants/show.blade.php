@@ -19,7 +19,7 @@
                 <!-- PLANT INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
-                        <h1>{{ $plant->name }} Details</h1>
+                        <h1><span class="text-muted italic">#ID&nbsp{{ $plant->id }}&nbsp&nbsp</span>{{ $plant->name }} Details</h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
                         <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
                         <p><strong>Status:</strong> {{ $plant->status }}</p>
