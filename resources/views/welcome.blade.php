@@ -64,7 +64,7 @@
     <section class="bg-blue-100 py-20 px-4">
         <div class="max-w-6xl mx-auto text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
-                Business build on <span class="text-blue-700">EDISLAB EMS</span>
+                Business build on <span class="text-blue-700">EDIS Lab EMS</span>
             </h1>
             <p class="mt-6 text-lg text-gray-700">
                 Powerful energy monitoring tools to help manage solar, battery, and grid performance in one place.
@@ -103,7 +103,7 @@
         <div class="max-w-6xl mx-auto text-center">
             <h2 class="text-3xl font-bold mb-6">Everything you need to manage your energy systems</h2>
             <p class="max-w-2xl mx-auto text-gray-600 mb-10">
-                EDISLAB offers real-time monitoring, historical data, smart alerts, and energy savings optimization.
+                EDIS Lab offers real-time monitoring, historical data, smart alerts, and energy savings optimization.
             </p>
 
             <div class="grid md:grid-cols-3 gap-10 text-left">
@@ -127,7 +127,7 @@
     <!-- CTA -->
     <section class="py-20 px-4 bg-blue-900 text-white text-center">
         <h2 class="text-3xl font-bold mb-4">Ready to get started?</h2>
-        <p class="mb-6">Start using EDISLAB today to monitor, analyze, and save energy like never before.</p>
+        <p class="mb-6">Start using EDIS Lab today to monitor, analyze, and save energy like never before.</p>
         <a href="{{ route('register') }}"
             class="inline-block px-6 py-3 bg-white text-blue-700 font-semibold rounded hover:bg-gray-100 transition">
             Get Started Free
@@ -139,7 +139,7 @@
     <footer class="bg-gray-100 border-t border-gray-300 py-10 text-sm text-gray-600">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-8">
             <div>
-                <h4 class="font-semibold text-gray-800 mb-2">EDISLAB</h4>
+                <h4 class="font-semibold text-gray-800 mb-2">EDIS Lab</h4>
                 <p>Smart EMS tools for solar, battery, and grid energy management.</p>
             </div>
             <div>
@@ -169,7 +169,7 @@
         </div>
 
         <div class="mt-8 text-center text-xs text-gray-400">
-            &copy; {{ date('Y') }} EDISLAB EMS. All rights reserved.
+            &copy; {{ date('Y') }} EDIS Lab EMS. All rights reserved.
         </div>
     </footer>
 

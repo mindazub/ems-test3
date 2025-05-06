@@ -26,6 +26,7 @@
                         <p><strong>Main Feed ID:</strong> {{ $device->mainFeed->id ?? 'N/A' }}</p>
                         <p><strong>Parent Device ID:</strong> {{ $device->parent?->id ?? '—' }}</p>
                         <p><strong>Is Parent:</strong> {{ $device->parent_device ? 'Yes' : 'No' }}</p>
+                        <p><strong>Plant:</strong> {{ $device->plant->name ?? '—' }}</p>
                         <div class="mt-4">
                             <a href="{{ url()->previous() }}" class="btn btn-sm btn-primary">Back</a>
                         </div>
@@ -45,7 +46,9 @@
                                                 @foreach ($value as $subKey => $subValue)
                                                     <li>
                                                         <span class="fw-semibold">{{ $subKey }}:</span>
-                                                        <span>{{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}</span>
+                                                        <span>
+                                                            {{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}
+                                                        </span>
                                                     </li>
                                                 @endforeach
                                             </ul>
@@ -86,11 +89,9 @@
                         </table>
                     </div>
                 @endif
-
             </div>
         </div>
     </div>
-
 
     <script>
         document.querySelectorAll('a').forEach(link => {
@@ -99,7 +100,6 @@
             });
         });
     </script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const scrollPos = sessionStorage.getItem('scrollPosition');
@@ -112,7 +112,6 @@
             }
         });
     </script>
-
 
     {{-- JavaScript Libraries --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
