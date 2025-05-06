@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
                 'capacity' => rand(100000, 500000),
                 'latitude' => round(50 + mt_rand(0, 1000000) / 100000, 5),
                 'longitude' => round(20 + mt_rand(0, 1000000) / 100000, 5),
-                'last_updated' => now(),
+                'last_updated' => now()->timestamp,
             ]);
 
             // Each plant gets 1 to 4 feeds

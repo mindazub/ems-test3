@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('capacity', 12, 2);
             $table->decimal('latitude', 10, 6);
             $table->decimal('longitude', 10, 6);
-            $table->unsignedBigInteger('last_updated')->nullable(); // timestamp as INT
+            $table->bigInteger('last_updated')->nullable(); // timestamp as INT
             $table->timestamps();
         });
     }
