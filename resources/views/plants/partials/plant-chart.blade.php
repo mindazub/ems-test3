@@ -350,7 +350,7 @@ Chart.register(verticalLinePlugin);
                 labels,
                 datasets: [
                     {
-                        label: 'Battery Power (kWh)',
+                        label: 'Battery Power (kW)',
                         data: batteryDataKW,
                         backgroundColor: 'rgba(0,123,255,0.5)',
                         yAxisID: 'y',
