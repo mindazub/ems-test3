@@ -8,6 +8,9 @@ use App\Models\Plant;
 use App\Models\MainFeed;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
+use Faker\Factory as Faker;
+
+
 
 class DatabaseSeeder extends Seeder
 {
