@@ -60,7 +60,7 @@ class DatabaseSeeder extends Seeder
 
         // 2️⃣ CREATE PLANTS, MAINFEEDS, AND ASSIGN DEVICES
 
-        $faker = \Faker\Factory::create();
+        $faker = Faker::create();
 
         for ($plantNum = 1; $plantNum <= 50; $plantNum++) {
 
