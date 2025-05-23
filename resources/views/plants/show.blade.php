@@ -6,12 +6,9 @@
         </h2>
     </x-slot>
 
-    {{-- External Libraries --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    {{-- Only Leaflet CSS needed --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 
-    {{-- Page Content --}}
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
@@ -19,17 +16,24 @@
                 <!-- PLANT INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
-                        <h1><span class="text-muted italic">#ID&nbsp{{ $plant->id }}&nbsp&nbsp</span>{{ $plant->name }} Details</h1>
+                        <h1>
+                            <span class="text-gray-400 italic">#ID&nbsp;{{ $plant->id }}&nbsp;&nbsp;</span>
+                            <span class="font-semibold">{{ $plant->name }}</span> Details
+                        </h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
-                        <p><strong>Owner Email:</strong> {{ $plant->owner_email }}</p>
-                        <p><strong>Status:</strong> {{ $plant->status }}</p>
-                        <p><strong>Battery Capacity:</strong> {{ number_format($plant->capacity / 1000, 0) }} kWh</p>
-                        <p><strong>Location:</strong> Lat {{ $plant->latitude }}, Lng {{ $plant->longitude }}</p>
-                        <p><strong>Last Updated:</strong>
-                            {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
-                        </p>
+                        <div class="space-y-1">
+                            <p><span class="font-semibold">Owner Email:</span> {{ $plant->owner_email }}</p>
+                            <p><span class="font-semibold">Status:</span> {{ $plant->status }}</p>
+                            <p><span class="font-semibold">Battery Capacity:</span> {{ number_format($plant->capacity / 1000, 0) }} kWh</p>
+                            <p><span class="font-semibold">Location:</span> Lat {{ $plant->latitude }}, Lng {{ $plant->longitude }}</p>
+                            <p><span class="font-semibold">Last Updated:</span>
+                                {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
+                            </p>
+                        </div>
                         <div class="mt-4">
-                            <a href="{{ route('plants.index') }}" class="btn btn-sm btn-primary">Back</a>
+                            <a href="{{ route('plants.index') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                Back
+                            </a>
                         </div>
                     </div>
 
@@ -44,86 +48,19 @@
 
                 <!-- DEVICES LIST -->
                 @include('plants.partials.devices-list')
-
             </div>
         </div>
     </div>
 
-    {{-- JavaScript Libraries --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- JS Libraries --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
     <script>
+        // --- LEAFLET MAP INIT ---
         document.addEventListener('DOMContentLoaded', function() {
-            const expandedRowsKey = 'expandedSlaveRows';
-
-            function saveExpandedRows() {
-                const expanded = Array.from(document.querySelectorAll('.slave-row.show'))
-                    .map(row => row.id);
-                localStorage.setItem(expandedRowsKey, JSON.stringify(expanded));
-            }
-
-            function restoreExpandedRows() {
-                const expanded = JSON.parse(localStorage.getItem(expandedRowsKey) || '[]');
-                expanded.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el && !el.classList.contains('show')) {
-                        console.log(`Restoring expanded state for #${id}`);
-                        const instance = new bootstrap.Collapse(el, {
-                            toggle: false
-                        });
-                        instance.show(); // separate to avoid event overlap
-                    }
-                });
-            }
-
-            restoreExpandedRows();
-
-            const collapseElements = document.querySelectorAll('.collapse.slave-row');
-
-            collapseElements.forEach(collapseEl => {
-                const toggleBtn = document.querySelector(`[data-bs-target="#${collapseEl.id}"]`);
-                const icon = toggleBtn?.querySelector('.toggle-icon');
-
-                collapseEl.addEventListener('show.bs.collapse', () => {
-                    console.log(`▶️ Revealing: #${collapseEl.id}`);
-                    if (icon) {
-                        icon.classList.remove('bi-plus-circle-fill');
-                        icon.classList.add('bi-dash-circle-fill');
-                    }
-                });
-
-                collapseEl.addEventListener('shown.bs.collapse', () => {
-                    console.log(`✅ Revealed: #${collapseEl.id}`);
-                    saveExpandedRows();
-                });
-
-                collapseEl.addEventListener('hide.bs.collapse', () => {
-                    console.log(`⏹️ Hiding: #${collapseEl.id}`);
-                    if (icon) {
-                        icon.classList.remove('bi-dash-circle-fill');
-                        icon.classList.add('bi-plus-circle-fill');
-                    }
-                });
-
-                collapseEl.addEventListener('hidden.bs.collapse', () => {
-                    console.log(`❌ Hidden: #${collapseEl.id}`);
-                    saveExpandedRows();
-                });
-            });
-        });
-    </script>
-
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Existing collapse logic...
-
-            // --- LEAFLET MAP INIT ---
             const lat = {{ $plant->latitude }};
             const lng = {{ $plant->longitude }};
-
             const map = L.map('map').setView([lat, lng], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -140,51 +77,44 @@
         });
     </script>
 
-<script>
+    <script>
+        // (if you use chart image upload, keep this part)
+        function uploadChartImage(chartId, chartInstance, plantId) {
+            const canvas = document.getElementById(chartId);
 
-function uploadChartImage(chartId, chartInstance, plantId) {
-    const canvas = document.getElementById(chartId);
+            const scale = 2;
+            const originalWidth = canvas.width;
+            const originalHeight = canvas.height;
 
-    const scale = 2;
-    const originalWidth = canvas.width;
-    const originalHeight = canvas.height;
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = originalWidth * scale;
+            tempCanvas.height = originalHeight * scale;
 
-    const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = originalWidth * scale;
-    tempCanvas.height = originalHeight * scale;
+            const ctx = tempCanvas.getContext("2d");
 
-    const ctx = tempCanvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-    // Fill white background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            ctx.scale(scale, scale);
+            ctx.drawImage(canvas, 0, 0);
 
-    // Scale and draw original chart into temp canvas
-    ctx.scale(scale, scale);
-    ctx.drawImage(canvas, 0, 0);
+            const imageData = tempCanvas.toDataURL("image/png");
 
-    const imageData = tempCanvas.toDataURL("image/png");
-
-    fetch("{{ route('charts.upload') }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').getAttribute("content")
-        },
-        body: JSON.stringify({
-            plant_id: plantId,
-            chart: chartId.replace('Chart', '').toLowerCase(),
-            image: imageData
-        })
-    })
-    .then(res => res.json())
-    .then(res => console.log("✅ Uploaded high-res:", chartId))
-    .catch(err => console.error("❌ Upload failed:", err));
-}
-
-
-
+            fetch("{{ route('charts.upload') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').getAttribute("content")
+                },
+                body: JSON.stringify({
+                    plant_id: plantId,
+                    chart: chartId.replace('Chart', '').toLowerCase(),
+                    image: imageData
+                })
+            })
+                .then(res => res.json())
+                .then(res => console.log("✅ Uploaded high-res:", chartId))
+                .catch(err => console.error("❌ Upload failed:", err));
+        }
     </script>
-
-
 </x-app-layout>
