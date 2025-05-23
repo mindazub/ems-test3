@@ -5,11 +5,6 @@
         </h2>
     </x-slot>
 
-    {{-- External Libraries --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-    {{-- Page Content --}}
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-md rounded-lg p-6">
@@ -17,18 +12,25 @@
                 <!-- DEVICE INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
-                        <h1><span class="text-muted italic">#ID&nbsp{{ $device->id }}&nbsp&nbsp</span>{{ $device->device_model }} Details</h1>
+                        <h1>
+                            <span class="text-gray-400 italic">#ID&nbsp;{{ $device->id }}&nbsp;&nbsp;</span>
+                            <span class="font-semibold">{{ $device->device_model }}</span> Details
+                        </h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
-                        <p><strong>Type:</strong> {{ $device->device_type }}</p>
-                        <p><strong>Manufacturer:</strong> {{ $device->manufacturer }}</p>
-                        <p><strong>Model:</strong> {{ $device->device_model }}</p>
-                        <p><strong>Status:</strong> {{ $device->device_status }}</p>
-                        <p><strong>Main Feed ID:</strong> {{ $device->mainFeed->id ?? 'N/A' }}</p>
-                        <p><strong>Parent Device ID:</strong> {{ $device->parent?->id ?? '—' }}</p>
-                        <p><strong>Is Parent:</strong> {{ $device->parent_device ? 'Yes' : 'No' }}</p>
-                        <p><strong>Plant:</strong> {{ $device->plant->name ?? '—' }}</p>
+                        <div class="space-y-1">
+                            <p><span class="font-semibold">Type:</span> {{ $device->device_type }}</p>
+                            <p><span class="font-semibold">Manufacturer:</span> {{ $device->manufacturer }}</p>
+                            <p><span class="font-semibold">Model:</span> {{ $device->device_model }}</p>
+                            <p><span class="font-semibold">Status:</span> {{ $device->device_status }}</p>
+                            <p><span class="font-semibold">Main Feed ID:</span> {{ $device->mainFeed->id ?? 'N/A' }}</p>
+                            <p><span class="font-semibold">Parent Device ID:</span> {{ $device->parent?->id ?? '—' }}</p>
+                            <p><span class="font-semibold">Is Parent:</span> {{ $device->parent_device ? 'Yes' : 'No' }}</p>
+                            <p><span class="font-semibold">Plant:</span> {{ $device->plant->name ?? '—' }}</p>
+                        </div>
                         <div class="mt-4">
-                            <a href="{{ url()->previous() }}" class="btn btn-sm btn-primary">Back</a>
+                            <a href="{{ url()->previous() }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                Back
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -36,16 +38,16 @@
                 @if (!empty($device->parameters))
                     <div class="mb-4">
                         <h3 class="text-lg font-semibold mb-2">Parameters</h3>
-                        <ul class="list-group">
+                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded">
                             @foreach ($device->parameters as $key => $value)
-                                <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">{{ $key }}</span>
-                                    <span>
+                                <li class="flex flex-col md:flex-row md:justify-between md:items-center px-4 py-2">
+                                    <span class="font-semibold text-gray-800">{{ $key }}</span>
+                                    <span class="mt-1 md:mt-0 text-gray-600">
                                         @if(is_array($value))
-                                            <ul class="mb-0 ps-3">
+                                            <ul class="ml-3 list-disc list-inside text-sm">
                                                 @foreach ($value as $subKey => $subValue)
                                                     <li>
-                                                        <span class="fw-semibold">{{ $subKey }}:</span>
+                                                        <span class="font-semibold">{{ $subKey }}:</span>
                                                         <span>
                                                             {{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}
                                                         </span>
@@ -65,28 +67,30 @@
                 @if ($device->assignedDevices->count())
                     <div class="mt-4">
                         <h3 class="text-lg font-semibold mb-2">Assigned Devices</h3>
-                        <table class="table table-sm table-bordered table-hover">
-                            <thead>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded">
+                                <thead class="bg-gray-50">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Type</th>
-                                    <th>Manufacturer</th>
-                                    <th>Model</th>
-                                    <th>Status</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manufacturer</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
-                            </thead>
-                            <tbody>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach ($device->assignedDevices as $child)
-                                    <tr class="align-middle">
-                                        <td>{{ $child->id }}</td>
-                                        <td>{{ $child->device_type }}</td>
-                                        <td>{{ $child->manufacturer }}</td>
-                                        <td>{{ $child->device_model }}</td>
-                                        <td>{{ $child->device_status }}</td>
+                                    <tr class="transition hover:bg-gray-100">
+                                        <td class="px-4 py-2">{{ $child->id }}</td>
+                                        <td class="px-4 py-2">{{ $child->device_type }}</td>
+                                        <td class="px-4 py-2">{{ $child->manufacturer }}</td>
+                                        <td class="px-4 py-2">{{ $child->device_model }}</td>
+                                        <td class="px-4 py-2">{{ $child->device_status }}</td>
                                     </tr>
                                 @endforeach
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -112,7 +116,4 @@
             }
         });
     </script>
-
-    {{-- JavaScript Libraries --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </x-app-layout>

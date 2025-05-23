@@ -1,106 +1,101 @@
 <x-app-layout>
-
-
     <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl leading-tight">
                 {{ __('Devices') }}
             </h2>
-            <a href="{{ route('devices.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> New Device
+            <a href="{{ route('devices.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded shadow transition">
+                <!-- Heroicon Plus Circle -->
+                <x-heroicon-o-plus-circle class="w-5 h-5 mr-1" />
+                New Device
             </a>
         </div>
     </x-slot>
 
-    {{-- ✅ Bootstrap CSS --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/scroller/2.2.0/css/scroller.bootstrap5.min.css" rel="stylesheet">
+    {{-- ✅ DataTables CSS (plain, no Bootstrap) --}}
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 
     <div id="page-content" class="py-12">
-        <div class="container">
-            <div class="card">
-                <div class="card-body">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
 
                     {{-- ✅ Success Message --}}
                     @if (session('message'))
-                        <div id="success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('message') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <div id="success-alert" class="mb-4 bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded relative flex items-center justify-between" role="alert">
+                            <span>{{ session('message') }}</span>
+                            <button type="button" class="text-green-800 hover:text-green-900 focus:outline-none ml-2" onclick="this.closest('div').remove();">
+                                <span class="sr-only">Close</span>
+                                &times;
+                            </button>
                         </div>
                     @endif
 
                     {{-- ✅ Table --}}
-                    <h3 class="mb-4">Devices Table</h3>
+                    <h3 class="mb-4 text-lg font-bold">Devices Table</h3>
 
-                    <table id="devicesTable" class="table table-striped table-hover table-bordered align-middle" style="width:100%">
-                        <thead>
+                    <div class="overflow-x-auto">
+                        <table id="devicesTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                             <tr>
-                                <th>ID</th>
-                                <th>Type</th>
-                                <th>Manufacturer</th>
-                                <th>Model</th>
-                                <th>Status</th>
-                                <th>Main Feed</th>
-                                <th>Parent Device</th>
-                                <th>Actions</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manufacturer</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Main Feed</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parent Device</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($devices as $device)
-                                <tr class="clickable-row" data-href="{{ route('devices.show', $device) }}">
-                                    <td>{{ $device->id }}</td>
-                                    <td>{{ $device->device_type }}</td>
-                                    <td>{{ $device->manufacturer }}</td>
-                                    <td>{{ $device->device_model }}</td>
-                                    <td>{{ $device->device_status }}</td>
-                                    <td>{{ $device->mainFeed->id ?? 'N/A' }}</td>
-                                    <td>{{ $device->parent?->id ?? '—' }}</td>
-                                    <td>
-                                        <a href="{{ route('devices.edit', $device) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                        <form method="POST" action="{{ route('devices.destroy', $device) }}" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                <tr class="clickable-row hover:bg-blue-50 cursor-pointer transition" data-href="{{ route('devices.show', $device) }}">
+                                    <td class="px-4 py-2">{{ $device->id }}</td>
+                                    <td class="px-4 py-2">{{ $device->device_type }}</td>
+                                    <td class="px-4 py-2">{{ $device->manufacturer }}</td>
+                                    <td class="px-4 py-2">{{ $device->device_model }}</td>
+                                    <td class="px-4 py-2">{{ $device->device_status }}</td>
+                                    <td class="px-4 py-2">{{ $device->mainFeed->id ?? 'N/A' }}</td>
+                                    <td class="px-4 py-2">{{ $device->parent?->id ?? '—' }}</td>
+                                    <td class="px-4 py-2 flex space-x-2">
+                                        <a href="{{ route('devices.edit', $device) }}" class="inline-block px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">Edit</a>
+                                        <form method="POST" action="{{ route('devices.destroy', $device) }}" class="inline-block" onsubmit="return confirm('Are you sure?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            <button type="submit" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Delete</button>
                                         </form>
                                     </td>
                                 </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-
+                            </tbody>
+                        </table>
+                    </div>
 
                 </div>
             </div>
         </div>
     </div>
 
-
+    {{-- ✅ DataTables (no Bootstrap) --}}
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script>
-
 
     <script>
         $(document).ready(function() {
-            $(document).ready(function() {
-                $('#devicesTable').DataTable({
-                    paging: true,
-                    pageLength: 10,
-                    lengthMenu: [10, 25, 50, 100],
-                    info: true,
-                    language: {
-                        search: "Search:",
-                        lengthMenu: "Show _MENU_ entries",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        zeroRecords: "No matching devices found",
-                    },
-                    ordering: true
-                });
+            $('#devicesTable').DataTable({
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                info: true,
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    zeroRecords: "No matching devices found",
+                },
+                ordering: true
             });
-
 
             // Make rows clickable
             $('#devicesTable').on('click', '.clickable-row', function(e) {
@@ -112,37 +107,42 @@
         });
     </script>
 
-    {{-- ✅ Styling --}}
-    <style>
-        .clickable-row {
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .clickable-row:hover {
-            background-color: #e7f3ff;
-            color: #0c4a6e;
-        }
-        #success-alert.fade-out {
-            opacity: 0;
-            transition: opacity 1s ease-out;
-        }
-    </style>
-
-    {{-- ✅ Success Alert Fade Out --}}
+    {{-- ✅ Tailwind Success Alert Fade Out --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const alert = document.getElementById('success-alert');
             if (alert) {
                 setTimeout(() => {
-                    alert.classList.add('fade-out');
+                    alert.classList.add('opacity-0');
                     setTimeout(() => alert.remove(), 1000);
                 }, 2300);
             }
         });
     </script>
 
+    {{-- ✅ Custom styles for clickable row (Tailwind version) --}}
+    <style>
+        .clickable-row {
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
 
+        .dataTables_length select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: white;
+            border: 1px solid #d1d5db;
+            color: #111827;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            background-image: none !important; /* No custom arrow */
+            box-shadow: none;
+        }
+        .dataTables_length select:focus,
+        .dataTables_length select:active {
+            background-image: none;
+        }
+    </style>
 
 </x-app-layout>
-
-
