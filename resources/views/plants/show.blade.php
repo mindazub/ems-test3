@@ -1,4 +1,3 @@
-{{-- resources/views/show.blade.php --}}
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -55,6 +54,7 @@
     {{-- JS Libraries --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
 
     <script>
         // --- LEAFLET MAP INIT ---
@@ -75,46 +75,5 @@
                 )
                 .openPopup();
         });
-    </script>
-
-    <script>
-        // (if you use chart image upload, keep this part)
-        function uploadChartImage(chartId, chartInstance, plantId) {
-            const canvas = document.getElementById(chartId);
-
-            const scale = 2;
-            const originalWidth = canvas.width;
-            const originalHeight = canvas.height;
-
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = originalWidth * scale;
-            tempCanvas.height = originalHeight * scale;
-
-            const ctx = tempCanvas.getContext("2d");
-
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-            ctx.scale(scale, scale);
-            ctx.drawImage(canvas, 0, 0);
-
-            const imageData = tempCanvas.toDataURL("image/png");
-
-            fetch("{{ route('charts.upload') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').getAttribute("content")
-                },
-                body: JSON.stringify({
-                    plant_id: plantId,
-                    chart: chartId.replace('Chart', '').toLowerCase(),
-                    image: imageData
-                })
-            })
-                .then(res => res.json())
-                .then(res => console.log("✅ Uploaded high-res:", chartId))
-                .catch(err => console.error("❌ Upload failed:", err));
-        }
     </script>
 </x-app-layout>
