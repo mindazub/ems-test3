@@ -36,7 +36,7 @@
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Graph Tab -->
             <div x-show="tabEnergy === 'graph'">
-                <h4 class="text-center mb-3 font-bold text-3xl">Energy Live Chart</h4>
+                <h4 class="text-center mb-5 font-bold text-3xl">Energy Live Chart</h4>
                 <div class="w-full" style="height: 600px;">
                     <canvas id="energyChart" class="w-full h-full"></canvas>
                 </div>
@@ -97,7 +97,7 @@
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Battery Chart Tab -->
             <div x-show="tabBattery === 'graph'">
-                <h4 class="text-center mb-3 font-bold text-3xl">Battery Power and Energy Price</h4>
+                <h4 class="text-center mb-5 font-bold text-3xl">Battery Power and Energy Price</h4>
                 <div class="w-full" style="height: 600px;">
                     <canvas id="batteryChart" class="w-full h-full"></canvas>
                 </div>
@@ -156,7 +156,7 @@
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Graph Tab -->
             <div x-show="tabSavings === 'graph'">
-                <h4 class="text-center mb-3 font-bold text-3xl">Battery Savings</h4>
+                <h4 class="text-center mb-5 font-bold text-3xl">Battery Savings</h4>
                 <p id="batterySavingsTotal" class="text-center text-green-700 font-bold"></p>
                 <div class="w-full" style="height: 600px;">
                     <canvas id="savingsChart" class="w-full h-full"></canvas>
@@ -260,8 +260,20 @@ function renderCharts(batteryOkData, batterySavingsData) {
             interaction: { mode: 'index', intersect: false },
             elements: { point: { radius: 4, hoverRadius: 12 } },
             scales: {
-                y: { ticks: { font: { size: 14 } } },
-                x: { ticks: { font: { size: 14 } } }
+
+                y: {
+                    ticks:
+                        { font:
+                            {
+                                size: 14
+                            }
+                     },
+                     grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                        }
+                    },
+                x: { ticks: { font: { size: 14 } }, border: { display: true, width: 4 } }
             }
         }
     });
@@ -308,7 +320,10 @@ function renderCharts(batteryOkData, batterySavingsData) {
         },
         options: {
             responsive: true,
-            plugins: { legend: { position: 'top' } },
+            plugins: {
+                legend: { position: 'top' },
+                // crosshair plugin config
+            },
             interaction: { mode: 'index', intersect: false },
             elements: { point: { radius: 4, hoverRadius: 12 } },
             scales: {
@@ -320,7 +335,10 @@ function renderCharts(batteryOkData, batterySavingsData) {
                 y1: {
                     type: 'linear',
                     position: 'right',
-                    grid: { drawOnChartArea: false },
+                    grid: {
+                            lineWidth: 1,
+                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                    },
                     ticks: { font: { size: 14 } },
                     min: -0.25,
                     max: 0.25
@@ -367,8 +385,15 @@ function renderCharts(batteryOkData, batterySavingsData) {
             plugins: { legend: { display: false } },
             interaction: { mode: 'index', intersect: false },
             scales: {
-                y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } } },
-                y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 14 } } },
+                y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } },
+                grid: {
+                                lineWidth: 1,
+                                color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
+                            }, },
+                y1: { type: 'linear', position: 'right',
+
+                    ticks: { font: { size: 14 } }
+                },
                 x: { ticks: { font: { size: 14 } } }
             }
         }
