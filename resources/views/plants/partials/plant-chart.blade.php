@@ -26,9 +26,10 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'png']) }}">Download PNG</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'pdf']) }}">Download PDF</a>
+                     <a id="downloadPNG-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
+                     <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+
                 </div>
             </div>
         </div>
@@ -87,9 +88,9 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'png']) }}">Download PNG</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'pdf']) }}">Download PDF</a>
+                     <a id="downloadPNG-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
+                     <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
                 </div>
             </div>
         </div>
@@ -147,9 +148,9 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'png']) }}">Download PNG</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a>
-                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'pdf']) }}">Download PDF</a>
+                     <a id="downloadPNG-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
+                     <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
                 </div>
             </div>
         </div>
@@ -411,3 +412,61 @@ function renderCharts(batteryOkData, batterySavingsData) {
     });
 }
 </script>
+
+
+<script>
+    function sendChartToBackend(chartId, chartName, plantId, type) {
+        let canvas = document.getElementById(chartId);
+        let dataUrl = canvas.toDataURL('image/png');
+
+        return fetch(`/plants/${plantId}/save-chart-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                chart: chartName,
+                image: dataUrl
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  window.location.href = `/plants/${plantId}/download/${chartName}/${type}`;
+              } else {
+                  alert('Error saving chart image!');
+              }
+          });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let plantId = {{ $plant->id }};
+        // ENERGY
+        document.getElementById('downloadPNG-energy').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('energyChart', 'energy', plantId, 'png');
+        });
+        document.getElementById('downloadPDF-energy').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('energyChart', 'energy', plantId, 'pdf');
+        });
+        // BATTERY
+        document.getElementById('downloadPNG-battery').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('batteryChart', 'battery', plantId, 'png');
+        });
+        document.getElementById('downloadPDF-battery').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('batteryChart', 'battery', plantId, 'pdf');
+        });
+        // SAVINGS
+        document.getElementById('downloadPNG-savings').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('savingsChart', 'savings', plantId, 'png');
+        });
+        document.getElementById('downloadPDF-savings').addEventListener('click', function(e) {
+            e.preventDefault();
+            sendChartToBackend('savingsChart', 'savings', plantId, 'pdf');
+        });
+    });
+    </script>

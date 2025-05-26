@@ -31,7 +31,7 @@
                         </div>
                         <div class="mt-4">
                             <a href="{{ route('plants.index') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
-                                Back
+                                Back to All Plants List
                             </a>
                         </div>
                     </div>

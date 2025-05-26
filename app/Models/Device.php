@@ -36,4 +36,11 @@ class Device extends Model
     {
         return $this->hasMany(Device::class, 'parent_device_id');
     }
+
+    public function getPlantAttribute()
+    {
+        // $this->mainFeed could be null if not set
+        return $this->mainFeed ? $this->mainFeed->plant : null;
+    }
+
 }

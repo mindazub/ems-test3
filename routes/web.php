@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChartUploadController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
@@ -29,10 +30,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('devices', DeviceController::class);
 
     // Download PNG, CSV, PDF
+
+    //
     Route::get('/plants/{plant}/download/{chart}/{type}', [DownloadController::class, 'download'])
     ->name('plants.download');
-    Route::post('/charts/upload', [\App\Http\Controllers\ChartUploadController::class, 'store'])
+    Route::post('/charts/upload', [ChartUploadController::class, 'store'])
     ->name('charts.upload');
+
+    Route::post('/plants/{plant}/save-chart-image', [DownloadController::class, 'saveChartImage'])
+    ->name('plants.save_chart_image');
 
 });
 

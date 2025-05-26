@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Plant;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 
 class DownloadController extends Controller
 {
@@ -98,4 +99,23 @@ class DownloadController extends Controller
             'data' => $data
         ])->download("{$plant->name}_{$chart}.pdf");
     }
+
+    public function saveChartImage(Request $request, Plant $plant)
+    {
+        $chart = $request->input('chart'); // 'energy', 'battery', or 'savings'
+        $imageData = $request->input('image');
+
+        // Check and decode base64 image
+        if (preg_match('/^data:image\/png;base64,/', $imageData)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $imageData = base64_decode($imageData);
+            $dir = public_path("charts");
+            if (!is_dir($dir)) mkdir($dir, 0777, true);
+            $path = "{$dir}/{$plant->id}_{$chart}.png";
+            file_put_contents($path, $imageData);
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false], 400);
+    }
+
 }

@@ -49,7 +49,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                             @forelse ($plants as $plant)
-                                <tr class="clickable-row transition hover:bg-gray-100 cursor-pointer" data-href="{{ route('plants.show', $plant) }}">
+                                <tr class="clickable-row transition hover:bg-indigo-100 cursor-pointer" data-href="{{ route('plants.show', $plant) }}">
                                     <td class="px-4 py-2"> {{ $plant->id }}</td>
                                     <td class="px-4 py-2">{{ $plant->name }}</td>
                                     <td class="px-4 py-2">{{ $plant->owner_email }}</td>

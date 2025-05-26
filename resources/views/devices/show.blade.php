@@ -27,42 +27,69 @@
                             <p><span class="font-semibold">Is Parent:</span> {{ $device->parent_device ? 'Yes' : 'No' }}</p>
                             <p><span class="font-semibold">Plant:</span> {{ $device->plant->name ?? '—' }}</p>
                         </div>
+
                         <div class="mt-4">
-                            <a href="{{ url()->previous() }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
-                                Back
-                            </a>
+                            @if($device->parent)
+                                <a href="{{ url('/devices/' . $device->parent->id) }}"
+                                    class="inline-block bg-indigo-600 hover:bg-indigo-700 mt-2 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                    {{ $device->parent->device_model ?? $device->parent->id }}
+                                </a>
+                            @elseif($device->parent_device_id)
+                                <a href="{{ url('/devices/' . $device->parent_device_id) }}"
+                                    class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                    {{ $device->parent_device_id }}
+                                </a>
+                            @else
+                                <p class="italic text-gray-500 text-success-emphasis m-4">It is a parent device. Back to Plant.</p>
+                            @endif
+
+                            {{-- Back to Plant Button --}}
+                            @if($device->plant)
+                                <a href="{{ url('/plants/' . $device->plant->id) }}"
+                                   class="inline-block bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium px-4 py-2 rounded transition mt-4 ml-2">
+                                    Back to Parent Plant
+                                </a>
+                            @else
+                                <button class="inline-block bg-gray-300 text-gray-500 cursor-not-allowed text-xs font-medium px-4 py-2 rounded mt-4 ml-2" disabled>
+                                    No Plant Assigned
+                                </button>
+                            @endif
                         </div>
+
+
                     </div>
                 </div>
 
                 @if (!empty($device->parameters))
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold mb-2">Parameters</h3>
-                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded">
-                            @foreach ($device->parameters as $key => $value)
-                                <li class="flex flex-col md:flex-row md:justify-between md:items-center px-4 py-2">
-                                    <span class="font-semibold text-gray-800">{{ $key }}</span>
-                                    <span class="mt-1 md:mt-0 text-gray-600">
-                                        @if(is_array($value))
-                                            <ul class="ml-3 list-disc list-inside text-sm">
-                                                @foreach ($value as $subKey => $subValue)
-                                                    <li>
-                                                        <span class="font-semibold">{{ $subKey }}:</span>
-                                                        <span>
-                                                            {{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}
-                                                        </span>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            {{ $value }}
-                                        @endif
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+    <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2">Parameters</h3>
+        <ul class="divide-y divide-gray-200 border border-gray-200 rounded">
+            @foreach ($device->parameters as $key => $value)
+                <li class="flex flex-col md:flex-row md:justify-between md:items-center px-4 py-2
+                           hover:bg-indigo-100 focus:bg-indigo-100 cursor-pointer transition">
+                    <span class="font-semibold text-gray-800">{{ $key }}</span>
+                    <span class="mt-1 md:mt-0 text-gray-600">
+                        @if(is_array($value))
+                            <ul class="ml-3 list-disc list-inside text-sm">
+                                @foreach ($value as $subKey => $subValue)
+                                    <li class="hover:bg-indigo-100 focus:bg-indigo-100 cursor-pointer transition px-2 py-1 rounded">
+                                        <span class="font-semibold">{{ $subKey }}:</span>
+                                        <span>
+                                            {{ is_array($subValue) ? json_encode($subValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $subValue }}
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            {{ $value }}
+                        @endif
+                    </span>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 
                 @if ($device->assignedDevices->count())
                     <div class="mt-4">
@@ -80,7 +107,12 @@
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach ($device->assignedDevices as $child)
-                                    <tr class="transition hover:bg-gray-100">
+                                    {{-- <tr class="transition hover:bg-gray-100"> --}}
+                                    <tr
+                                        class="transition hover:bg-indigo-50 cursor-pointer"
+                                        onclick="window.location='{{ url('/devices/'.$child->id) }}'"
+                                        title="Show device details"
+                                    >
                                         <td class="px-4 py-2">{{ $child->id }}</td>
                                         <td class="px-4 py-2">{{ $child->device_type }}</td>
                                         <td class="px-4 py-2">{{ $child->manufacturer }}</td>
