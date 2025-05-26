@@ -1,19 +1,18 @@
 <div class="mb-6 space-y-8">
-
     <!-- Energy Chart Tabs -->
-    <div x-data="{ tab: 'graph', open: false }" class="bg-white rounded-lg shadow">
+    <div x-data="{ tabEnergy: 'graph', open: false }" class="bg-white rounded-lg shadow">
         <div class="border-b px-4 pt-4 flex items-center">
             <nav class="flex space-x-4" aria-label="Tabs">
                 <button
-                    :class="tab === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabEnergy === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'graph'">
+                    @click="tabEnergy = 'graph'">
                     Graph
                 </button>
                 <button
-                    :class="tab === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabEnergy === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'data'">
+                    @click="tabEnergy = 'data'">
                     Data
                 </button>
             </nav>
@@ -36,22 +35,22 @@
 
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Graph Tab -->
-            <div x-show="tab === 'graph'">
-                <h4 class="text-center mb-3 font-semibold">Energy Live Chart</h4>
-                <div class="w-full" style="height: 400px;">
+            <div x-show="tabEnergy === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Energy Live Chart</h4>
+                <div class="w-full" style="height: 600px;">
                     <canvas id="energyChart" class="w-full h-full"></canvas>
                 </div>
             </div>
             <!-- Data Tab -->
-            <div x-show="tab === 'data'">
-                <div class="overflow-x-auto h-96">
-                    <table class="min-w-full text-xs border rounded">
+            <div x-show="tabEnergy === 'data'">
+                <div class="overflow-x-auto" style="height: 650px;">
+                    <table class="w-full text-lg border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
-                            <th class="px-4 py-2 text-left">Time</th>
-                            <th class="px-4 py-2 text-left">PV (kW)</th>
-                            <th class="px-4 py-2 text-left">Battery (kW)</th>
-                            <th class="px-4 py-2 text-left">Grid (kW)</th>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">PV (kW)</th>
+                            <th class="px-4 py-2 text-center">Battery (kW)</th>
+                            <th class="px-4 py-2 text-center">Grid (kW)</th>
                         </tr>
                         </thead>
                         <tbody id="energyDataTableBody"></tbody>
@@ -62,19 +61,19 @@
     </div>
 
     <!-- Battery Chart Tabs -->
-    <div x-data="{ tab: 'graph', open: false }" class="bg-white rounded-lg shadow">
+    <div x-data="{ tabBattery: 'graph', open: false }" class="bg-white rounded-lg shadow">
         <div class="border-b px-4 pt-4 flex items-center">
             <nav class="flex space-x-4" aria-label="Tabs">
                 <button
-                    :class="tab === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabBattery === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'graph'">
+                    @click="tabBattery = 'graph'">
                     Graph
                 </button>
                 <button
-                    :class="tab === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabBattery === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'data'">
+                    @click="tabBattery = 'data'">
                     Data
                 </button>
             </nav>
@@ -97,21 +96,21 @@
 
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Battery Chart Tab -->
-            <div x-show="tab === 'graph'">
-                <h4 class="text-center mb-3 font-semibold">Battery Power and Energy Price</h4>
-                <div class="w-full" style="height: 400px;">
+            <div x-show="tabBattery === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Battery Power and Energy Price</h4>
+                <div class="w-full" style="height: 600px;">
                     <canvas id="batteryChart" class="w-full h-full"></canvas>
                 </div>
             </div>
             <!-- Data Tab -->
-            <div x-show="tab === 'data'">
-                <div class="overflow-x-auto h-96">
-                    <table class="min-w-full text-xs border rounded">
+            <div x-show="tabBattery === 'data'">
+                <div class="overflow-x-auto" style="height: 650px;">
+                    <table class="w-full text-lg border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
-                            <th class="px-4 py-2 text-left">Time</th>
-                            <th class="px-4 py-2 text-left">Battery Power (kW)</th>
-                            <th class="px-4 py-2 text-left">Energy Price (€ / kWh)</th>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">Battery Power (kW)</th>
+                            <th class="px-4 py-2 text-center">Energy Price (€ / kWh)</th>
                         </tr>
                         </thead>
                         <tbody id="batteryDataTableBody"></tbody>
@@ -122,19 +121,19 @@
     </div>
 
     <!-- Battery Savings Chart Tabs -->
-    <div x-data="{ tab: 'graph', open: false }" class="bg-white rounded-lg shadow">
+    <div x-data="{ tabSavings: 'graph', open: false }" class="bg-white rounded-lg shadow">
         <div class="border-b px-4 pt-4 flex items-center">
             <nav class="flex space-x-4" aria-label="Tabs">
                 <button
-                    :class="tab === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabSavings === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'graph'">
+                    @click="tabSavings = 'graph'">
                     Graph
                 </button>
                 <button
-                    :class="tab === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    :class="tabSavings === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
                     class="px-3 py-2 text-sm font-medium focus:outline-none"
-                    @click="tab = 'data'">
+                    @click="tabSavings = 'data'">
                     Data
                 </button>
             </nav>
@@ -156,21 +155,21 @@
         </div>
         <div class="px-4 py-4 min-h-[550px]">
             <!-- Graph Tab -->
-            <div x-show="tab === 'graph'">
-                <h4 class="text-center mb-3 font-semibold">Battery Savings</h4>
-                <p id="batterySavingsTotal" class="text-center text-green-700 font-semibold"></p>
-                <div class="flex items-center" style="height: 400px;">
-                    <canvas id="savingsChart" class="w-full h-96"></canvas>
+            <div x-show="tabSavings === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Battery Savings</h4>
+                <p id="batterySavingsTotal" class="text-center text-green-700 font-bold"></p>
+                <div class="w-full" style="height: 600px;">
+                    <canvas id="savingsChart" class="w-full h-full"></canvas>
                 </div>
             </div>
             <!-- Data Tab -->
-            <div x-show="tab === 'data'">
-                <div class="overflow-x-auto h-96">
-                    <table class="min-w-full text-xs border rounded">
+            <div x-show="tabSavings === 'data'">
+                <div class="overflow-x-auto" style="height: 670px;">
+                    <table class="w-full text-lg border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
-                            <th class="px-4 py-2 text-left">Time</th>
-                            <th class="px-4 py-2 text-left">Battery Savings (€)</th>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">Battery Savings (€)</th>
                         </tr>
                         </thead>
                         <tbody id="batterySavingsDataTableBody"></tbody>
@@ -180,6 +179,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Chart.js loader -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -239,8 +239,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { position: 'top' } },
-                elements: { point: { radius: 4, hoverRadius: 8 } }
+                elements: { point: { radius: 4, hoverRadius: 8 } },
+                scales: {
+                    y: { ticks: { font: { size: 14 } } },
+                    x: { ticks: { font: { size: 14 } } }
+                }
             }
+
         });
 
         // Fill Energy Data Table
@@ -249,10 +254,10 @@
         entries.forEach(([ts, val]) => {
             energyTable.innerHTML += `
             <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${(val.pv_p / 1000).toFixed(2)}</td>
-                <td>${(val.battery_p / 1000).toFixed(2)}</td>
-                <td>${(val.grid_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td>
             </tr>`;
         });
 
@@ -284,13 +289,43 @@
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'top' } },
+                plugins: {
+                    legend: { position: 'top' },
+                    // Add crosshair plugin config here if using
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                elements: {
+                    point: {
+                        radius: 4,        // normal
+                        hoverRadius: 12   // << bigger on hover!
+                    }
+                },
                 scales: {
-                    y: { type: 'linear', position: 'left' },
-                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        ticks: { font: { size: 16 } }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { font: { size: 14 } },
+                        min: -0.25,
+                        max: 0.25
+                    },
+                    x: {
+                        ticks: { font: { size: 14 } },
+                        border: { display: true, width: 4 }
+                    }
                 }
             }
         });
+
+
 
         // Fill Battery Data Table
         const batteryTable = document.getElementById('batteryDataTableBody');
@@ -298,9 +333,9 @@
         entries.forEach(([ts, val]) => {
             batteryTable.innerHTML += `
             <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${(val.battery_p / 1000).toFixed(2)}</td>
-                <td>${val.tariff.toFixed(4)}</td>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td>
             </tr>`;
         });
 
@@ -324,7 +359,11 @@
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: { y: {}, x: {} }
+                scales: {
+                    y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } } },
+                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 14 } } },
+                    x: { ticks: { font: { size: 14 } } }
+                }
             }
         });
 
@@ -334,8 +373,8 @@
         savingsEntries.forEach(([ts, val]) => {
             savingsTable.innerHTML += `
             <tr>
-                <td>${formatLabelDate(ts)}</td>
-                <td>${val.battery_savings.toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td>
             </tr>`;
         });
     }
