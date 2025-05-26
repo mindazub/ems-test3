@@ -38,8 +38,8 @@
             <!-- Graph Tab -->
             <div x-show="tab === 'graph'">
                 <h4 class="text-center mb-3 font-semibold">Energy Live Chart</h4>
-                <div class="flex items-center" style="height: 400px;">
-                    <canvas id="energyChart" class="w-full h-96"></canvas>
+                <div class="w-full" style="height: 400px;">
+                    <canvas id="energyChart" class="w-full h-full"></canvas>
                 </div>
             </div>
             <!-- Data Tab -->
@@ -96,11 +96,11 @@
         </div>
 
         <div class="px-4 py-4 min-h-[550px]">
-            <!-- Graph Tab -->
+            <!-- Battery Chart Tab -->
             <div x-show="tab === 'graph'">
                 <h4 class="text-center mb-3 font-semibold">Battery Power and Energy Price</h4>
-                <div class="flex items-center" style="height: 400px;">
-                    <canvas id="batteryChart" class="w-full h-96"></canvas>
+                <div class="w-full" style="height: 400px;">
+                    <canvas id="batteryChart" class="w-full h-full"></canvas>
                 </div>
             </div>
             <!-- Data Tab -->

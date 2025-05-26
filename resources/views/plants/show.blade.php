@@ -15,7 +15,7 @@
                 <!-- PLANT INFO SECTION -->
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
-                        <h1>
+                        <h1 class="text-4xl font-bold ">
                             <span class="text-gray-400 italic">#ID&nbsp;{{ $plant->id }}&nbsp;&nbsp;</span>
                             <span class="font-semibold">{{ $plant->name }}</span> Details
                         </h1>
