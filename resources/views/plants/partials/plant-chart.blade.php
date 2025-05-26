@@ -180,202 +180,209 @@
     </div>
 </div>
 
-
 <!-- Chart.js loader -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- Alpine.js loader (required for x-data, if not already loaded elsewhere) -->
 <script src="//unpkg.com/alpinejs" defer></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-        try {
-            const [batteryOkRes, batterySavingsRes] = await Promise.all([
-                fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
-                fetch("{{ asset('battery_savings.json') }}").then(res => res.json()),
-            ]);
-            renderCharts(batteryOkRes, batterySavingsRes);
-        } catch (e) {
-            console.error("Chart rendering failed", e);
+// Vertical crosshair line plugin for Chart.js (applies to all charts)
+const verticalLinePlugin = {
+    id: 'verticalLine',
+    afterDraw(chart) {
+        if (chart.tooltip?._active && chart.tooltip._active.length && chart.chartArea) {
+            const ctx = chart.ctx;
+            const x = chart.tooltip._active[0].element.x;
+            const topY = chart.chartArea.top;
+            const bottomY = chart.chartArea.bottom;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = 3; // Make it bolder
+            ctx.strokeStyle = 'rgba(90,90,220,0.4)';
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+};
+Chart.register(verticalLinePlugin);
+
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        const [batteryOkRes, batterySavingsRes] = await Promise.all([
+            fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
+            fetch("{{ asset('battery_savings.json') }}").then(res => res.json()),
+        ]);
+        renderCharts(batteryOkRes, batterySavingsRes);
+    } catch (e) {
+        console.error("Chart rendering failed", e);
+    }
+});
+
+function formatLabelDate(ts) {
+    const date = isNaN(ts) ? new Date(ts) : new Date(Number(ts));
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderCharts(batteryOkData, batterySavingsData) {
+    // ENERGY CHART
+    const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const labels = entries.map(([ts]) => formatLabelDate(ts));
+    const pvData = entries.map(([, v]) => v.pv_p / 1000);
+    const batteryData = entries.map(([, v]) => v.battery_p / 1000);
+    const gridData = entries.map(([, v]) => v.grid_p / 1000);
+
+    new Chart(document.getElementById('energyChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'PV (kW)', data: pvData,
+                    borderColor: 'rgba(0,123,255,1)', backgroundColor: 'rgba(0,123,255,0.15)', fill: true, pointRadius: 2, pointHoverRadius: 12
+                },
+                {
+                    label: 'Battery (kW)', data: batteryData,
+                    borderColor: 'rgba(220,53,69,1)', backgroundColor: 'rgba(220,53,69,0.12)', fill: true, pointRadius: 2, pointHoverRadius: 12
+                },
+                {
+                    label: 'Grid (kW)', data: gridData,
+                    borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,0.12)', fill: true, pointRadius: 2, pointHoverRadius: 12
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            interaction: { mode: 'index', intersect: false },
+            elements: { point: { radius: 4, hoverRadius: 12 } },
+            scales: {
+                y: { ticks: { font: { size: 14 } } },
+                x: { ticks: { font: { size: 14 } } }
+            }
         }
     });
 
-    function formatLabelDate(ts) {
-        const date = isNaN(ts) ? new Date(ts) : new Date(Number(ts));
-        return date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
+    // Fill Energy Data Table
+    const energyTable = document.getElementById('energyDataTableBody');
+    energyTable.innerHTML = '';
+    entries.forEach(([ts, val]) => {
+        energyTable.innerHTML += `
+        <tr>
+            <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+            <td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td>
+            <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+            <td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td>
+        </tr>`;
+    });
 
-    function renderCharts(batteryOkData, batterySavingsData) {
-        // ENERGY CHART
-        const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const labels = entries.map(([ts]) => formatLabelDate(ts));
-        const pvData = entries.map(([, v]) => v.pv_p / 1000);
-        const batteryData = entries.map(([, v]) => v.battery_p / 1000);
-        const gridData = entries.map(([, v]) => v.grid_p / 1000);
+    // BATTERY CHART
+    const tariffData = entries.map(([, v]) => v.tariff);
 
-        // Energy Chart
-        new Chart(document.getElementById('energyChart'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'PV (kW)', data: pvData,
-                        borderColor: 'rgba(0,123,255,1)', backgroundColor: 'rgba(0,123,255,0.15)', fill: true, pointRadius: 2
-                    },
-                    {
-                        label: 'Battery (kW)', data: batteryData,
-                        borderColor: 'rgba(220,53,69,1)', backgroundColor: 'rgba(220,53,69,0.12)', fill: true, pointRadius: 2
-                    },
-                    {
-                        label: 'Grid (kW)', data: gridData,
-                        borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,0.12)', fill: true, pointRadius: 2
-                    },
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                elements: { point: { radius: 4, hoverRadius: 8 } },
-                scales: {
-                    y: { ticks: { font: { size: 14 } } },
-                    x: { ticks: { font: { size: 14 } } }
+    new Chart(document.getElementById('batteryChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    type: 'line',
+                    label: 'Battery Power (kW)',
+                    data: batteryData,
+                    borderColor: 'rgba(0,123,255,0.8)',
+                    backgroundColor: 'rgba(0,123,255,0.15)',
+                    fill: true,
+                    yAxisID: 'y',
+                    pointRadius: 4, pointHoverRadius: 12
+                },
+                {
+                    type: 'bar',
+                    label: 'Energy Price (€ / kWh)',
+                    data: tariffData,
+                    backgroundColor: 'rgba(40,167,69,0.5)',
+                    yAxisID: 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            interaction: { mode: 'index', intersect: false },
+            elements: { point: { radius: 4, hoverRadius: 12 } },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    ticks: { font: { size: 16 } }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { font: { size: 14 } },
+                    min: -0.25,
+                    max: 0.25
+                },
+                x: {
+                    ticks: { font: { size: 14 } },
+                    border: { display: true, width: 4 }
                 }
             }
+        }
+    });
 
-        });
+    // Fill Battery Data Table
+    const batteryTable = document.getElementById('batteryDataTableBody');
+    batteryTable.innerHTML = '';
+    entries.forEach(([ts, val]) => {
+        batteryTable.innerHTML += `
+        <tr>
+            <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+            <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+            <td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td>
+        </tr>`;
+    });
 
-        // Fill Energy Data Table
-        const energyTable = document.getElementById('energyDataTableBody');
-        energyTable.innerHTML = '';
-        entries.forEach(([ts, val]) => {
-            energyTable.innerHTML += `
-            <tr>
-                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
-                <td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td>
-                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
-                <td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td>
-            </tr>`;
-        });
+    // BATTERY SAVINGS CHART
+    const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
+    const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
+    const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
+    document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
 
-        // BATTERY CHART
-        const tariffData = entries.map(([, v]) => v.tariff);
-
-        new Chart(document.getElementById('batteryChart'), {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        type: 'line',
-                        label: 'Battery Power (kW)',
-                        data: batteryData,
-                        borderColor: 'rgba(0,123,255,0.8)',
-                        backgroundColor: 'rgba(0,123,255,0.15)',
-                        fill: true,
-                        yAxisID: 'y'
-                    },
-                    {
-                        type: 'bar',
-                        label: 'Energy Price (€ / kWh)',
-                        data: tariffData,
-                        backgroundColor: 'rgba(40,167,69,0.5)',
-                        yAxisID: 'y1',
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top' },
-                    // Add crosshair plugin config here if using
-                },
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                elements: {
-                    point: {
-                        radius: 4,        // normal
-                        hoverRadius: 12   // << bigger on hover!
-                    }
-                },
-                scales: {
-                    y: {
-                        type: 'linear',
-                        position: 'left',
-                        ticks: { font: { size: 16 } }
-                    },
-                    y1: {
-                        type: 'linear',
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        ticks: { font: { size: 14 } },
-                        min: -0.25,
-                        max: 0.25
-                    },
-                    x: {
-                        ticks: { font: { size: 14 } },
-                        border: { display: true, width: 4 }
-                    }
-                }
+    new Chart(document.getElementById('savingsChart'), {
+        type: 'bar',
+        data: {
+            labels: savingsLabels,
+            datasets: [{
+                label: 'Battery Savings (€)',
+                data: savingsData,
+                backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)')
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } } },
+                y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 14 } } },
+                x: { ticks: { font: { size: 14 } } }
             }
-        });
+        }
+    });
 
-
-
-        // Fill Battery Data Table
-        const batteryTable = document.getElementById('batteryDataTableBody');
-        batteryTable.innerHTML = '';
-        entries.forEach(([ts, val]) => {
-            batteryTable.innerHTML += `
-            <tr>
-                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
-                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
-                <td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td>
-            </tr>`;
-        });
-
-        // BATTERY SAVINGS CHART
-        const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
-        const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
-        const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
-        document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
-
-        new Chart(document.getElementById('savingsChart'), {
-            type: 'bar',
-            data: {
-                labels: savingsLabels,
-                datasets: [{
-                    label: 'Battery Savings (€)',
-                    data: savingsData,
-                    backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)')
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } } },
-                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 14 } } },
-                    x: { ticks: { font: { size: 14 } } }
-                }
-            }
-        });
-
-        // Fill Savings Data Table
-        const savingsTable = document.getElementById('batterySavingsDataTableBody');
-        savingsTable.innerHTML = '';
-        savingsEntries.forEach(([ts, val]) => {
-            savingsTable.innerHTML += `
-            <tr>
-                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
-                <td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td>
-            </tr>`;
-        });
-    }
+    // Fill Savings Data Table
+    const savingsTable = document.getElementById('batterySavingsDataTableBody');
+    savingsTable.innerHTML = '';
+    savingsEntries.forEach(([ts, val]) => {
+        savingsTable.innerHTML += `
+        <tr>
+            <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+            <td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td>
+        </tr>`;
+    });
+}
 </script>

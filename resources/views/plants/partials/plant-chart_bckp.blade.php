@@ -1,54 +1,57 @@
-<div class="mb-6">
-    <!-- Chart Tabs and Containers -->
-    <div class="card mb-5">
-        <div class="card-header pb-0">
-            <ul class="nav nav-tabs" id="energyTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="graph-tab" data-bs-toggle="tab" data-bs-target="#graphTab"
-                        type="button" role="tab" aria-controls="graphTab" aria-selected="true">Graph</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#dataTab"
-                        type="button" role="tab" aria-controls="dataTab" aria-selected="false">Data</button>
-                </li>
-                <li class="nav-item ms-auto" role="presentation">
-                    <div class="nav-link p-0 border-0 bg-transparent">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                id="energyDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-download"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="energyDownloadMenu">
-                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'png']) }}">Download PNG</a></li>
-                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a></li>
-                                <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'energy', 'pdf']) }}">Download PDF</a></li>
-                                                            </ul>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <div class="card-body tab-content" id="energyTabContent" style="height: 550px;">
-            <!-- Graph Tab -->
-            <div class="tab-pane fade show active h-100" id="graphTab" role="tabpanel" aria-labelledby="graph-tab">
-                <h4 class="text-center m-3">Energy Live Chart</h4>
-                <div style="height: calc(100% - 90px); display: flex; align-items: center; width: 100%;">
-                    <canvas id="energyChart" style="width: 100%; height: 400px;"></canvas>
+<div class="mb-6 space-y-8">
+    <!-- Energy Chart Tabs -->
+    <div x-data="{ tabEnergy: 'graph', open: false }" class="bg-white rounded-lg shadow">
+        <div class="border-b px-4 pt-4 flex items-center">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button
+                    :class="tabEnergy === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabEnergy = 'graph'">
+                    Graph
+                </button>
+                <button
+                    :class="tabEnergy === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabEnergy = 'data'">
+                    Data
+                </button>
+            </nav>
+            <!-- Dropdown, aligned right -->
+            <div class="ml-auto relative" x-data="{ openMenu: false }">
+                <button @click="openMenu = !openMenu"
+                        class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
+                        aria-label="Download">
+                    <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
+                </button>
+                <div x-show="openMenu" @click.away="openMenu = false"
+                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     style="display: none;">
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'png']) }}">Download PNG</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'pdf']) }}">Download PDF</a>
                 </div>
             </div>
+        </div>
 
+        <div class="px-4 py-4 min-h-[550px]">
+            <!-- Graph Tab -->
+            <div x-show="tabEnergy === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Energy Live Chart</h4>
+                <div class="w-full" style="height: 600px;">
+                    <canvas id="energyChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
             <!-- Data Tab -->
-            <div class="tab-pane fade h-100" id="dataTab" role="tabpanel" aria-labelledby="data-tab">
-                <div class="table-responsive h-100">
-                    <table id="energyDataTable" class="table table-bordered table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Time</th>
-                                <th>PV (kW)</th>
-                                <th>Battery (kW)</th>
-                                <th>Grid (kW)</th>
-                            </tr>
+            <div x-show="tabEnergy === 'data'">
+                <div class="overflow-x-auto" style="height: 650px;">
+                    <table class="w-full text-lg border rounded">
+                        <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">PV (kW)</th>
+                            <th class="px-4 py-2 text-center">Battery (kW)</th>
+                            <th class="px-4 py-2 text-center">Grid (kW)</th>
+                        </tr>
                         </thead>
                         <tbody id="energyDataTableBody"></tbody>
                     </table>
@@ -57,56 +60,119 @@
         </div>
     </div>
 
-    <!-- Battery Chart Tabs and Containers -->
-    <div class="card mb-5">
-        <div class="card-header pb-0">
-            <ul class="nav nav-tabs" id="batteryTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="battery-graph-tab" data-bs-toggle="tab"
-                        data-bs-target="#batteryGraphTab" type="button" role="tab" aria-controls="batteryGraphTab"
-                        aria-selected="true">Graph</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="battery-data-tab" data-bs-toggle="tab" data-bs-target="#batteryDataTab"
-                        type="button" role="tab" aria-controls="batteryDataTab" aria-selected="false">Data</button>
-                </li>
-                <li class="nav-item ms-auto" role="presentation">
-                    <div class="nav-link p-0 border-0 bg-transparent">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                id="batteryDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-download"></i>
-                            </button>
-{{-- BATTERY Chart Buttons --}}
-<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="batteryPowerDownloadMenu">
-<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'png']) }}">Download PNG</a></li>
-<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a></li>
-<li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'battery', 'pdf']) }}">Download PDF</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body tab-content" id="batteryTabContent" style="height: 550px;">
-            <div class="tab-pane fade show active h-100" id="batteryGraphTab" role="tabpanel"
-                aria-labelledby="battery-graph-tab">
-                <h4 class="text-center m-3">Battery Power and Energy Price</h4>
-                <div style="height: calc(100% - 90px); display: flex; align-items: center;">
-                    <canvas id="batteryChart" style="width: 100%; height: 100%;"></canvas>
+    <!-- Battery Chart Tabs -->
+    <div x-data="{ tabBattery: 'graph', open: false }" class="bg-white rounded-lg shadow">
+        <div class="border-b px-4 pt-4 flex items-center">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button
+                    :class="tabBattery === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabBattery = 'graph'">
+                    Graph
+                </button>
+                <button
+                    :class="tabBattery === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabBattery = 'data'">
+                    Data
+                </button>
+            </nav>
+            <!-- Dropdown -->
+            <div class="ml-auto relative" x-data="{ openMenu: false }">
+                <button @click="openMenu = !openMenu"
+                        class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
+                        aria-label="Download">
+                    <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
+                </button>
+                <div x-show="openMenu" @click.away="openMenu = false"
+                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     style="display: none;">
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'png']) }}">Download PNG</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'pdf']) }}">Download PDF</a>
                 </div>
             </div>
-            <div class="tab-pane fade h-100" id="batteryDataTab" role="tabpanel" aria-labelledby="battery-data-tab">
-                <div class="table-responsive h-100">
-                    <table id="batteryDataTable" class="table table-bordered table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Time</th>
-                                <th>Battery Power (kW)</th>
-                                <th>Energy Price (€ / kWh)</th>
-                            </tr>
+        </div>
+
+        <div class="px-4 py-4 min-h-[550px]">
+            <!-- Battery Chart Tab -->
+            <div x-show="tabBattery === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Battery Power and Energy Price</h4>
+                <div class="w-full" style="height: 600px;">
+                    <canvas id="batteryChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+            <!-- Data Tab -->
+            <div x-show="tabBattery === 'data'">
+                <div class="overflow-x-auto" style="height: 650px;">
+                    <table class="w-full text-lg border rounded">
+                        <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">Battery Power (kW)</th>
+                            <th class="px-4 py-2 text-center">Energy Price (€ / kWh)</th>
+                        </tr>
                         </thead>
                         <tbody id="batteryDataTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery Savings Chart Tabs -->
+    <div x-data="{ tabSavings: 'graph', open: false }" class="bg-white rounded-lg shadow">
+        <div class="border-b px-4 pt-4 flex items-center">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button
+                    :class="tabSavings === 'graph' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabSavings = 'graph'">
+                    Graph
+                </button>
+                <button
+                    :class="tabSavings === 'data' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'"
+                    class="px-3 py-2 text-sm font-medium focus:outline-none"
+                    @click="tabSavings = 'data'">
+                    Data
+                </button>
+            </nav>
+            <!-- Dropdown -->
+            <div class="ml-auto relative" x-data="{ openMenu: false }">
+                <button @click="openMenu = !openMenu"
+                        class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
+                        aria-label="Download">
+                    <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
+                </button>
+                <div x-show="openMenu" @click.away="openMenu = false"
+                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     style="display: none;">
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'png']) }}">Download PNG</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a>
+                    <a class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'pdf']) }}">Download PDF</a>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 py-4 min-h-[550px]">
+            <!-- Graph Tab -->
+            <div x-show="tabSavings === 'graph'">
+                <h4 class="text-center mb-3 font-bold text-3xl">Battery Savings</h4>
+                <p id="batterySavingsTotal" class="text-center text-green-700 font-bold"></p>
+                <div class="w-full" style="height: 600px;">
+                    <canvas id="savingsChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+            <!-- Data Tab -->
+            <div x-show="tabSavings === 'data'">
+                <div class="overflow-x-auto" style="height: 670px;">
+                    <table class="w-full text-lg border rounded">
+                        <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-4 py-2 text-center">Time</th>
+                            <th class="px-4 py-2 text-center">Battery Savings (€)</th>
+                        </tr>
+                        </thead>
+                        <tbody id="batterySavingsDataTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -115,102 +181,13 @@
 </div>
 
 
-<!-- Battery Savings Chart Tabs and Containers -->
-<div class="card mb-5">
-    <div class="card-header pb-0">
-        <ul class="nav nav-tabs" id="savingsTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="savings-graph-tab" data-bs-toggle="tab"
-                    data-bs-target="#savingsGraphTab" type="button" role="tab" aria-controls="savingsGraphTab"
-                    aria-selected="true">Graph</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="savings-data-tab" data-bs-toggle="tab" data-bs-target="#savingsDataTab"
-                    type="button" role="tab" aria-controls="savingsDataTab" aria-selected="false">Data</button>
-            </li>
-            <li class="nav-item ms-auto" role="presentation">
-                <div class="nav-link p-0 border-0 bg-transparent">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                            id="savingsDownloadMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-download"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="savingsDownloadMenu">
-{{-- SAVINGS Chart Buttons --}}
-
-    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'png']) }}">Download PNG</a></li>
-    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a></li>
-    <li><a class="dropdown-item" href="{{ route('plants.download', [$plant->id, 'savings', 'pdf']) }}">Download PDF</a></li>
-                                </ul>
-                    </div>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <div class="card-body tab-content" id="savingsTabContent" style="height: 550px;">
-        <div class="tab-pane fade show active h-100" id="savingsGraphTab" role="tabpanel"
-            aria-labelledby="savings-graph-tab">
-            <h4 class="text-center m-3">Battery Savings</h4>
-            <p id="batterySavingsTotal" class="text-center text-success fw-semibold"></p>
-            <div style="height: calc(100% - 90px); display: flex; align-items: center;">
-                <canvas id="savingsChart" style="width: 100%; height: 100%;"></canvas>
-            </div>
-        </div>
-        <div class="tab-pane fade h-100" id="savingsDataTab" role="tabpanel" aria-labelledby="savings-data-tab">
-            <div class="table-responsive h-100">
-                <table id="batterySavingsDataTable" class="table table-bordered table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Time</th>
-                            <th>Battery Savings (€)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batterySavingsDataTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Load Chart.js FIRST -->
+<!-- Chart.js loader -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-<script>
-
-// Crosshair plugin for Chart.js
-const verticalLinePlugin = {
-    id: 'verticalLine',
-    afterDraw(chart) {
-        // Only draw if tooltip is active and chartArea is defined
-        if (chart.tooltip?._active?.length && chart.chartArea) {
-            const x = chart.tooltip._active[0].element.x;
-            const ctx = chart.ctx;
-            const topY = chart.chartArea.top;
-            const bottomY = chart.chartArea.bottom;
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(x, topY);
-            ctx.lineTo(x, bottomY);
-            ctx.lineWidth = 3; // Thicker line for visibility
-            ctx.strokeStyle = 'rgba(255,0,0,0.9)';
-            ctx.stroke();
-            ctx.restore();
-        }
-    }
-};
-
-// Register the verticalLinePlugin for all charts
-Chart.register(verticalLinePlugin);
-
-</script>
+<!-- Alpine.js loader (required for x-data, if not already loaded elsewhere) -->
+<script src="//unpkg.com/alpinejs" defer></script>
 
 <script>
-
     document.addEventListener("DOMContentLoaded", async function () {
-
-
         try {
             const [batteryOkRes, batterySavingsRes] = await Promise.all([
                 fetch("{{ asset('energy_live_chart.json') }}").then(res => res.json()),
@@ -230,123 +207,64 @@ Chart.register(verticalLinePlugin);
         });
     }
 
-
-
-
     function renderCharts(batteryOkData, batterySavingsData) {
+        // ENERGY CHART
         const entries = Object.entries(batteryOkData).sort(([a], [b]) => new Date(a) - new Date(b));
         const labels = entries.map(([ts]) => formatLabelDate(ts));
+        const pvData = entries.map(([, v]) => v.pv_p / 1000);
+        const batteryData = entries.map(([, v]) => v.battery_p / 1000);
+        const gridData = entries.map(([, v]) => v.grid_p / 1000);
 
-        const pvData = entries.map(([, v]) => v.pv_p);
-        const batteryData = entries.map(([, v]) => v.battery_p);
-        const gridData = entries.map(([, v]) => v.grid_p);
-        const tariffData = entries.map(([, v]) => v.tariff);
-
-
-
-
-        // --- Energy Chart ---
-        const pvDataKW = pvData.map(v => v / 1000);
-        const batteryDataKW00 = batteryData.map(v => v / 1000);
-        const gridDataKW = gridData.map(v => v / 1000);
-
-
-        window.energyChart = new Chart(document.getElementById('energyChart'), {
+        // Energy Chart
+        new Chart(document.getElementById('energyChart'), {
             type: 'line',
             data: {
                 labels,
                 datasets: [
                     {
-                        label: 'PV (kW)',
-                        data: pvDataKW,
-                        borderColor: 'rgba(0,123,255,1)',         // blue line
-                        backgroundColor: 'rgba(0,123,255,0.15)',  // light blue fill
-                        fill: true,                               // fill area under line
-                        pointRadius: 2,
-                        pointHoverRadius: 12
+                        label: 'PV (kW)', data: pvData,
+                        borderColor: 'rgba(0,123,255,1)', backgroundColor: 'rgba(0,123,255,0.15)', fill: true, pointRadius: 2
                     },
                     {
-                        label: 'Battery (kW)',
-                        data: batteryDataKW00,
-                        borderColor: 'rgba(220,53,69,1)',         // red line
-                        backgroundColor: 'rgba(220,53,69,0.12)',  // light red fill
-                        fill: true,
-                        pointRadius: 2,
-                        pointHoverRadius: 12
+                        label: 'Battery (kW)', data: batteryData,
+                        borderColor: 'rgba(220,53,69,1)', backgroundColor: 'rgba(220,53,69,0.12)', fill: true, pointRadius: 2
                     },
                     {
-                        label: 'Grid (kW)',
-                        data: gridDataKW,
-                        borderColor: 'rgba(40,167,69,1)',         // green line
-                        backgroundColor: 'rgba(40,167,69,0.12)',  // light green fill
-                        fill: true,
-                        pointRadius: 2,
-                        pointHoverRadius: 12
+                        label: 'Grid (kW)', data: gridData,
+                        borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,0.12)', fill: true, pointRadius: 2
                     },
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                hover: {
-                    mode: 'index',
-                    intersect: false
-                },
-                elements: {
-                    point: {
-                        radius: 4,
-                        hoverRadius: 8
-                    }
-                },
+                plugins: { legend: { position: 'top' } },
+                elements: { point: { radius: 4, hoverRadius: 8 } },
                 scales: {
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Power (kW)'
-                        },
-                        grid: {
-                            lineWidth: 1,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: { weight: 'normal' }
-                        },
-                    }
+                    y: { ticks: { font: { size: 14 } } },
+                    x: { ticks: { font: { size: 14 } } }
                 }
             }
+
         });
 
-
-        const energyTable = document.querySelector('#energyDataTableBody');
+        // Fill Energy Data Table
+        const energyTable = document.getElementById('energyDataTableBody');
+        energyTable.innerHTML = '';
         entries.forEach(([ts, val]) => {
             energyTable.innerHTML += `
-                <tr>
-                    <td>${formatLabelDate(ts)}</td>
-                    <td>${val.pv_p.toFixed(2)}</td>
-                    <td>${val.battery_p.toFixed(2)}</td>
-                    <td>${val.grid_p.toFixed(2)}</td>
-                </tr>`;
+            <tr>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td>
+            </tr>`;
         });
 
-        setTimeout(() => uploadChartImage('energyChart', window.energyChart, {{ $plant->id }}), 800);
+        // BATTERY CHART
+        const tariffData = entries.map(([, v]) => v.tariff);
 
-        // --- Battery Chart ---
-        const batteryDataKW = batteryData.map(v => v / 1000);
-
-        window.batteryChart = new Chart(document.getElementById('batteryChart'), {
+        new Chart(document.getElementById('batteryChart'), {
             type: 'bar',
             data: {
                 labels,
@@ -354,14 +272,11 @@ Chart.register(verticalLinePlugin);
                     {
                         type: 'line',
                         label: 'Battery Power (kW)',
-                        data: batteryDataKW,
+                        data: batteryData,
                         borderColor: 'rgba(0,123,255,0.8)',
                         backgroundColor: 'rgba(0,123,255,0.15)',
                         fill: true,
-                        yAxisID: 'y',
-                        pointRadius: 4,
-                        pointHoverRadius: 8,
-                        tension: 0.2
+                        yAxisID: 'y'
                     },
                     {
                         type: 'bar',
@@ -375,170 +290,92 @@ Chart.register(verticalLinePlugin);
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { position: 'top' }
+                    legend: { position: 'top' },
+                    // Add crosshair plugin config here if using
                 },
                 interaction: {
                     mode: 'index',
                     intersect: false
                 },
-                hover: {
-                    mode: 'index',
-                    intersect: false
+                elements: {
+                    point: {
+                        radius: 4,        // normal
+                        hoverRadius: 12   // << bigger on hover!
+                    }
                 },
                 scales: {
                     y: {
                         type: 'linear',
                         position: 'left',
-                        min: -30,
-                        max: 30,
-                        ticks: {
-                            callback: v => v.toLocaleString(undefined, { maximumFractionDigits: 2 }),
-                            font: { weight: 'bold' }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Battery Power (kW)'
-                        },
-                        grid: {
-                            lineWidth: 1,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
+                        ticks: { font: { size: 16 } }
                     },
                     y1: {
                         type: 'linear',
                         position: 'right',
-                        min: -0.25,
-                        max: 0.25,
                         grid: { drawOnChartArea: false },
-                        title: {
-                            display: true,
-                            text: 'Energy Price (€ / kWh)'
-                        },
-                        ticks: {
-                            font: { weight: 'bold' }
-                        },
-                        grid: {
-                            lineWidth: 1,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
+                        ticks: { font: { size: 14 } },
+                        min: -0.25,
+                        max: 0.25
                     },
                     x: {
-                        ticks: {
-                            font: { weight: 'bold' }
-                        },
-                        grid: {
-                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
+                        ticks: { font: { size: 14 } },
+                        border: { display: true, width: 4 }
                     }
                 }
             }
         });
 
-        const batteryTable = document.querySelector('#batteryDataTableBody');
+
+
+        // Fill Battery Data Table
+        const batteryTable = document.getElementById('batteryDataTableBody');
+        batteryTable.innerHTML = '';
         entries.forEach(([ts, val]) => {
             batteryTable.innerHTML += `
-                <tr>
-                    <td>${formatLabelDate(ts)}</td>
-                    <td>${val.battery_p.toFixed(2)}</td>
-                    <td>${val.tariff.toFixed(4)}</td>
-                </tr>`;
+            <tr>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td>
+                <td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td>
+            </tr>`;
         });
 
-        setTimeout(() => uploadChartImage('batteryChart', window.batteryChart, {{ $plant->id }}), 800);
-
-        // --- Battery Savings Chart ---
-        const savingsEntries = Object.entries(batterySavingsData).sort(([a, b]) => new Date(a) - new Date(b));
+        // BATTERY SAVINGS CHART
+        const savingsEntries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
         const savingsLabels = savingsEntries.map(([ts]) => formatLabelDate(ts));
         const savingsData = savingsEntries.map(([, v]) => v.battery_savings);
-        const savingsColors = savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)');
         const totalSavings = savingsData.reduce((acc, val) => acc + val, 0);
         document.getElementById('batterySavingsTotal').textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
 
-        window.batterySavingsChart = new Chart(document.getElementById('savingsChart'), {
+        new Chart(document.getElementById('savingsChart'), {
             type: 'bar',
             data: {
                 labels: savingsLabels,
                 datasets: [{
                     label: 'Battery Savings (€)',
                     data: savingsData,
-                    backgroundColor: savingsColors
+                    backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)')
                 }]
             },
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        ticks: {
-                            font: { weight: 'bold' }
-                        },
-                        grid: {
-                            lineWidth: 1,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Battery Savings (€)'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: { weight: 'bold' }
-                        },
-                        grid: {
-                            lineWidth: context => context.tick && context.tick.value === 0 ? 2 : 0.5,
-                            color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
-                        }
-                    }
+                    y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } } },
+                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 14 } } },
+                    x: { ticks: { font: { size: 14 } } }
                 }
             }
         });
 
-        const savingsTable = document.querySelector('#batterySavingsDataTableBody');
+        // Fill Savings Data Table
+        const savingsTable = document.getElementById('batterySavingsDataTableBody');
+        savingsTable.innerHTML = '';
         savingsEntries.forEach(([ts, val]) => {
             savingsTable.innerHTML += `
-                <tr>
-                    <td>${formatLabelDate(ts)}</td>
-                    <td>${val.battery_savings.toFixed(2)}</td>
-                </tr>`;
+            <tr>
+                <td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td>
+                <td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td>
+            </tr>`;
         });
-
-        setTimeout(() => uploadChartImage('savingsChart', window.batterySavingsChart, {{ $plant->id }}), 800);
     }
-
-    function uploadChartImage(chartId, chartInstance, plantId) {
-        const canvas = document.getElementById(chartId);
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-
-        const ctx = tempCanvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        ctx.drawImage(canvas, 0, 0);
-
-        const imageData = tempCanvas.toDataURL("image/png");
-
-        fetch("{{ route('charts.upload') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
-            },
-            body: JSON.stringify({
-                plant_id: plantId,
-                chart: chartId.replace('Chart', '').toLowerCase(),
-                image: imageData
-            })
-        })
-            .then(res => res.json())
-            .then(res => console.log("✅ Uploaded high-res:", chartId))
-            .catch(err => console.error("❌ Upload failed:", err));
-    }
-
-
-
-    </script>
-
-
+</script>
