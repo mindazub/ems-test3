@@ -45,7 +45,7 @@
             <!-- Data Tab -->
             <div x-show="tabEnergy === 'data'">
                 <div class="overflow-x-auto" style="height: 650px;">
-                    <table class="w-full text-lg border rounded">
+                    <table class="w-full text-sm border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
@@ -106,7 +106,7 @@
             <!-- Data Tab -->
             <div x-show="tabBattery === 'data'">
                 <div class="overflow-x-auto" style="height: 650px;">
-                    <table class="w-full text-lg border rounded">
+                    <table class="w-full text-sm border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
@@ -166,7 +166,7 @@
             <!-- Data Tab -->
             <div x-show="tabSavings === 'data'">
                 <div class="overflow-x-auto" style="height: 670px;">
-                    <table class="w-full text-lg border rounded">
+                    <table class="w-full text-sm border rounded">
                         <thead class="bg-gray-50 border-b">
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
@@ -257,12 +257,16 @@ function renderCharts(batteryOkData, batterySavingsData) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
+            plugins: { legend: { position: 'top', padding: 30 } },
             interaction: { mode: 'index', intersect: false },
             elements: { point: { radius: 4, hoverRadius: 12 } },
             scales: {
 
                 y: {
+                    title: {
+                            display: true,
+                            text: 'Power (kW)'
+                    },
                     ticks:
                         { font:
                             {
@@ -306,6 +310,7 @@ function renderCharts(batteryOkData, batterySavingsData) {
                     data: batteryData,
                     borderColor: 'rgba(0,123,255,0.8)',
                     backgroundColor: 'rgba(0,123,255,0.15)',
+                    // hoverBackgroundColor: 'rgba(0,123,255,1)',
                     fill: true,
                     yAxisID: 'y',
                     pointRadius: 4, pointHoverRadius: 12
@@ -315,6 +320,8 @@ function renderCharts(batteryOkData, batterySavingsData) {
                     label: 'Energy Price (€ / kWh)',
                     data: tariffData,
                     backgroundColor: 'rgba(40,167,69,0.5)',
+                    hoverBackgroundColor: 'rgba(40,167,69,1)',
+
                     yAxisID: 'y1',
                 }
             ]
@@ -322,18 +329,28 @@ function renderCharts(batteryOkData, batterySavingsData) {
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'top' },
+                legend: { position: 'top', padding: 30 },
                 // crosshair plugin config
             },
             interaction: { mode: 'index', intersect: false },
             elements: { point: { radius: 4, hoverRadius: 12 } },
             scales: {
                 y: {
+                    title: {
+                            display: true,
+                            text: 'Battery Power (kW)'
+                    },
                     type: 'linear',
                     position: 'left',
-                    ticks: { font: { size: 16 } }
+                    ticks: { font: { size: 14 } },
+                    min: -30,
+                    max: 30
                 },
                 y1: {
+                    title: {
+                            display: true,
+                            text: 'Energy Price (€ / kWh)'
+                    },
                     type: 'linear',
                     position: 'right',
                     grid: {
@@ -378,23 +395,26 @@ function renderCharts(batteryOkData, batterySavingsData) {
             datasets: [{
                 label: 'Battery Savings (€)',
                 data: savingsData,
-                backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)')
+                backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)'),
+                hoverBackgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,1)' : 'rgba(220,53,69,1)')
+
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            plugins: { legend: { display: false} },
             interaction: { mode: 'index', intersect: false },
             scales: {
-                y: { type: 'linear', position: 'left', ticks: { font: { size: 16 } },
+                y: { title: {
+                            display: true,
+                            text: 'Battery Savings (€)'
+                    },
+                type: 'linear', position: 'left', ticks: { font: { size: 14 } },
                 grid: {
                                 lineWidth: 1,
                                 color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc'
                             }, },
-                y1: { type: 'linear', position: 'right',
 
-                    ticks: { font: { size: 14 } }
-                },
                 x: { ticks: { font: { size: 14 } } }
             }
         }
