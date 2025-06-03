@@ -47,11 +47,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->only(['index', 'edit', 'update'])
         ->parameter('roles', 'user');
 
-        Route::resource('customers', CustomerController::class)
+    Route::resource('customers', CustomerController::class)
         ->only(['index', 'show', 'edit', 'update'])
         ->parameter('customers', 'user')
         ->name('customers.index', 'customers');
 
+    // Admin dashboard route
+    Route::get('/admin', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
 });
 
 
