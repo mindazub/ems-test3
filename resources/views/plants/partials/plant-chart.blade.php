@@ -222,9 +222,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 });
 
+// Get user time format preference from backend (default to 24)
+const userTimeFormat = @json(auth()->user()->settings['time_format'] ?? '24');
+
 function formatLabelDate(ts) {
     const date = isNaN(ts) ? new Date(ts) : new Date(Number(ts));
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (userTimeFormat === '12') {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    } else {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
 }
 
 function renderCharts(batteryOkData, batterySavingsData) {

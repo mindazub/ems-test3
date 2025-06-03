@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DownloadController;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,6 +41,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/plants/{plant}/save-chart-image', [DownloadController::class, 'saveChartImage'])
     ->name('plants.save_chart_image');
 
+    Route::put('/profile/settings', function (Request $request) {
+        $user = $request->user();
+        $settings = $user->settings ?? [];
+        $settings['time_format'] = $request->input('time_format', '24');
+        $user->settings = $settings;
+        $user->save();
+        return redirect()->route('profile.edit')->with('status', 'settings-updated');
+    })->name('profile.update.settings');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
