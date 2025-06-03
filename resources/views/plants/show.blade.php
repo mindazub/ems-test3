@@ -28,6 +28,7 @@
                             <p><span class="font-semibold">Last Updated:</span>
                                 {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
                             </p>
+                            <p><span class="font-semibold">UUID:</span> {{ $plant->uuid ?? 'asdopijfaoeri goiaro' }}</p>
                         </div>
                         <div class="mt-4">
                             <a href="{{ route('plants.index') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('main_feeds', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique()->index();
             $table->foreignId('plant_id')->constrained()->onDelete('cascade');
             $table->bigInteger('import_power');
             $table->bigInteger('export_power');

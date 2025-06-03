@@ -8,6 +8,7 @@ use App\Models\Plant;
 use App\Models\MainFeed;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 
 
@@ -72,6 +73,7 @@ class DatabaseSeeder extends Seeder
                 'latitude' => round(50 + mt_rand(0, 1000000) / 100000, 5),
                 'longitude' => round(20 + mt_rand(0, 1000000) / 100000, 5),
                 'last_updated' => now()->timestamp,
+                'uuid' => (string) Str::uuid(),
             ]);
 
             // Each plant gets 1 to 4 feeds
@@ -87,10 +89,12 @@ class DatabaseSeeder extends Seeder
                 $mainFeed = $plant->mainFeeds()->create([
                     'import_power' => rand(50000, 150000),
                     'export_power' => rand(20000, 100000),
+                    'uuid' => (string) Str::uuid(),
                 ]);
 
                 // --- Create parent device assigned to this feed
                 $parentData = $parentDevicesData[$parentIndex];
+                $parentData['uuid'] = (string) Str::uuid();
                 $parentDevice = $mainFeed->devices()->create($parentData);
 
                 $parentIndex++;
@@ -109,6 +113,7 @@ class DatabaseSeeder extends Seeder
                     // Add relation fields
                     $slaveData['main_feed_id'] = $mainFeed->id;
                     $slaveData['parent_device_id'] = $parentDevice->id;
+                    $slaveData['uuid'] = (string) Str::uuid();
 
                     // Create slave device
                     Device::create($slaveData);
@@ -150,6 +155,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@admin.com',
             'password' => bcrypt('admin000'),
             'role' => 'admin',
+            'uuid' => (string) Str::uuid(),
         ]);
 
         User::create([
@@ -157,6 +163,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'manager@demo.com',
             'password' => bcrypt('manager000'),
             'role' => 'manager',
+            'uuid' => (string) Str::uuid(),
         ]);
 
         User::create([
@@ -164,6 +171,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'installer@demo.com',
             'password' => bcrypt('installer000'),
             'role' => 'installer',
+            'uuid' => (string) Str::uuid(),
         ]);
 
         User::create([
@@ -171,6 +179,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'customer@demo.com',
             'password' => bcrypt('customer000'),
             'role' => 'customer',
+            'uuid' => (string) Str::uuid(),
         ]);
     }
 }
