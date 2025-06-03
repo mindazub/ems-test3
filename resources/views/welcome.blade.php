@@ -10,7 +10,7 @@
             darkMode: 'class'
         };
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
 
 
 
