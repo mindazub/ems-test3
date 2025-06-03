@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- CHARTS -->
-                @include('plants.partials.plant-chart')
+                @include('plants.partials.plant-chart', ['user' => $user])
 
                 <!-- DEVICES LIST -->
                 @include('plants.partials.devices-list')

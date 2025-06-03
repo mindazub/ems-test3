@@ -43,7 +43,12 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/profile/settings', function (Request $request) {
         $user = $request->user();
-        $settings = $user->settings ?? [];
+        $settings = $user->settings;
+        if (is_string($settings)) {
+            $settings = json_decode($settings, true) ?: [];
+        } elseif (!is_array($settings)) {
+            $settings = [];
+        }
         $settings['time_format'] = $request->input('time_format', '24');
         $user->settings = $settings;
         $user->save();

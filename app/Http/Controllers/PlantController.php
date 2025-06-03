@@ -89,7 +89,7 @@ class PlantController extends Controller
 
 
     public function destroy(Plant $plant)
-    {    
+    {
         $plant->delete();
         Cache::forget('plants.with.mainFeeds.devices');
         return redirect()->route('plants.index')->with('message', 'Plant deleted successfully.');
@@ -98,7 +98,8 @@ class PlantController extends Controller
     public function show(Plant $plant)
     {
         $plant->load('mainFeeds.devices'); // Eager load to prevent N+1 and ensure data is available
-        return view('plants.show', compact('plant'));
+        $user = auth()->user();
+        return view('plants.show', compact('plant', 'user'));
     }
 
 }
