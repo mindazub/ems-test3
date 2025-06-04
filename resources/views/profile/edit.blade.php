@@ -59,7 +59,7 @@
                         @include('profile.partials.update-password-form')
                     </div>
                 </div>
-                <div class="p-4 sm:p-8 bg-sky-300 shadow sm:rounded-lg w-full md:w-1/2">
+                <div class="p-4 sm:p-8 bg-yellow-300 shadow sm:rounded-lg w-full md:w-1/2">
                     <div class="max-w-xl">
                         @include('profile.partials.delete-user-form')
                     </div>
