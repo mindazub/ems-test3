@@ -22,7 +22,7 @@
                                 alert.style.opacity = '0';
                                 alert.style.marginBottom = '0px';
                                 setTimeout(() => alert.remove(), 1300);
-                            }
+                    }
                         }, 2000);
                     });
                 </script>
