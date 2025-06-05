@@ -20,7 +20,6 @@ class PlantController extends Controller
     public function create()
     {
         return view('plants.create', [
-            'companies' => \App\Models\Company::all(), // optional if companies exist
         ]);
     }
 
