@@ -27,43 +27,45 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($feed->devices->where('parent_device', true) as $parent)
-                                        <tbody x-data="{ open: false }" class="bg-gray-100 hover:bg-indigo-100 transition">
-                                        <tr>
-                                            <td class="text-center">
-                                                <button
-                                                    type="button"
-                                                    class="focus:outline-none"
-                                                    @click.stop="open = !open"
-                                                    :aria-expanded="open"
-                                                    aria-label="Toggle children"
-                                                >
-                                                    <template x-if="!open">
-                                                        <x-heroicon-o-plus-circle class="w-5 h-5 text-indigo-600" />
-                                                    </template>
-                                                    <template x-if="open">
-                                                        <x-heroicon-o-minus-circle class="w-5 h-5 text-indigo-600" />
-                                                    </template>
-                                                </button>
-                                            </td>
-                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->id }}</td>
-                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_type }}</td>
-                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->manufacturer }}</td>
-                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_model }}</td>
-                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_status }}</td>
+                                @foreach ($feed->devices->where('parent_device', true) as $parent)
+                                    <tbody x-data="{ open: false }" class="bg-gray-100 hover:bg-indigo-100 transition">
+                                    <tr>
+                                        <td class="text-center">
+                                            <button
+                                                type="button"
+                                                class="focus:outline-none"
+                                                @click.stop="open = !open"
+                                                :aria-expanded="open"
+                                                aria-label="Toggle children"
+                                            >
+                                                <template x-if="!open">
+                                                    <x-heroicon-o-plus-circle class="w-5 h-5 text-indigo-600" />
+                                                </template>
+                                                <template x-if="open">
+                                                    <x-heroicon-o-minus-circle class="w-5 h-5 text-indigo-600" />
+                                                </template>
+                                            </button>
+                                        </td>
+                                        <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->id }}</td>
+                                        <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_type }}</td>
+                                        <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->manufacturer }}</td>
+                                        <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_model }}</td>
+                                        <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$parent->id) }}'">{{ $parent->device_status }}</td>
+                                    </tr>
+                                    @php $slaveRows = $feed->devices->where('parent_device', false)->where('parent_device_id', $parent->id)->values(); @endphp
+                                    @foreach ($slaveRows as $i => $child)
+                                        <tr x-show="open" x-transition
+                                            class="{{ $i % 2 === 0 ? 'bg-indigo-50' : 'bg-indigo-100' }} hover:bg-indigo-200 cursor-pointer transition">
+                                            <td></td>
+                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->id }}</td>
+                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_type }}</td>
+                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->manufacturer }}</td>
+                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_model }}</td>
+                                            <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_status }}</td>
                                         </tr>
-                                        @foreach ($feed->devices->where('parent_device', false)->where('parent_device_id', $parent->id) as $child)
-                                            <tr x-show="open" class="bg-indigo-50">
-                                                <td></td>
-                                                <td class="px-2 py-2 pl-8 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->id }}</td>
-                                                <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_type }}</td>
-                                                <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->manufacturer }}</td>
-                                                <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_model }}</td>
-                                                <td class="px-2 py-2 cursor-pointer" @click="window.location='{{ url('/devices/'.$child->id) }}'">{{ $child->device_status }}</td>
-                                            </tr>
-                                        @endforeach
-                                        </tbody>
                                     @endforeach
+                                    </tbody>
+                                @endforeach
                                 </tbody>
                             </table>
                         </div>
