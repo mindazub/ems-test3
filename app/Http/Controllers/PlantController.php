@@ -10,8 +10,8 @@ class PlantController extends Controller
 {
     public function index()
     {
-        $plants = Cache::remember('plants.with.mainFeeds.devices', now()->addMinutes(10), function () {
-            return Plant::with('mainFeeds.devices')->get();
+        $plants = Cache::remember('plants.with.controllers.mainFeeds.devices', now()->addMinutes(10), function () {
+            return Plant::with('controllers.mainFeeds.devices')->get();
         });
 
         return view('plants.index', compact('plants'));
@@ -49,7 +49,7 @@ class PlantController extends Controller
                 : null,
         ]);
 
-        Cache::forget('plants.with.mainFeeds.devices');
+        Cache::forget('plants.with.controllers.mainFeeds.devices');
 
         return redirect()->route('plants.index')->with('message', 'Plant created successfully.');
     }
@@ -83,7 +83,7 @@ class PlantController extends Controller
                 ? \Carbon\Carbon::parse($request->last_updated)->timestamp
                 : null,
         ]);
-        Cache::forget('plants.with.mainFeeds.devices');
+        Cache::forget('plants.with.controllers.mainFeeds.devices');
         return redirect()->route('plants.index')->with('message', 'Plant updated successfully.');
     }
 
@@ -91,13 +91,13 @@ class PlantController extends Controller
     public function destroy(Plant $plant)
     {
         $plant->delete();
-        Cache::forget('plants.with.mainFeeds.devices');
+        Cache::forget('plants.with.controllers.mainFeeds.devices');
         return redirect()->route('plants.index')->with('message', 'Plant deleted successfully.');
     }
 
     public function show(Plant $plant)
     {
-        $plant->load('mainFeeds.devices'); // Eager load to prevent N+1 and ensure data is available
+        $plant->load(['controllers.mainFeeds.devices']); // Eager load controllers, mainFeeds, and devices
         $user = auth()->user();
         return view('plants.show', compact('plant', 'user'));
     }

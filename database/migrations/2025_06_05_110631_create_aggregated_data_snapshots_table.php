@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('main_feeds', function (Blueprint $table) {
+        Schema::create('aggregated_data_snapshots', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
-            $table->foreignId('plant_controller_id')->constrained()->onDelete('cascade');
-            $table->bigInteger('import_power');
-            $table->bigInteger('export_power');
+            $table->foreignId('plant_id')->constrained()->onDelete('cascade');
+            $table->json('data');
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('main_feeds');
+        Schema::dropIfExists('aggregated_data_snapshots');
     }
 };

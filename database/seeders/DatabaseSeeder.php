@@ -64,7 +64,6 @@ class DatabaseSeeder extends Seeder
         $faker = Faker::create();
 
         for ($plantNum = 1; $plantNum <= 50; $plantNum++) {
-
             $plant = Plant::create([
                 'name' => 'Plant ' . $faker->city . ' ' . ucfirst(collect(explode(' ', $faker->catchPhrase))->take(2)->implode(' ')),
                 'owner_email' => strtolower($faker->firstName . '.' . $faker->lastName) . '@example.com',
@@ -76,51 +75,50 @@ class DatabaseSeeder extends Seeder
                 'uuid' => (string) Str::uuid(),
             ]);
 
-            // Each plant gets 1 to 4 feeds
-            $feedCount = rand(1, 4);
-
-            for ($feedNum = 1; $feedNum <= $feedCount; $feedNum++) {
-
-                // Stop if we run out of parent devices
-                if ($parentIndex >= count($parentDevicesData)) {
-                    break 2; // exit both loops if no more parents
-                }
-
-                $mainFeed = $plant->mainFeeds()->create([
-                    'import_power' => rand(50000, 150000),
-                    'export_power' => rand(20000, 100000),
+            // Each plant gets 1 to 2 controllers
+            $controllerCount = rand(1, 2);
+            for ($controllerNum = 1; $controllerNum <= $controllerCount; $controllerNum++) {
+                $controller = $plant->controllers()->create([
+                    'name' => 'Controller ' . $controllerNum,
                     'uuid' => (string) Str::uuid(),
                 ]);
 
-                // --- Create parent device assigned to this feed
-                $parentData = $parentDevicesData[$parentIndex];
-                $parentData['uuid'] = (string) Str::uuid();
-                $parentDevice = $mainFeed->devices()->create($parentData);
-
-                $parentIndex++;
-
-                // Assign 2 to 5 slave devices
-                $slaveCount = rand(2, 5);
-
-                for ($i = 1; $i <= $slaveCount; $i++) {
-
-                    // Stop if we run out of slaves
-                    if ($slaveIndex >= count($slaveDevicesData)) {
-                        break;
+                // Each controller gets 1 to 3 feeds
+                $feedCount = rand(1, 3);
+                for ($feedNum = 1; $feedNum <= $feedCount; $feedNum++) {
+                    if ($parentIndex >= count($parentDevicesData)) {
+                        break 3; // exit all loops if no more parents
                     }
-
-                    $slaveData = $slaveDevicesData[$slaveIndex];
-                    // Add relation fields
-                    $slaveData['main_feed_id'] = $mainFeed->id;
-                    $slaveData['parent_device_id'] = $parentDevice->id;
-                    $slaveData['uuid'] = (string) Str::uuid();
-
-                    // Create slave device
-                    Device::create($slaveData);
-
-                    $slaveIndex++;
+                    $mainFeed = $controller->mainFeeds()->create([
+                        'import_power' => rand(50000, 150000),
+                        'export_power' => rand(20000, 100000),
+                        'uuid' => (string) Str::uuid(),
+                    ]);
+                    // --- Create parent device assigned to this feed
+                    $parentData = $parentDevicesData[$parentIndex];
+                    $parentData['uuid'] = (string) Str::uuid();
+                    $parentDevice = $mainFeed->devices()->create($parentData);
+                    $parentIndex++;
+                    // Assign 2 to 5 slave devices
+                    $slaveCount = rand(2, 5);
+                    for ($i = 1; $i <= $slaveCount; $i++) {
+                        if ($slaveIndex >= count($slaveDevicesData)) {
+                            break;
+                        }
+                        $slaveData = $slaveDevicesData[$slaveIndex];
+                        $slaveData['main_feed_id'] = $mainFeed->id;
+                        $slaveData['parent_device_id'] = $parentDevice->id;
+                        $slaveData['uuid'] = (string) Str::uuid();
+                        Device::create($slaveData);
+                        $slaveIndex++;
+                    }
                 }
             }
+            // Add AggregatedDataSnapshot for each plant
+            $plant->aggregatedDataSnapshots()->create([
+                'data' => ['example' => 'snapshot', 'value' => rand(1, 100)],
+                'uuid' => (string) Str::uuid(),
+            ]);
         }
 
         $this->command->info('✅ Plants, feeds, and pre-prepared devices assigned successfully!');

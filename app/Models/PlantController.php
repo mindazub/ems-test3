@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class MainFeed extends Model
+class PlantController extends Model
 {
     protected $fillable = [
-        'plant_controller_id',
-        'import_power',
-        'export_power',
+        'plant_id',
+        'name',
         'uuid',
     ];
 
@@ -24,13 +23,13 @@ class MainFeed extends Model
         });
     }
 
-    public function plantController()
+    public function plant()
     {
-        return $this->belongsTo(PlantController::class);
+        return $this->belongsTo(Plant::class);
     }
 
-    public function devices()
+    public function mainFeeds()
     {
-        return $this->hasMany(Device::class);
+        return $this->hasMany(MainFeed::class);
     }
 }

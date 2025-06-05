@@ -17,7 +17,7 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
-        $plants = Plant::with('mainFeeds.devices')->paginate();
+        $plants = Plant::with('controllers.mainFeeds.devices')->paginate();
         return view('plants.index', compact('plants'));
     }
 

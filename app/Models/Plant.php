@@ -34,9 +34,14 @@ class Plant extends Model
         return $this->hasMany(Device::class);
     }
 
-    public function mainFeeds()
+    public function controllers()
     {
-        return $this->hasMany(MainFeed::class);
+        return $this->hasMany(PlantController::class);
+    }
+
+    public function aggregatedDataSnapshots()
+    {
+        return $this->hasMany(AggregatedDataSnapshot::class);
     }
 
 

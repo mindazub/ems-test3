@@ -5,13 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class MainFeed extends Model
+class AggregatedDataSnapshot extends Model
 {
     protected $fillable = [
-        'plant_controller_id',
-        'import_power',
-        'export_power',
+        'plant_id',
+        'data',
         'uuid',
+    ];
+
+    protected $casts = [
+        'data' => 'array',
     ];
 
     protected static function boot()
@@ -24,13 +27,8 @@ class MainFeed extends Model
         });
     }
 
-    public function plantController()
+    public function plant()
     {
-        return $this->belongsTo(PlantController::class);
-    }
-
-    public function devices()
-    {
-        return $this->hasMany(Device::class);
+        return $this->belongsTo(Plant::class);
     }
 }
