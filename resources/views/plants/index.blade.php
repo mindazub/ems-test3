@@ -39,6 +39,7 @@
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Device Amount</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -51,6 +52,9 @@
                                     <td class="px-4 py-2">
                                         {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
                                     </td>
+                                    <td class="px-4 py-2">
+                                    <a href="{{ route('plants.show', $plant->id) }}" class="text-blue-600 hover:text-blue-900">Show</a>
+                                    
                                 </tr>
                             @empty
                                 <tr>
