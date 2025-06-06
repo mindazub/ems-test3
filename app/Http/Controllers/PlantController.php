@@ -126,25 +126,24 @@ class PlantController extends Controller
 
     public function show(Plant $plant)
     {
-            $id = $plant->id;
-            $client = new \GuzzleHttp\Client();
-            $url = "http://127.0.0.1:5001/plant_view/{$id}";
-            $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
-            try {
-                $response = $client->request('GET', $url, [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $token,
-                        'Accept' => 'application/json',
-                    ],
-                    'timeout' => 5,
-                ]);
-                $body = $response->getBody()->getContents();
-                $plant = json_decode($body, true);
-            } catch (\Exception $e) {
-                $plant = null;
-            }
-            return view('plants.show', compact('plant'));
-        
+        $id = $plant->id;
+        $client = new \GuzzleHttp\Client();
+        $url = "http://127.0.0.1:5001/plant_view/{$id}";
+        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        try {
+            $response = $client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 5,
+            ]);
+            $plant = json_decode($body = $response->getBody()->getContents(), false);
+        } catch (\Exception $e) {
+            $plant = null;
+        }
+        $user = auth()->user();
+        return view('plants.show', compact('plant', 'user'));
     }
 
     public function showRemote($id)
@@ -160,11 +159,28 @@ class PlantController extends Controller
                 ],
                 'timeout' => 5,
             ]);
-            $body = $response->getBody()->getContents();
-            $plant = json_decode($body, true);
+            $plant = json_decode($body = $response->getBody()->getContents(), false);
+            // Normalize plant object for view compatibility
+            if ($plant) {
+                $plant->uid = $plant->uid ?? null;
+                $plant->uuid = $plant->uuid ?? $plant->uid ?? null;
+                $plant->owner_email = $plant->owner_email ?? '';
+                $plant->status = $plant->status ?? '';
+                $plant->capacity = $plant->capacity ?? null;
+                $plant->latitude = $plant->latitude ?? null;
+                $plant->longitude = $plant->longitude ?? null;
+                // Normalize last_updated: support both last_updated and updated_at
+                if (!isset($plant->last_updated) && isset($plant->updated_at)) {
+                    $plant->last_updated = $plant->updated_at;
+                }
+                if (!isset($plant->last_updated)) {
+                    $plant->last_updated = null;
+                }
+            }
         } catch (\Exception $e) {
             $plant = null;
         }
-        return view('plants.show', compact('plant'));
+        $user = auth()->user();
+        return view('plants.show', compact('plant', 'user'));
     }
 }

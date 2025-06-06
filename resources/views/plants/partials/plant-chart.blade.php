@@ -27,7 +27,11 @@
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
                      <a id="downloadPNG-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a>
+                     @if(!empty($plant->uid))
+                         <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'energy', 'csv']) }}">Download CSV</a>
+                     @else
+                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                     @endif
                      <a id="downloadPDF-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
 
                 </div>
@@ -89,7 +93,11 @@
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
                      <a id="downloadPNG-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a>
+                     @if(!empty($plant->uid))
+                         <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'battery', 'csv']) }}">Download CSV</a>
+                     @else
+                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                     @endif
                      <a id="downloadPDF-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
                 </div>
             </div>
@@ -149,7 +157,11 @@
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
                      <a id="downloadPNG-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a>
+                     @if(!empty($plant->uid))
+                         <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'savings', 'csv']) }}">Download CSV</a>
+                     @else
+                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                     @endif
                      <a id="downloadPDF-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
                 </div>
             </div>
@@ -467,7 +479,7 @@ function renderCharts(batteryOkData, batterySavingsData) {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        let plantId = {{ $plant->id }};
+        let plantId = {{ $plant->uid }};
         // ENERGY
         document.getElementById('downloadPNG-energy').addEventListener('click', function(e) {
             e.preventDefault();
