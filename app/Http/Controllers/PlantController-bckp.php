@@ -10,39 +10,9 @@ class PlantController extends Controller
 {
     public function index()
     {
-        $client = new \GuzzleHttp\Client();
-        $url = 'http://127.0.0.1:5001/plant_list/6a36660d-daae-48dd-a4fe-000b191b13d8';
-        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
-        try {
-            $response = $client->request('GET', $url, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 5,
-            ]);
-            $body = $response->getBody()->getContents();
-            $data = json_decode($body, true);
-            $plantsArr = $data['plants'] ?? [];
-            $plants = collect($plantsArr)->map(function ($plant) {
-                // Map API fields to expected frontend fields
-                $plantObj = new \stdClass();
-                $plantObj->id = $plant['uid'] ?? null;
-                $plantObj->name = $plant['uid'] ?? '';
-                $plantObj->owner_email = $plant['owner'] ?? '';
-                $plantObj->status = $plant['status'] ?? '';
-                $plantObj->last_updated = $plant['updated_at'] ?? null;
-                $plantObj->controllers = collect();
-                // For demo, set mainFeeds and devices as empty collections
-                // You can expand this if your API provides more structure
-                return $plantObj;
-            });
-        } catch (\Exception $e) {
-            
-            $plants = collect();
-        }
-
-        // dd($plants);
+        $plants = Cache::remember('plants.with.controllers.mainFeeds.devices', now()->addMinutes(10), function () {
+            return Plant::with('controllers.mainFeeds.devices')->get();
+        });
 
         return view('plants.index', compact('plants'));
     }

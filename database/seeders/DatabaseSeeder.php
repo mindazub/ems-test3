@@ -17,133 +17,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->cleanDatabase();
         $this->createUsers();
-
-        // 1️⃣ PREPARE DEVICE DATA (DO NOT CREATE YET)
-
-        $parentDevicesData = [];
-        for ($i = 1; $i <= 40; $i++) {
-            $parentDevicesData[] = [
-                'device_type' => 'Meter',
-                'manufacturer' => 'Generic Inc.',
-                'device_model' => 'ParentModel-' . $i,
-                'device_status' => 'Ready',
-                'parent_device' => true,
-                'parameters' => [
-                    'communication_type' => 'Modbus TCP/IP',
-                    'ip' => '192.168.1.' . $i,
-                    'port' => 502,
-                ],
-            ];
-        }
-
-        $slaveDevicesData = [];
-        for ($i = 1; $i <= 300; $i++) {
-            $slaveDevicesData[] = [
-                'device_type' => 'Inverter',
-                'manufacturer' => 'Huawei',
-                'device_model' => 'SlaveModel-' . $i,
-                'device_status' => 'Ready',
-                'parent_device' => false,
-                'parameters' => [
-                    'slave_id' => $i,
-                ],
-            ];
-        }
-
-        // Shuffle the arrays so selection is random
-        shuffle($parentDevicesData);
-        shuffle($slaveDevicesData);
-
-        $slaveIndex = 0;
-        $parentIndex = 0;
-
-        // 2️⃣ CREATE PLANTS, MAINFEEDS, AND ASSIGN DEVICES
-
-        $faker = Faker::create();
-
-        for ($plantNum = 1; $plantNum <= 50; $plantNum++) {
-            $plant = Plant::create([
-                'name' => 'Plant ' . $faker->city . ' ' . ucfirst(collect(explode(' ', $faker->catchPhrase))->take(2)->implode(' ')),
-                'owner_email' => strtolower($faker->firstName . '.' . $faker->lastName) . '@example.com',
-                'status' => 'Working',
-                'capacity' => rand(100000, 500000),
-                'latitude' => round(50 + mt_rand(0, 1000000) / 100000, 5),
-                'longitude' => round(20 + mt_rand(0, 1000000) / 100000, 5),
-                'last_updated' => now()->timestamp,
-                'uuid' => (string) Str::uuid(),
-            ]);
-
-            // Each plant gets 1 to 2 controllers
-            $controllerCount = rand(1, 2);
-            for ($controllerNum = 1; $controllerNum <= $controllerCount; $controllerNum++) {
-                $controller = $plant->controllers()->create([
-                    'name' => 'Controller ' . $controllerNum,
-                    'uuid' => (string) Str::uuid(),
-                ]);
-
-                // Each controller gets 1 to 3 feeds
-                $feedCount = rand(1, 3);
-                for ($feedNum = 1; $feedNum <= $feedCount; $feedNum++) {
-                    if ($parentIndex >= count($parentDevicesData)) {
-                        break 3; // exit all loops if no more parents
-                    }
-                    $mainFeed = $controller->mainFeeds()->create([
-                        'import_power' => rand(50000, 150000),
-                        'export_power' => rand(20000, 100000),
-                        'uuid' => (string) Str::uuid(),
-                    ]);
-                    // --- Create parent device assigned to this feed
-                    $parentData = $parentDevicesData[$parentIndex];
-                    $parentData['uuid'] = (string) Str::uuid();
-                    $parentDevice = $mainFeed->devices()->create($parentData);
-                    $parentIndex++;
-                    // Assign 2 to 5 slave devices
-                    $slaveCount = rand(2, 5);
-                    for ($i = 1; $i <= $slaveCount; $i++) {
-                        if ($slaveIndex >= count($slaveDevicesData)) {
-                            break;
-                        }
-                        $slaveData = $slaveDevicesData[$slaveIndex];
-                        $slaveData['main_feed_id'] = $mainFeed->id;
-                        $slaveData['parent_device_id'] = $parentDevice->id;
-                        $slaveData['uuid'] = (string) Str::uuid();
-                        Device::create($slaveData);
-                        $slaveIndex++;
-                    }
-                }
-            }
-            // Add AggregatedDataSnapshot for each plant
-            $plant->aggregatedDataSnapshots()->create([
-                'data' => ['example' => 'snapshot', 'value' => rand(1, 100)],
-                'uuid' => (string) Str::uuid(),
-            ]);
-        }
-
-        $this->command->info('✅ Plants, feeds, and pre-prepared devices assigned successfully!');
-    }
-
-    private function cleanDatabase(): void
-    {
-        $connection = DB::getDriverName();
-
-        if ($connection === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        } elseif ($connection === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF;');
-        }
-
-        Device::truncate();
-        MainFeed::truncate();
-        Plant::truncate();
-        User::truncate();
-
-        if ($connection === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        } elseif ($connection === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON;');
-        }
     }
 
     private function createUsers(): void
@@ -153,7 +27,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@admin.com',
             'password' => bcrypt('admin000'),
             'role' => 'admin',
-            'uuid' => (string) Str::uuid(),
+            'uuid' => Str::uuid()->toString(),
         ]);
 
         User::create([
@@ -161,7 +35,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'manager@demo.com',
             'password' => bcrypt('manager000'),
             'role' => 'manager',
-            'uuid' => (string) Str::uuid(),
+            'uuid' => Str::uuid()->toString(),
         ]);
 
         User::create([
@@ -169,7 +43,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'installer@demo.com',
             'password' => bcrypt('installer000'),
             'role' => 'installer',
-            'uuid' => (string) Str::uuid(),
+            'uuid' => Str::uuid()->toString(),
         ]);
 
         User::create([
@@ -177,7 +51,15 @@ class DatabaseSeeder extends Seeder
             'email' => 'customer@demo.com',
             'password' => bcrypt('customer000'),
             'role' => 'customer',
-            'uuid' => (string) Str::uuid(),
+            'uuid' => Str::uuid()->toString(),
+        ]);
+
+        User::create([
+            'name' => 'Mantas Zelba',
+            'email' => 'mantas@viasolis.eu',
+            'password' => bcrypt('mantas000'),
+            'role' => 'customer',
+            'uuid' => '6a36660d-daae-48dd-a4fe-000b191b13d8',
         ]);
     }
 }

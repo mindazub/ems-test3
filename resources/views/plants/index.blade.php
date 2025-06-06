@@ -35,41 +35,30 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table id="plantsTable" class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plant ID</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Controllers</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Main Feeds</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Devices</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Device Amount</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                             @forelse ($plants as $plant)
-                                <tr class="clickable-row transition hover:bg-indigo-100 cursor-pointer" data-href="{{ route('plants.show', $plant) }}">
-                                    <td class="px-4 py-2"> {{ $plant->id }}</td>
-                                    <td class="px-4 py-2">{{ $plant->name }}</td>
+                                <tr>
+                                    <td class="px-4 py-2">{{ $plant->id }}</td>
                                     <td class="px-4 py-2">{{ $plant->owner_email }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->flatMap->mainFeeds->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->flatMap->mainFeeds->flatMap->devices->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d') : 'N/A' }}</td>
-                                    <td class="px-4 py-2 flex space-x-2">
-                                        <a href="{{ route('plants.edit', $plant) }}" class="inline-block px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">Edit</a>
-                                        <form method="POST" action="{{ route('plants.destroy', $plant) }}" class="inline-block" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Delete</button>
-                                        </form>
+                                    <td class="px-4 py-2">{{ $plant->status }}</td>
+                                    <td class="px-4 py-2">{{ $plant->device_amount ?? 'N/A' }}</td>
+                                    <td class="px-4 py-2">
+                                        {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-gray-400 py-4">No plants found.</td>
+                                    <td colspan="5" class="px-4 py-2 text-center">No plants found.</td>
                                 </tr>
                             @endforelse
                             </tbody>
