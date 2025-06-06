@@ -75,5 +75,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     })->name('admin.dashboard');
 });
 
+// Route::get('/plants/remote/{id}', [App\Http\Controllers\PlantController::class, 'showRemote'])->name('plants.show.remote');
+
 
 require __DIR__.'/auth.php';

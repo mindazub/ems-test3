@@ -25,16 +25,16 @@ class PlantController extends Controller
             $data = json_decode($body, true);
             $plantsArr = $data['plants'] ?? [];
             $plants = collect($plantsArr)->map(function ($plant) {
-                // Map API fields to expected frontend fields
                 $plantObj = new \stdClass();
                 $plantObj->id = $plant['uid'] ?? null;
                 $plantObj->name = $plant['uid'] ?? '';
-                $plantObj->owner_email = $plant['owner'] ?? '';
+                // Fetch user by UUID and set email
+                $user = \App\Models\User::where('uuid', $plant['owner'] ?? '')->first();
+                $plantObj->owner_email = $user ? $user->email : ($plant['owner'] ?? '');
                 $plantObj->status = $plant['status'] ?? '';
                 $plantObj->last_updated = $plant['updated_at'] ?? null;
+                $plantObj->device_amount = $plant['device_amount'] ?? null;
                 $plantObj->controllers = collect();
-                // For demo, set mainFeeds and devices as empty collections
-                // You can expand this if your API provides more structure
                 return $plantObj;
             });
         } catch (\Exception $e) {
@@ -126,9 +126,45 @@ class PlantController extends Controller
 
     public function show(Plant $plant)
     {
-        $plant->load(['controllers.mainFeeds.devices']); // Eager load controllers, mainFeeds, and devices
-        $user = auth()->user();
-        return view('plants.show', compact('plant', 'user'));
+            $id = $plant->id;
+            $client = new \GuzzleHttp\Client();
+            $url = "http://127.0.0.1:5001/plant_view/{$id}";
+            $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+            try {
+                $response = $client->request('GET', $url, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept' => 'application/json',
+                    ],
+                    'timeout' => 5,
+                ]);
+                $body = $response->getBody()->getContents();
+                $plant = json_decode($body, true);
+            } catch (\Exception $e) {
+                $plant = null;
+            }
+            return view('plants.show', compact('plant'));
+        
     }
 
+    public function showRemote($id)
+    {
+        $client = new \GuzzleHttp\Client();
+        $url = "http://127.0.0.1:5001/plant_view/{$id}";
+        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        try {
+            $response = $client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 5,
+            ]);
+            $body = $response->getBody()->getContents();
+            $plant = json_decode($body, true);
+        } catch (\Exception $e) {
+            $plant = null;
+        }
+        return view('plants.show', compact('plant'));
+    }
 }
