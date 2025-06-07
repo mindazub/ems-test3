@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Plant Details') }} - {{ $plant->name }}
+            {{ __('Plant Details') }} - {{ $plant->uid ?? 'N/A' }}
         </h2>
     </x-slot>
 
@@ -16,8 +16,7 @@
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
                         <h1 class="text-4xl font-bold ">
-                            <span class="text-gray-400 italic">#ID&nbsp;{{ $plant->id }}&nbsp;&nbsp;</span>
-                            <span class="font-semibold">{{ $plant->name }}</span> Details
+                            <span class="text-gray-400 italic">#ID&nbsp;{{ $plant->uid }}</span>
                         </h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
                         <div class="space-y-1">
@@ -44,7 +43,7 @@
                 </div>
 
                 <!-- CHARTS -->
-                @include('plants.partials.plant-chart', ['user' => $user])
+                @include('plants.partials.plant-chart', ['plant' => $plant, 'user' => $user])
 
                 <!-- DEVICES LIST -->
                 @include('plants.partials.devices-list')

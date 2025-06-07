@@ -7,6 +7,15 @@ use Illuminate\Support\Str;
 
 class PlantController extends Model
 {
+        /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $connection = 'edis_system_data';
+
+    protected $table = 'controllers';
+
     protected $fillable = [
         'plant_id',
         'name',
@@ -25,7 +34,8 @@ class PlantController extends Model
 
     public function plant()
     {
-        return $this->belongsTo(Plant::class);
+        // plant_id is a string (uid/uuid), not integer
+        return $this->belongsTo(Plant::class, 'plant_id', 'uid');
     }
 
     public function mainFeeds()

@@ -39,37 +39,38 @@
                             <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plant ID</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Controllers</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Main Feeds</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Devices</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">UID</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Latitude</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Longitude</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Capacity</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Owner Name</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Owner Email</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created At</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Updated At</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                             @forelse ($plants as $plant)
-                                <tr class="clickable-row transition hover:bg-indigo-100 cursor-pointer" data-href="{{ route('plants.show', $plant) }}">
-                                    <td class="px-4 py-2"> {{ $plant->id }}</td>
-                                    <td class="px-4 py-2">{{ $plant->name }}</td>
-                                    <td class="px-4 py-2">{{ $plant->owner_email }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->flatMap->mainFeeds->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->controllers->flatMap->mainFeeds->flatMap->devices->count() }}</td>
-                                    <td class="px-4 py-2">{{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d') : 'N/A' }}</td>
+                                <tr class="clickable-row transition hover:bg-indigo-100 cursor-pointer" data-href="{{ route('plant.show.uid', $plant->uid ?? '-') }}">
+                                    <td class="px-4 py-2">{{ $plant->id ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->uid ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->latitude ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->longitude ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->status ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->capacity ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->owner_name ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->owner_email ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->created_at ?? 'NA' }}</td>
+                                    <td class="px-4 py-2">{{ $plant->updated_at ?? 'NA' }}</td>
                                     <td class="px-4 py-2 flex space-x-2">
-                                        <a href="{{ route('plants.edit', $plant) }}" class="inline-block px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">Edit</a>
-                                        <form method="POST" action="{{ route('plants.destroy', $plant) }}" class="inline-block" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Delete</button>
-                                        </form>
+                                        {{-- Actions can be left empty or add dummy buttons for JSON view --}}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-gray-400 py-4">No plants found.</td>
+                                    <td colspan="11" class="text-center text-gray-400 py-4">No plants found.</td>
                                 </tr>
                             @endforelse
                             </tbody>
@@ -84,17 +85,21 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $('#plantsTable').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [10, 25, 50, 100],
-                "language": {
-                    "search": "Search:",
-                    "lengthMenu": "Show _MENU_ entries",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ entries"
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('plantsTable');
+            if (table && table.querySelector('thead') && table.querySelectorAll('tbody tr').length > 0) {
+                if (!$.fn.dataTable.isDataTable('#plantsTable')) {
+                    $('#plantsTable').DataTable({
+                        "pageLength": 10,
+                        "lengthMenu": [10, 25, 50, 100],
+                        "language": {
+                            "search": "Search:",
+                            "lengthMenu": "Show _MENU_ entries",
+                            "info": "Showing _START_ to _END_ of _TOTAL_ entries"
+                        }
+                    });
                 }
-            });
-
+            }
             $('#plantsTable').on('click', '.clickable-row', function(e) {
                 if ($(e.target).is('a') || $(e.target).is('button') || $(e.target).closest('form').length) {
                     return;

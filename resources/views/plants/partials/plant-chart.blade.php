@@ -17,7 +17,7 @@
                 </button>
             </nav>
             <!-- Dropdown, aligned right -->
-            <div class="ml-auto relative" x-data="{ openMenu: false }">
+            <div class="ml-auto relative" x-data="{ openMenu: false }" data-plant-uid="{{ $plant->uid }}">
                 <button @click="openMenu = !openMenu"
                         class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
                         aria-label="Download">
@@ -26,9 +26,9 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'energy', 'csv']) }}">Download CSV</a>
-                     <a id="downloadPDF-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPNG-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PNG</a>
+                     <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'energy', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PDF</a>
 
                 </div>
             </div>
@@ -79,7 +79,7 @@
                 </button>
             </nav>
             <!-- Dropdown -->
-            <div class="ml-auto relative" x-data="{ openMenu: false }">
+            <div class="ml-auto relative" x-data="{ openMenu: false }" data-plant-uid="{{ $plant->uid }}">
                 <button @click="openMenu = !openMenu"
                         class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
                         aria-label="Download">
@@ -88,9 +88,9 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'battery', 'csv']) }}">Download CSV</a>
-                     <a id="downloadPDF-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPNG-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PNG</a>
+                     <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'battery', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PDF</a>
                 </div>
             </div>
         </div>
@@ -139,7 +139,7 @@
                 </button>
             </nav>
             <!-- Dropdown -->
-            <div class="ml-auto relative" x-data="{ openMenu: false }">
+            <div class="ml-auto relative" x-data="{ openMenu: false }" data-plant-uid="{{ $plant->uid }}">
                 <button @click="openMenu = !openMenu"
                         class="p-1 rounded hover:bg-gray-100 transition border border-gray-200"
                         aria-label="Download">
@@ -148,9 +148,9 @@
                 <div x-show="openMenu" @click.away="openMenu = false"
                      class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->id, 'savings', 'csv']) }}">Download CSV</a>
-                     <a id="downloadPDF-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPNG-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PNG</a>
+                     <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'savings', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPDF-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer" href="#">Download PDF</a>
                 </div>
             </div>
         </div>
@@ -442,11 +442,33 @@ function renderCharts(batteryOkData, batterySavingsData) {
 
 
 <script>
-    function sendChartToBackend(chartId, chartName, plantId, type) {
+    /**
+     * Send chart image to backend and initiate download
+     * @param {string} chartId - DOM ID of the chart canvas element
+     * @param {string} chartName - Type of chart (energy, battery, or savings)
+     * @param {string} plantUid - Plant's unique identifier
+     * @param {string} type - Download type (png, csv, pdf)
+     */
+    function sendChartToBackend(chartId, chartName, plantUid, type) {
+        // Get the chart canvas element
         let canvas = document.getElementById(chartId);
+        if (!canvas) {
+            alert('Chart not rendered yet! Please wait for the chart to load.');
+            return;
+        }
+
+        // Show loading indicator
+        const loadingElement = document.createElement('div');
+        loadingElement.className = 'loading-indicator';
+        loadingElement.innerHTML = 'Preparing download, please wait...';
+        loadingElement.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 15px; border-radius: 5px; z-index: 9999;';
+        document.body.appendChild(loadingElement);
+
+        // Convert canvas to PNG data URL
         let dataUrl = canvas.toDataURL('image/png');
 
-        return fetch(`/plants/${plantId}/save-chart-image`, {
+        // Send image data to backend
+        return fetch(`/plants/${plantUid}/save-chart-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -456,44 +478,100 @@ function renderCharts(batteryOkData, batterySavingsData) {
                 chart: chartName,
                 image: dataUrl
             })
-        }).then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  window.location.href = `/plants/${plantId}/download/${chartName}/${type}`;
-              } else {
-                  alert('Error saving chart image!');
-              }
-          });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Remove loading indicator
+            document.body.removeChild(loadingElement);
+
+            // Redirect to download if successful
+            if (data.success) {
+                window.location.href = `/plants/${plantUid}/download/${chartName}/${type}`;
+            } else {
+                alert('Error saving chart image: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            // Remove loading indicator and show error
+            document.body.removeChild(loadingElement);
+            console.error('Chart download failed:', error);
+            alert('Download failed: ' + error.message);
+        });
+    }
+
+    /**
+     * Download chart data as CSV
+     * @param {string} chartName - Type of chart (energy, battery, or savings)
+     * @param {string} plantUid - Plant's unique identifier
+     */
+    function downloadCSV(chartName, plantUid) {
+        const loadingElement = document.createElement('div');
+        loadingElement.className = 'loading-indicator';
+        loadingElement.innerHTML = 'Preparing CSV download, please wait...';
+        loadingElement.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 15px; border-radius: 5px; z-index: 9999;';
+        document.body.appendChild(loadingElement);
+
+        setTimeout(() => {
+            document.body.removeChild(loadingElement);
+            window.location.href = `/plants/${plantUid}/download/${chartName}/csv`;
+        }, 500);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        let plantId = {{ $plant->id }};
+        // Get plant UID from the dropdown container's data attribute for robustness
+        let plantDropdown = document.querySelector('.ml-auto[data-plant-uid]');
+        let plantUid = plantDropdown ? plantDropdown.getAttribute('data-plant-uid') : '';
+        if (!plantUid) {
+            console.warn('No plant uid found for chart download actions!');
+            // Add error notice to the page
+            const errorNotice = document.createElement('div');
+            errorNotice.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4';
+            errorNotice.innerHTML = '<strong class="font-bold">Warning!</strong><span class="block sm:inline"> Unable to identify plant for download actions. Download functionality may not work properly.</span>';
+            document.querySelector('.mb-6').prepend(errorNotice);
+        }
         // ENERGY
         document.getElementById('downloadPNG-energy').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('energyChart', 'energy', plantId, 'png');
+            if (plantUid) sendChartToBackend('energyChart', 'energy', plantUid, 'png');
         });
         document.getElementById('downloadPDF-energy').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('energyChart', 'energy', plantId, 'pdf');
+            if (plantUid) sendChartToBackend('energyChart', 'energy', plantUid, 'pdf');
+        });
+        document.getElementById('downloadCSV-energy').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (plantUid) downloadCSV('energy', plantUid);
         });
         // BATTERY
         document.getElementById('downloadPNG-battery').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('batteryChart', 'battery', plantId, 'png');
+            if (plantUid) sendChartToBackend('batteryChart', 'battery', plantUid, 'png');
         });
         document.getElementById('downloadPDF-battery').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('batteryChart', 'battery', plantId, 'pdf');
+            if (plantUid) sendChartToBackend('batteryChart', 'battery', plantUid, 'pdf');
+        });
+        document.getElementById('downloadCSV-battery').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (plantUid) downloadCSV('battery', plantUid);
         });
         // SAVINGS
         document.getElementById('downloadPNG-savings').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('savingsChart', 'savings', plantId, 'png');
+            if (plantUid) sendChartToBackend('savingsChart', 'savings', plantUid, 'png');
         });
         document.getElementById('downloadPDF-savings').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('savingsChart', 'savings', plantId, 'pdf');
+            if (plantUid) sendChartToBackend('savingsChart', 'savings', plantUid, 'pdf');
+        });
+        document.getElementById('downloadCSV-savings').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (plantUid) downloadCSV('savings', plantUid);
         });
     });
-    </script>
+</script>

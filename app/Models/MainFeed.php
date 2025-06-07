@@ -7,6 +7,17 @@ use Illuminate\Support\Str;
 
 class MainFeed extends Model
 {
+
+        /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $connection = 'edis_system_data';
+
+    protected $table = 'main_feeds';
+
+
     protected $fillable = [
         'plant_controller_id',
         'import_power',

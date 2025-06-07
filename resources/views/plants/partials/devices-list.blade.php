@@ -1,13 +1,13 @@
 <div class="mb-8">
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-semibold mb-4">Devices by Controller & Feed</h3>
-        @foreach ($plant->controllers as $controller)
+        @foreach ($controllers as $controller)
             <div class="mb-6 border-2 border-indigo-200 rounded-lg p-4 bg-indigo-50">
                 <div class="mb-2 flex items-center justify-between">
                     <h4 class="text-xl font-bold text-indigo-800">Controller #{{ $controller->id }} <span class="text-xs text-gray-500">({{ $controller->name }})</span></h4>
                     <span class="text-xs text-gray-500">UUID: {{ $controller->uuid }}</span>
                 </div>
-                @foreach ($controller->mainFeeds as $feed)
+                @foreach ($controller->mainfeeds as $feed)
                     <div class="mb-4 border rounded p-3 bg-white">
                         <div class="flex justify-between items-center mb-2">
                             <h5 class="font-semibold text-indigo-700 mb-0">

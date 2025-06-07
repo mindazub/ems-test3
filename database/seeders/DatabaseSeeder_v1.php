@@ -179,13 +179,5 @@ class DatabaseSeeder extends Seeder
             'role' => 'customer',
             'uuid' => (string) Str::uuid(),
         ]);
-
-        User::create([
-            'name' => 'Mantas Zelba',
-            'email' => 'mantas@viasolis.eu',
-            'password' => bcrypt('mantas000'),
-            'role' => 'customer',
-            'uuid' => '6a36660d-daae-48dd-a4fe-000b191b13d8',
-        ]);
     }
 }

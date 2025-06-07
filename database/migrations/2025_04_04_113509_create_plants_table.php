@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('plants', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique()->index();
-            $table->string('name');
-            $table->string('owner_email');
-            $table->string('status');
-            $table->decimal('capacity', 12, 2);
-            $table->decimal('latitude', 10, 6);
-            $table->decimal('longitude', 10, 6);
-            $table->bigInteger('last_updated')->nullable(); // timestamp as INT
+            $table->uuid('uid')->unique();
+            $table->decimal('latitude', 10, 8);
+            $table->decimal('longitude', 11, 8);
+            $table->string('status', 20);
+            $table->float('capacity', 8, 2);
+            $table->uuid('owner');
             $table->timestamps();
         });
     }

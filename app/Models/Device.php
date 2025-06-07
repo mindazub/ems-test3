@@ -7,6 +7,17 @@ use Illuminate\Support\Str;
 
 class Device extends Model
 {
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $connection = 'edis_system_data';
+
+    protected $table = 'devices';
+
+
     protected $fillable = [
         'main_feed_id',
         'parent_device_id',
