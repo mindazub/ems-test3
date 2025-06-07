@@ -1,3 +1,14 @@
+
+
+<!-- Add calendar controls above each chart -->
+<div class="flex items-center justify-center mb-2 gap-2" id="energy-calendar-controls">
+                <button id="energy-prev" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Previous hour">&#8592;</button>
+                <input type="date" id="energy-date" class="border rounded px-2 py-1" />
+                <button id="energy-next" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Next hour">&#8594;</button>
+            </div>
+
+
+
 <div class="mb-6 space-y-8">
     <!-- Energy Chart Tabs -->
     <div x-data="{ tabEnergy: 'graph', open: false }" class="bg-white rounded-lg shadow">
