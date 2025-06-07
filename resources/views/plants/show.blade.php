@@ -1,7 +1,10 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Plant Details') }} - {{ $plant->uid ?? 'N/A' }}
+            {{ __('Plant Details') }} - {{ isset($id) ? Str::substr($id, 0, 8) :  'N/A' }}
         </h2>
     </x-slot>
 
@@ -16,18 +19,22 @@
                 <div class="mb-6 flex flex-wrap gap-6">
                     <div class="w-full lg:w-1/2 space-y-2">
                         <h1 class="text-4xl font-bold ">
-                            <span class="text-gray-400 italic">#ID&nbsp;{{ $plant->uid ?? 'N/A' }}</span>
+                            <span class="text-gray-400 italic">#ID&nbsp;{{ Str::substr($id ?? 'N/A', 0, 8) }}</span>
                         </h1>
                         <h2 class="text-lg font-semibold mb-2">General Info</h2>
                         <div class="space-y-1">
-                            <p><span class="font-semibold">Owner Email:</span> {{ $plant->owner_email ?? '' }}</p>
-                            <p><span class="font-semibold">Status:</span> {{ $plant->status ?? '' }}</p>
-                            <p><span class="font-semibold">Battery Capacity:</span> {{ isset($plant->capacity) ? number_format($plant->capacity / 1000, 0) : 'N/A' }} kWh</p>
-                            <p><span class="font-semibold">Location:</span> Lat {{ $plant->latitude ?? '' }}, Lng {{ $plant->longitude ?? '' }}</p>
-                            <p><span class="font-semibold">Last Updated:</span>
-                                {{ $plant->last_updated ? \Carbon\Carbon::createFromTimestamp($plant->last_updated)->format('Y-m-d H:i') : 'N/A' }}
-                            </p>
-                            <p><span class="font-semibold">UUID:</span> {{ $plant->uuid ?? $plant->uid ?? 'N/A' }}</p>
+                                                        
+                            <p>
+                            @if(!empty($plant->metadata_flat))
+                                
+                                    <div class="space-y-1">
+                                        @foreach($plant->metadata_flat as $metaKey => $metaValue)
+                                            <p><span class="font-semibold">{{ $metaKey }}:</span> {{ is_array($metaValue) ? json_encode($metaValue) : $metaValue }}</p>
+                                        @endforeach
+                                    </div>
+
+                            @endif
+</p>
                         </div>
                         <div class="mt-4">
                             <a href="{{ route('plants.index') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
@@ -59,8 +66,9 @@
     <script>
         // --- LEAFLET MAP INIT ---
         document.addEventListener('DOMContentLoaded', function() {
-            const lat = {{ $plant->latitude ?? 0 }};
-            const lng = {{ $plant->longitude ?? 0 }};
+            // Prefer plant_metadata lat/lng if available, else fallback
+            let lat = @json($plant->metadata_flat['Latitude'] ?? $plant->latitude ?? 0);
+            let lng = @json($plant->metadata_flat['Longitude'] ?? $plant->longitude ?? 0);
             const map = L.map('map').setView([lat, lng], 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,7 +79,7 @@
             L.marker([lat, lng])
                 .addTo(map)
                 .bindPopup(
-                    "<strong>{{ $plant->name ?? $plant->uid }}</strong><br>Lat: {{ $plant->latitude ?? '' }}<br>Lng: {{ $plant->longitude ?? '' }}"
+                    "<strong>{{ $plant->name ?? $plant->uid }}</strong><br>Lat: " + lat + "<br>Lng: " + lng
                 )
                 .openPopup();
         });
