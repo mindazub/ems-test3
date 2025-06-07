@@ -10,11 +10,12 @@ class PlantController extends Controller
 {
     public function index()
     {
-        $client = new \GuzzleHttp\Client();
-        $plant_id = '6a36660d-daae-48dd-a4fe-000b191b13d8'; // Example plant ID
-        
-        $url = 'http://127.0.0.1:5001/plant_list/{plant_id}';
+        // Use the correct plant list endpoint with the required UUID
+        $plantListUuid = '6a36660d-daae-48dd-a4fe-000b191b13d8';
+        $url = "http://127.0.0.1:5001/plant_list/{$plantListUuid}";
         $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        $plants = collect();
+        $client = new \GuzzleHttp\Client();
         try {
             $response = $client->request('GET', $url, [
                 'headers' => [
@@ -30,7 +31,6 @@ class PlantController extends Controller
                 $plantObj = new \stdClass();
                 $plantObj->id = $plant['uid'] ?? null;
                 $plantObj->name = $plant['uid'] ?? '';
-                // Fetch user by UUID and set email
                 $user = \App\Models\User::where('uuid', $plant['owner'] ?? '')->first();
                 $plantObj->owner_email = $user ? $user->email : ($plant['owner'] ?? '');
                 $plantObj->status = $plant['status'] ?? '';
@@ -40,90 +40,10 @@ class PlantController extends Controller
                 return $plantObj;
             });
         } catch (\Exception $e) {
-            
+            \Log::error('Error fetching plants from API', ['error' => $e->getMessage()]);
             $plants = collect();
         }
-
-        // dd($plants);
-
-        return view('plants.index', compact('plants', 'plant_id'));
-    }
-
-    public function create()
-    {
-        return view('plants.create', [
-        ]);
-    }
-
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'owner_email' => 'required|email',
-            'status' => 'required|string|max:255',
-            'capacity' => 'required|numeric|min:0',
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'last_updated' => 'nullable|date',
-        ]);
-
-        Plant::create([
-            'name' => $request->name,
-            'owner_email' => $request->owner_email,
-            'status' => $request->status,
-            'capacity' => $request->capacity,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'last_updated' => $request->last_updated
-                ? \Carbon\Carbon::parse($request->last_updated)->timestamp
-                : null,
-        ]);
-
-        Cache::forget('plants.with.controllers.mainFeeds.devices');
-
-        return redirect()->route('plants.index')->with('message', 'Plant created successfully.');
-    }
-
-
-    public function edit(Plant $plant)
-    {
-        return view('plants.edit', compact('plant'));
-    }
-
-    public function update(Request $request, Plant $plant)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'owner_email' => 'required|email',
-            'status' => 'required|string',
-            'capacity' => 'required|numeric',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'last_updated' => 'nullable|date',
-        ]);
-
-        $plant->update([
-            'name' => $request->name,
-            'owner_email' => $request->owner_email,
-            'status' => $request->status,
-            'capacity' => $request->capacity,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'last_updated' => $request->last_updated
-                ? \Carbon\Carbon::parse($request->last_updated)->timestamp
-                : null,
-        ]);
-        Cache::forget('plants.with.controllers.mainFeeds.devices');
-        return redirect()->route('plants.index')->with('message', 'Plant updated successfully.');
-    }
-
-
-    public function destroy(Plant $plant)
-    {
-        $plant->delete();
-        Cache::forget('plants.with.controllers.mainFeeds.devices');
-        return redirect()->route('plants.index')->with('message', 'Plant deleted successfully.');
+        return view('plants.index', compact('plants'));
     }
 
     public function show(Plant $plant)
@@ -362,9 +282,20 @@ class PlantController extends Controller
                 // Normalize controllers/mainfeeds/devices for Blade compatibility
                 $plant->controllers = collect($plant->controllers ?? [])->map(function ($controller) {
                     $controllerObj = (object) $controller;
-                    $controllerObj->mainFeeds = collect($controller->mainfeeds ?? [])->map(function ($feed) {
+                    // Use controller_main_feeds for main feeds
+                    $mainFeeds = $controller->controller_main_feeds ?? [];
+                    $controllerObj->mainFeeds = collect($mainFeeds)->map(function ($feed) {
                         $feedObj = (object) $feed;
-                        $feedObj->devices = collect($feed->devices ?? [])->map(fn($d) => (object) $d);
+                        // Use main_feed_devices for devices
+                        $devices = $feed->main_feed_devices ?? [];
+                        // Recursively normalize assigned_devices
+                        $normalizeDevice = function ($device) use (&$normalizeDevice) {
+                            $deviceObj = (object) $device;
+                            $assigned = $device->assigned_devices ?? [];
+                            $deviceObj->assigned_devices = collect($assigned)->map(fn($d) => $normalizeDevice($d));
+                            return $deviceObj;
+                        };
+                        $feedObj->devices = collect($devices)->map(fn($d) => $normalizeDevice($d));
                         return $feedObj;
                     });
                     return $controllerObj;

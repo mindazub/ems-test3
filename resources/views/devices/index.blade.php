@@ -50,28 +50,29 @@
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manufacturer</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Main Feed</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plant</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Parent Device</th>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($devices as $device)
-                                <tr class="clickable-row hover:bg-blue-50 cursor-pointer transition" data-href="{{ route('devices.show', $device) }}">
-                                    <td class="px-4 py-2">{{ $device->id }}</td>
-                                    <td class="px-4 py-2">{{ $device->device_type }}</td>
-                                    <td class="px-4 py-2">{{ $device->manufacturer }}</td>
-                                    <td class="px-4 py-2">{{ $device->device_model }}</td>
-                                    <td class="px-4 py-2">{{ $device->device_status }}</td>
-                                    <td class="px-4 py-2">{{ $device->mainFeed->id ?? 'N/A' }}</td>
-                                    <td class="px-4 py-2">{{ $device->parent?->id ?? '—' }}</td>
+                                <tr class="clickable-row hover:bg-blue-50 cursor-pointer transition" data-device-id="{{ $device['id'] }}" data-href="{{ route('devices.show', $device['id']) }}">
+                                    <td class="px-4 py-2">{{ $device['id'] }}</td>
+                                    <td class="px-4 py-2">{{ $device['device_type'] }}</td>
+                                    <td class="px-4 py-2">{{ $device['manufacturer'] }}</td>
+                                    <td class="px-4 py-2">{{ $device['device_model'] }}</td>
+                                    <td class="px-4 py-2">{{ $device['device_status'] }}</td>
+                                    <td class="px-4 py-2">
+                                        @if($device['plant_uid'])
+                                            <a href="{{ url('/plants/' . $device['plant_uid']) }}" class="text-blue-600 hover:text-blue-900 underline">{{ $device['plant_uid'] }}</a>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2">{{ $device['parent_device_id'] ?? '' }}</td>
                                     <td class="px-4 py-2 flex space-x-2">
-                                        <a href="{{ route('devices.edit', $device) }}" class="inline-block px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">Edit</a>
-                                        <form method="POST" action="{{ route('devices.destroy', $device) }}" class="inline-block" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Delete</button>
-                                        </form>
+                                        {{-- Actions can be left as is or removed for API devices --}}
                                     </td>
                                 </tr>
                             @endforeach
@@ -150,6 +151,38 @@
         .dataTables_length select:active {
             background-image: none;
         }
+
+        {{-- Highlight row if highlight param is present --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const highlightId = urlParams.get('highlight');
+                if (highlightId) {
+                    const row = document.querySelector(`[data-device-id="${highlightId}"]`);
+                    if (row) {
+                        row.classList.add('highlight-device-row');
+                        setTimeout(() => {
+                            row.classList.add('highlight-fade');
+                            setTimeout(() => row.classList.remove('highlight-device-row', 'highlight-fade'), 1000);
+                        }, 3000);
+                    }
+                }
+            });
+        </script>
+        <style>
+            .highlight-device-row {
+                outline: 3px solid red !important;
+                outline-offset: -3px;
+                transition: outline 0.3s cubic-bezier(.4,2,.6,1), background 0.3s;
+                z-index: 10;
+                background: #fff7f7;
+            }
+            .highlight-fade {
+                outline: 0px solid transparent !important;
+                background: inherit;
+                transition: outline 1s cubic-bezier(.4,2,.6,1), background 1s;
+            }
+        </style>
     </style>
 
 </x-app-layout>

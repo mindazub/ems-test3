@@ -15,10 +15,9 @@ class DashboardController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index(): View
+    public function index()
     {
-        $plants = Plant::with('controllers.mainFeeds.devices')->paginate();
-        return view('plants.index', compact('plants'));
+        return redirect()->action([PlantController::class, 'index']);
     }
 
 }
