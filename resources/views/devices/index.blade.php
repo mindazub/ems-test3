@@ -57,24 +57,30 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($devices as $device)
-                                <tr class="clickable-row hover:bg-blue-50 cursor-pointer transition" data-device-id="{{ $device['id'] }}" data-href="{{ route('devices.show', $device['id']) }}">
-                                    <td class="px-4 py-2">{{ $device['id'] }}</td>
-                                    <td class="px-4 py-2">{{ $device['device_type'] }}</td>
-                                    <td class="px-4 py-2">{{ $device['manufacturer'] }}</td>
-                                    <td class="px-4 py-2">{{ $device['device_model'] }}</td>
-                                    <td class="px-4 py-2">{{ $device['device_status'] }}</td>
-                                    <td class="px-4 py-2">
-                                        @if($device['plant_uid'])
-                                            <a href="{{ url('/plants/' . $device['plant_uid']) }}" class="text-blue-600 hover:text-blue-900 underline">{{ $device['plant_uid'] }}</a>
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-2">{{ $device['parent_device_id'] ?? '' }}</td>
-                                    <td class="px-4 py-2 flex space-x-2">
-                                        {{-- Actions can be left as is or removed for API devices --}}
-                                    </td>
-                                </tr>
+                            <tr class="clickable-row hover:bg-blue-50 cursor-pointer transition" data-device-id="{{ $device['id'] }}" data-href="{{ route('devices.show', $device['id']) }}">
+                                <td class="px-4 py-2">
+                                    <a href="{{ route('devices.show', $device['id']) }}" class="text-blue-600 hover:underline" title="{{ $device['id'] }}">
+                                        {{ $device['short_id'] ?? (isset($device['id']) ? substr($device['id'], 0, 8) : '-') }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-2">{{ $device['device_type'] }}</td>
+                                <td class="px-4 py-2">{{ $device['manufacturer'] }}</td>
+                                <td class="px-4 py-2">{{ $device['device_model'] }}</td>
+                                <td class="px-4 py-2">{{ $device['device_status'] }}</td>
+                                <td class="px-4 py-2">
+                                    @if($device['plant_uid'])
+                                        <a href="{{ url('/plants/' . ($device['plant_full_uid'] ?? $device['plant_uid'])) }}" class="text-blue-600 hover:text-blue-900 underline" title="{{ $device['plant_full_uid'] ?? $device['plant_uid'] }}">
+                                            {{ $device['plant_short_uid'] ?? (isset($device['plant_uid']) ? substr($device['plant_uid'], 0, 8) : $device['plant_uid']) }}
+                                        </a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2">{{ $device['parent_device_short_id'] ?? ($device['parent_device_id'] ? substr($device['parent_device_id'], 0, 8) : '') }}</td>
+                                <td class="px-4 py-2 flex space-x-2">
+                                    {{-- Actions can be left as is or removed for API devices --}}
+                                </td>
+                            </tr>
                             @endforeach
                             </tbody>
                         </table>

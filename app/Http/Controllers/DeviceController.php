@@ -25,7 +25,8 @@ class DeviceController extends Controller
             $flat = collect();
             foreach ($devicesArr as $device) {
                 $d = [
-                    'id' => isset($device['uid']) ? substr($device['uid'], 0, 8) : null,
+                    'id' => $device['uid'] ?? null, // always use full UID for routing
+                    'short_id' => isset($device['uid']) ? substr($device['uid'], 0, 8) : null, // trimmed for display
                     'device_type' => $device['device_type'] ?? null,
                     'manufacturer' => $device['device_manufacturer'] ?? null,
                     'device_model' => $device['device_model'] ?? null,
@@ -34,7 +35,8 @@ class DeviceController extends Controller
                     'plant_name' => $plantName,
                     'controller_uid' => isset($controller['uid']) ? substr($controller['uid'], 0, 8) : null,
                     'feed_uid' => isset($feed['uid']) ? substr($feed['uid'], 0, 8) : null,
-                    'parent_device_id' => isset($parentDevice['uid']) ? substr($parentDevice['uid'], 0, 8) : null,
+                    'parent_device_id' => isset($parentDevice['uid']) ? $parentDevice['uid'] : null, // full UID for parent
+                    'parent_device_short_id' => isset($parentDevice['uid']) ? substr($parentDevice['uid'], 0, 8) : null,
                 ];
                 $flat->push($d);
                 if (!empty($device['assigned_devices'])) {
@@ -55,11 +57,66 @@ class DeviceController extends Controller
         return view('devices.index', [ 'devices' => $devices ]);
     }
 
-    public function show(Device $device)
+    public function show($id)
     {
-        $device->load(['mainFeed', 'parent', 'assignedDevices']);
-
-        return view('devices.show', compact('device'));
+        // Fetch plant_view JSON (simulate API call for now)
+        $jsonPath = public_path('plant_view_65f20fa1-047a-4379-8464-59f1d94be3c7_1748955255.json');
+        $data = [];
+        if (file_exists($jsonPath)) {
+            $data = json_decode(file_get_contents($jsonPath), true);
+        }
+        $deviceInfo = null;
+        $plantUid = $data['plant_metadata']['uid'] ?? null;
+        $plantName = $plantUid;
+        // Flatten all devices
+        $flattenDevices = function($devicesArr, $plantUid, $plantName, $parentDevice = null, $controller = null, $feed = null) use (&$flattenDevices) {
+            $flat = collect();
+            foreach ($devicesArr as $device) {
+                // Add plant_full_uid and plant_short_uid for plant links
+                $d = [
+                    'id' => $device['uid'] ?? null, // always use full UID for routing
+                    'short_id' => isset($device['uid']) ? substr($device['uid'], 0, 8) : null, // trimmed for display
+                    'full_uid' => $device['uid'] ?? null,
+                    'device_type' => $device['device_type'] ?? null,
+                    'manufacturer' => $device['device_manufacturer'] ?? null,
+                    'device_model' => $device['device_model'] ?? null,
+                    'device_status' => $device['device_status'] ?? null,
+                    'plant_uid' => $plantUid ? substr($plantUid, 0, 8) : null,
+                    'plant_full_uid' => $plantUid ?? null,
+                    'plant_short_uid' => $plantUid ? substr($plantUid, 0, 8) : null,
+                    'plant_name' => $plantName,
+                    'controller_uid' => isset($controller['uid']) ? substr($controller['uid'], 0, 8) : null,
+                    'controller_full_uid' => $controller['uid'] ?? null,
+                    'feed_uid' => isset($feed['uid']) ? substr($feed['uid'], 0, 8) : null,
+                    'feed_full_uid' => $feed['uid'] ?? null,
+                    'parent_device_id' => isset($parentDevice['uid']) ? $parentDevice['uid'] : null, // full UID for parent
+                    'parent_device_short_id' => isset($parentDevice['uid']) ? substr($parentDevice['uid'], 0, 8) : null,
+                    'raw' => $device,
+                ];
+                $flat->push($d);
+                if (!empty($device['assigned_devices'])) {
+                    $flat = $flat->merge($flattenDevices($device['assigned_devices'], $plantUid, $plantName, $device, $controller, $feed));
+                }
+            }
+            return $flat;
+        };
+        $allDevices = collect();
+        if (!empty($data['controllers'])) {
+            foreach ($data['controllers'] as $controller) {
+                foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
+                    $devicesArr = $feed['main_feed_devices'] ?? [];
+                    $allDevices = $allDevices->merge($flattenDevices($devicesArr, $plantUid, $plantName, null, $controller, $feed));
+                }
+            }
+        }
+        // Only match by full_uid
+        $deviceInfo = $allDevices->first(function($d) use ($id) {
+            return $d['full_uid'] === $id;
+        });
+        if (!$deviceInfo) {
+            abort(404, 'Device not found');
+        }
+        return view('devices.show', ['device' => $deviceInfo]);
     }
 
     public function create()

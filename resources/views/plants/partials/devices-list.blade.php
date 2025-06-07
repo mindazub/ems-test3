@@ -1,32 +1,45 @@
 @if (!function_exists('__device_row_blade'))
     @php
     function __device_row_blade($device, $level = 0, $parentKey = '') {
-        $isParent = $device->parent_device ?? false;
+        // Determine if device is parent: has assigned_devices and parameters does not have slave_id
         $hasChildren = !empty($device->assigned_devices);
-        $rowKey = $parentKey . ($device->id ?? $device->uuid ?? uniqid());
+        $parameters = (array)($device->parameters ?? []);
+        $isParent = $hasChildren && !array_key_exists('slave_id', $parameters);
+        $rowKey = $parentKey . ($device->id ?? $device->uid ?? uniqid());
         echo '<tr x-data="{ open: false }" data-device-id="' . ($device->id ?? $device->uid ?? '') . '">';
-        // Collapsible toggle for parent devices with children
+        // Expand/Collapse Icon
         echo '<td class="w-10 text-center">';
-        if ($isParent && $hasChildren) {
+        if ($isParent) {
             echo '<button type="button" class="focus:outline-none" @click="open = !open" :aria-expanded="open" aria-label="Toggle children">';
-            echo '<template x-if="!open"><svg class="w-5 h-5 text-indigo-600 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg></template>';
-            echo '<template x-if="open"><svg class="w-5 h-5 text-indigo-600 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg></template>';
+            echo '<template x-if="!open"><x-heroicon-o-plus class="w-5 h-5 text-indigo-600 inline" /></template>';
+            echo '<template x-if="open"><x-heroicon-o-minus class="w-5 h-5 text-indigo-600 inline" /></template>';
             echo '</button>';
         } else {
             echo $level > 0 ? str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level) . '↳' : '';
         }
         echo '</td>';
-        // ID column with link to /devices?highlight={id}
+        // ID columns: trimmed for display, full for routing
         $deviceId = $device->id ?? $device->uid ?? '';
+        $fullId = $device->uid ?? $device->id ?? '';
         $shortId = substr($deviceId, 0, 8);
         echo '<td class="px-2 py-2 cursor-pointer">';
-        echo '<a href="' . url('/devices?highlight=' . $shortId) . '" class="text-blue-600 hover:underline">' . $shortId . '</a>';
+        echo '<a href="' . url('/devices/' . $fullId) . '" class="text-blue-600 hover:underline" title="' . $fullId . '">' . $shortId . '</a>';
         echo '</td>';
         // Device info columns
         echo '<td class="px-2 py-2">' . ($device->device_type ?? '-') . '</td>';
         echo '<td class="px-2 py-2">' . ($device->device_manufacturer ?? '-') . '</td>';
         echo '<td class="px-2 py-2">' . ($device->device_model ?? '-') . '</td>';
         echo '<td class="px-2 py-2">' . ($device->device_status ?? '-') . '</td>';
+        // Assigned To column
+        echo '<td class="px-2 py-2">';
+        if (!empty($device->parent_device_id)) {
+            $parentFullId = $device->parent_device_id;
+            $parentShortId = substr($parentFullId, 0, 8);
+            echo '<a href="' . url('/devices/' . $parentFullId) . '" class="text-blue-600 hover:underline" title="' . $parentFullId . '">' . $parentShortId . '</a>';
+        } else {
+            echo '—';
+        }
+        echo '</td>';
         // Parent? column
         echo '<td class="px-2 py-2 text-center">' . ($isParent ? '<span class="text-green-600 font-bold">Yes</span>' : '<span class="text-gray-400">No</span>') . '</td>';
         echo '</tr>';
@@ -35,15 +48,31 @@
             foreach ($device->assigned_devices as $child) {
                 echo '<tr x-show="open" x-transition>';
                 echo '<td></td>';
-                echo '<td class="px-2 py-2 pl-8 cursor-pointer" onclick="window.location=\'' . url('/devices/' . (isset($child->id) ? substr($child->id, 0, 8) : (isset($child->uuid) ? substr($child->uuid, 0, 8) : '')) ) . '\'">' . (isset($child->id) ? substr($child->id, 0, 8) : (isset($child->uuid) ? substr($child->uuid, 0, 8) : 'N/A')) . '</td>';
+                $childId = isset($child->id) ? $child->id : (isset($child->uid) ? $child->uid : '');
+                $childFullId = isset($child->uid) ? $child->uid : (isset($child->id) ? $child->id : '');
+                $childShortId = substr($childId, 0, 8);
+                echo '<td class="px-2 py-2 pl-8 cursor-pointer" onclick="window.location=\'' . url('/devices/' . $childFullId) . '\'" title="' . $childFullId . '">' . ($childShortId ?: 'N/A') . '</td>';
                 echo '<td class="px-2 py-2">' . ($child->device_type ?? '-') . '</td>';
                 echo '<td class="px-2 py-2">' . ($child->device_manufacturer ?? '-') . '</td>';
                 echo '<td class="px-2 py-2">' . ($child->device_model ?? '-') . '</td>';
                 echo '<td class="px-2 py-2">' . ($child->device_status ?? '-') . '</td>';
-                echo '<td class="px-2 py-2 text-center">' . (($child->parent_device ?? false) ? '<span class="text-green-600 font-bold">Yes</span>' : '<span class="text-gray-400">No</span>') . '</td>';
+                // Assigned To column for child
+                echo '<td class="px-2 py-2">';
+                if (!empty($child->parent_device_id)) {
+                    $parentFullId = $child->parent_device_id;
+                    $parentShortId = substr($parentFullId, 0, 8);
+                    echo '<a href="' . url('/devices/' . $parentFullId) . '" class="text-blue-600 hover:underline" title="' . $parentFullId . '">' . $parentShortId . '</a>';
+                } else {
+                    echo '—';
+                }
+                echo '</td>';
+                // Recursively check if child is parent
+                $childParams = (array)($child->parameters ?? []);
+                $childIsParent = !empty($child->assigned_devices) && !array_key_exists('slave_id', $childParams);
+                echo '<td class="px-2 py-2 text-center">' . ($childIsParent ? '<span class="text-green-600 font-bold">Yes</span>' : '<span class="text-gray-400">No</span>') . '</td>';
                 echo '</tr>';
                 // Recursively render grandchildren (if any)
-                if (!empty($child->assigned_devices)) {
+                if ($childIsParent && !empty($child->assigned_devices)) {
                     __device_row_blade($child, $level + 1, $rowKey . '-');
                 }
             }
@@ -82,6 +111,7 @@
                                             <th class="px-2 py-2 text-left font-semibold">Manufacturer</th>
                                             <th class="px-2 py-2 text-left font-semibold">Model</th>
                                             <th class="px-2 py-2 text-left font-semibold">Status</th>
+                                            <th class="px-2 py-2 text-left font-semibold">Assigned To</th>
                                             <th class="px-2 py-2 text-left font-semibold">Parent ?</th>
                                         </tr>
                                         </thead>
@@ -91,7 +121,7 @@
                                                 @php __device_row_blade($device, 0); @endphp
                                             @endforeach
                                         @else
-                                            <tr><td colspan="7" class="text-center text-gray-400 italic">No devices found for this feed.</td></tr>
+                                            <tr><td colspan="8" class="text-center text-gray-400 italic">No devices found for this feed.</td></tr>
                                         @endif
                                         </tbody>
                                     </table>
