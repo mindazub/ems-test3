@@ -1,5 +1,3 @@
-
-
 <!-- Add calendar controls above each chart -->
 <div class="flex items-center justify-center mb-2 gap-2" id="energy-calendar-controls">
                 <button id="energy-prev" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Previous hour">&#8592;</button>
@@ -775,6 +773,178 @@ document.addEventListener("DOMContentLoaded", function () {
         if (savingsChartElement) {
             savingsChartElement.parentElement.innerHTML = '<div class="text-center text-gray-400 py-12">No battery savings data available.</div>';
         }
+    }
+});
+
+// --- CALENDAR WIDGET LOGIC ---
+document.addEventListener('DOMContentLoaded', function() {
+    let plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
+    const dateInput = document.getElementById('energy-date');
+    const prevBtn = document.getElementById('energy-prev');
+    const nextBtn = document.getElementById('energy-next');
+
+    // Set default date to today if empty
+    if (dateInput && !dateInput.value) {
+        const today = new Date();
+        dateInput.value = today.toISOString().slice(0, 10);
+    }
+
+    // Store chart instances for proper destruction
+    let chartInstances = {};
+
+    function fetchAndUpdateCharts(dateStr) {
+        if (!plantId) return;
+        const url = `/plants/${plantId}/data?start=${dateStr}`;
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.json();
+            })
+            .then(data => {
+                // Update chart data variables
+                energyData = data.energy_chart || {};
+                batteryPriceData = data.battery_price || {};
+                batterySavingsData = data.battery_savings || {};
+                // Remove old charts if they exist
+                ['energyChart','batteryChart','savingsChart'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.chartInstance) {
+                        el.chartInstance.destroy();
+                        el.chartInstance = null;
+                    }
+                });
+                // Re-render charts
+                renderAllCharts();
+            })
+            .catch(err => {
+                console.error('Error fetching plant data for date', dateStr, err);
+                // Optionally show a user-facing error
+            });
+    }
+
+    function renderAllCharts() {
+        // --- ENERGY CHART ---
+        if (typeof Chart !== 'undefined') {
+            // Remove and recreate canvases to avoid Chart.js errors
+            ['energyChart','batteryChart','savingsChart'].forEach(id => {
+                const old = document.getElementById(id);
+                if (old) {
+                    const parent = old.parentElement;
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.id = id;
+                    newCanvas.className = old.className;
+                    parent.replaceChild(newCanvas, old);
+                }
+            });
+            // Copy the chart rendering logic from the main block
+            // --- ENERGY CHART RENDER ---
+            try {
+                const entries = Object.entries(energyData).sort(([a], [b]) => new Date(a) - new Date(b));
+                const labels = entries.map(([ts]) => formatLabelDate(ts));
+                const pvData = entries.map(([, v]) => v.pv_p / 1000);
+                const batteryData = entries.map(([, v]) => v.battery_p / 1000);
+                const gridData = entries.map(([, v]) => v.grid_p / 1000);
+                const ctx = document.getElementById('energyChart');
+                if (ctx) {
+                    ctx.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                { label: 'PV (kW)', data: pvData, borderColor: 'rgba(0,123,255,1)', backgroundColor: 'rgba(0,123,255,0.15)', fill: true, pointRadius: 2, pointHoverRadius: 12 },
+                                { label: 'Battery (kW)', data: batteryData, borderColor: 'rgba(220,53,69,1)', backgroundColor: 'rgba(220,53,69,0.12)', fill: true, pointRadius: 2, pointHoverRadius: 12 },
+                                { label: 'Grid (kW)', data: gridData, borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,0.12)', fill: true, pointRadius: 2, pointHoverRadius: 12 }
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', padding: 30 } }, interaction: { mode: 'index', intersect: false }, elements: { point: { radius: 4, hoverRadius: 12 } }, scales: { y: { title: { display: true, text: 'Power (kW)' }, ticks: { font: { size: 14 } }, grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc' } }, x: { ticks: { font: { size: 14 } }, border: { display: true, width: 4 } } } }
+                    });
+                }
+                // Fill Energy Data Table
+                const energyTable = document.getElementById('energyDataTableBody');
+                if (energyTable) {
+                    energyTable.innerHTML = '';
+                    entries.forEach(([ts, val]) => {
+                        energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td></tr>`;
+                    });
+                }
+            } catch (e) { console.error('Error rendering energy chart:', e); }
+
+            // --- BATTERY CHART RENDER ---
+            try {
+                const entries = Object.entries(batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
+                const labels = entries.map(([ts]) => formatLabelDate(ts));
+                const batteryData = entries.map(([, v]) => v.battery_p / 1000);
+                const tariffData = entries.map(([, v]) => v.tariff);
+                const ctx = document.getElementById('batteryChart');
+                if (ctx) {
+                    ctx.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels, datasets: [ { label: 'Battery Power (kW)', data: batteryData, borderColor: 'rgba(220,53,69,1)', backgroundColor: 'rgba(220,53,69,0.1)', fill: true, yAxisID: 'y', pointRadius: 2, pointHoverRadius: 12 }, { label: 'Energy Price (€/kWh)', data: tariffData, borderColor: 'rgba(75,192,192,1)', backgroundColor: 'rgba(75,192,192,0.1)', fill: false, yAxisID: 'y1', pointRadius: 2, pointHoverRadius: 12 } ] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, interaction: { mode: 'index', intersect: false }, scales: { y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Battery Power (kW)' }, grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc' } }, y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Energy Price (€/kWh)' }, grid: { display: false } } } }
+                    });
+                }
+                // Fill Battery Data Table
+                const batteryTable = document.getElementById('batteryDataTableBody');
+                if (batteryTable) {
+                    batteryTable.innerHTML = '';
+                    entries.forEach(([ts, val]) => {
+                        batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td></tr>`;
+                    });
+                }
+            } catch (e) { console.error('Error rendering battery chart:', e); }
+
+            // --- BATTERY SAVINGS CHART RENDER ---
+            try {
+                const entries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+                const labels = entries.map(([ts]) => formatLabelDate(ts));
+                const savingsData = entries.map(([, v]) => v.battery_savings);
+                const totalSavings = savingsData.reduce((acc, val) => acc + parseFloat(val || 0), 0);
+                const ctx = document.getElementById('savingsChart');
+                if (ctx) {
+                    ctx.chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: { labels, datasets: [{ label: 'Battery Savings (€)', data: savingsData, backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)'), hoverBackgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,1)' : 'rgba(220,53,69,1)') }] },
+                        options: { responsive: true, plugins: { legend: { display: false } }, interaction: { mode: 'index', intersect: false }, scales: { y: { title: { display: true, text: 'Battery Savings (€)' }, type: 'linear', position: 'left', ticks: { font: { size: 14 } }, grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc' } }, x: { ticks: { font: { size: 14 } } } } }
+                    });
+                }
+                // Fill Savings Data Table
+                const savingsTable = document.getElementById('batterySavingsDataTableBody');
+                if (savingsTable) {
+                    savingsTable.innerHTML = '';
+                    entries.forEach(([ts, val]) => {
+                        savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${parseFloat(val.battery_savings).toFixed(2)}</td></tr>`;
+                    });
+                }
+                const batterySavingsTotal = document.getElementById('batterySavingsTotal');
+                if (batterySavingsTotal) {
+                    batterySavingsTotal.textContent = `Your savings: € ${totalSavings.toFixed(2)}`;
+                }
+            } catch (e) { console.error('Error rendering savings chart:', e); }
+        }
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            fetchAndUpdateCharts(this.value.replace(/-/g, ''));
+        });
+    }
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (!dateInput.value) return;
+            const d = new Date(dateInput.value);
+            d.setDate(d.getDate() - 1);
+            dateInput.value = d.toISOString().slice(0, 10);
+            dateInput.dispatchEvent(new Event('change'));
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            if (!dateInput.value) return;
+            const d = new Date(dateInput.value);
+            d.setDate(d.getDate() + 1);
+            dateInput.value = d.toISOString().slice(0, 10);
+            dateInput.dispatchEvent(new Event('change'));
+        });
     }
 });
 </script>

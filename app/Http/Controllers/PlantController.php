@@ -90,9 +90,8 @@ class PlantController extends Controller
         return view('plants.show', compact('plant', 'user', 'id'));
     }
 
-    public function showRemote($id)
+    public function showRemote($id, Request $request)
     {
-        // Directly fetch the owner with the specific UUID
         $specificOwnerUuid = '6a36660d-daae-48dd-a4fe-000b191b13d8';
         $specificOwner = \App\Models\User::where('uuid', $specificOwnerUuid)->first();
         if ($specificOwner) {
@@ -106,7 +105,18 @@ class PlantController extends Controller
         }
 
         $client = new \GuzzleHttp\Client();
+        // Build API URL with optional start/end params
         $url = "http://127.0.0.1:5001/plant_view/{$id}";
+        $query = [];
+        if ($request->has('start')) {
+            $query['start'] = $request->input('start');
+        }
+        if ($request->has('end')) {
+            $query['end'] = $request->input('end');
+        }
+        if (!empty($query)) {
+            $url .= '?' . http_build_query($query);
+        }
         $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
         try {
             $response = $client->request('GET', $url, [
