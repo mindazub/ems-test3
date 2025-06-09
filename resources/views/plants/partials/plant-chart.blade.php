@@ -1,5 +1,7 @@
 <!-- Calendar controls with complete day selection -->
-<div class="flex flex-col items-center justify-center mb-4 gap-2" id="energy-calendar-controls">
+<div class="flex flex-col items-center justify-center mb-4 gap-2" 
+    id="energy-calendar-controls" 
+    data-plant-id="{{ $plant->uid ?? $plant->uuid ?? $plant->id ?? '' }}">
     <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Date to View</h3>
     <div class="flex flex-col md:flex-row items-center gap-3">
         <div class="flex items-center gap-2 p-1 bg-gray-50 border rounded-lg">
@@ -325,12 +327,58 @@ function formatLabelDate(dateString) {
     }
 }
 
+// Define chart data variables globally so they can be accessed by all functions
+window.energyData = {};
+window.batteryPriceData = {};
+window.batterySavingsData = {};
+// Define plant ID globally to avoid scope issues with more robust initialization
+// Try multiple methods to get the plant ID
+
+// Method 1: From the JSON-encoded PHP variable
+try {
+    window.plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
+    console.log('Method 1 - Initial plant ID from backend JSON:', window.plantId);
+} catch (e) {
+    console.error('Error getting plant ID from JSON:', e);
+}
+
+// Method 2: Fallback to extract plant ID from URL if not set
+if (!window.plantId) {
+    const pathSegments = window.location.pathname.split('/');
+    const plantIdFromUrl = pathSegments.find((segment, index) => {
+        return index > 0 && pathSegments[index-1] === 'plants' && /^[a-zA-Z0-9-]+$/.test(segment);
+    });
+    
+    if (plantIdFromUrl) {
+        console.log('Method 2 - Extracted plant ID from URL:', plantIdFromUrl);
+        window.plantId = plantIdFromUrl;
+    }
+}
+
+// Method 3: Get from data attribute on the calendar controls
+if (!window.plantId) {
+    const calendarControls = document.getElementById('energy-calendar-controls');
+    if (calendarControls && calendarControls.dataset.plantId) {
+        window.plantId = calendarControls.dataset.plantId;
+        console.log('Method 3 - Extracted plant ID from data attribute:', window.plantId);
+    }
+}
+
+// Final check and warning if plant ID is still missing
+if (!window.plantId) {
+    console.error('WARNING: Plant ID is missing! This will cause functionality issues.');
+    // Add a visible error for the user
+    document.addEventListener('DOMContentLoaded', function() {
+        showNotification('Error: Plant ID is missing. Some features may not work correctly.', 'error');
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // --- ENERGY CHART ---
     // Try to use plant->energy_chart, fallback to aggregated_data_snapshots if empty
-    let energyData = @json($plant->energy_chart ?? []);
-    let batteryPriceData = @json($plant->battery_price ?? []);
-    let batterySavingsData = @json($plant->battery_savings ?? []);
+    window.energyData = @json($plant->energy_chart ?? []);
+    window.batteryPriceData = @json($plant->battery_price ?? []);
+    window.batterySavingsData = @json($plant->battery_savings ?? []);
     const aggregatedSnapshots = @json($plant->aggregated_data_snapshots ?? []);
     
     // Debug logging to help identify issues
@@ -846,7 +894,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // --- CALENDAR WIDGET LOGIC ---
 document.addEventListener('DOMContentLoaded', function() {
-    let plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
+    // Use the global plantId variable instead of redefining it
+    console.log('[Calendar] Plant ID:', window.plantId);
+    
+    // Ensure plant ID is available, try to extract from URL if needed
+    if (!window.plantId) {
+        const pathSegments = window.location.pathname.split('/');
+        for (let i = 0; i < pathSegments.length; i++) {
+            if (pathSegments[i] === 'plants' && i + 1 < pathSegments.length) {
+                window.plantId = pathSegments[i + 1];
+                console.log('[Calendar] Recovered plant ID from URL:', window.plantId);
+                break;
+            }
+        }
+    }
+    
     const dateInput = document.getElementById('energy-date');
     const prevBtn = document.getElementById('energy-prev');
     const nextBtn = document.getElementById('energy-next');
@@ -863,20 +925,47 @@ document.addEventListener('DOMContentLoaded', function() {
     let chartInstances = {};
 
     function fetchAndUpdateCharts(dateStr) {
-        if (!plantId) return;
+        // Check for plant ID and handle the error case
+        if (!window.plantId) {
+            console.error('[Calendar] Cannot fetch data: Plant ID is missing');
+            showNotification('Cannot fetch data: Plant ID is missing', 'error');
+            
+            // One last attempt to get the plant ID from the URL
+            const pathSegments = window.location.pathname.split('/');
+            for (let i = 0; i < pathSegments.length; i++) {
+                if (pathSegments[i] === 'plants' && i + 1 < pathSegments.length) {
+                    window.plantId = pathSegments[i + 1];
+                    console.log('[Calendar] Recovered plant ID from URL:', window.plantId);
+                    break;
+                }
+            }
+            
+            // If still no plant ID, we can't continue
+            if (!window.plantId) {
+                return;
+            }
+        }
         
         // Show loading indicator
         const loadingIndicator = document.getElementById('loading-indicator');
-        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+        if (loadingIndicator) {
+            loadingIndicator.classList.remove('hidden');
+            console.log('[Calendar] Showing loading indicator');
+        }
         
         // Convert selected date to Unix timestamps (start/end of day)
         let selectedDate;
         try {
+            console.log(`[Calendar] Processing date input: "${dateStr}"`);
+            
             // Handle different date string formats
             if (dateStr.includes('-')) {
                 selectedDate = new Date(dateStr);
+                console.log(`[Calendar] Date parsed from ISO format: ${selectedDate}`);
             } else {
+                // Handle YYYYMMDD format
                 selectedDate = new Date(dateStr.substring(0, 4) + '-' + dateStr.substring(4, 6) + '-' + dateStr.substring(6, 8));
+                console.log(`[Calendar] Date parsed from YYYYMMDD format: ${selectedDate}`);
             }
             
             // If invalid date, default to today
@@ -893,54 +982,209 @@ document.addEventListener('DOMContentLoaded', function() {
         const startOfDay = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
         const endOfDay = Math.floor(new Date(selectedDate).setHours(23, 59, 59, 999) / 1000);
         
-        console.log(`[Calendar] Fetching data for ${selectedDate.toDateString()}. Timestamps: start=${startOfDay}, end=${endOfDay}`);
+        console.log(`[Calendar] === FETCHING DATA FOR ${selectedDate.toDateString()} ===`);
+        console.log(`[Calendar] Date parameters:`, {
+            rawInputDate: dateStr,
+            parsedDate: selectedDate.toString(),
+            startTimestamp: startOfDay,
+            endTimestamp: endOfDay,
+            startFormatted: new Date(startOfDay * 1000).toISOString(),
+            endFormatted: new Date(endOfDay * 1000).toISOString(),
+            plantId: window.plantId
+        });
         
-        const url = `/plants/${plantId}/data?start=${startOfDay}&end=${endOfDay}`;
-        fetch(url)
+        // Start the timer for measuring fetch duration
+        console.time('[Calendar] Data fetch duration');
+        
+        // Double-check plantId before making API call
+        if (!window.plantId) {
+            console.error('[Calendar] Fatal: Plant ID is still missing before API call');
+            showNotification('Error: Unable to determine plant ID. Please reload the page.', 'error');
+            
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+            return;
+        }
+
+        const url = `/plants/${window.plantId}/data?start=${startOfDay}&end=${endOfDay}`;
+        console.log(`[Calendar] Fetching data from: ${url}`);
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
             .then(res => {
-                if (!res.ok) throw new Error(`Network response error: ${res.status} ${res.statusText}`);
-                return res.json();
+                console.log(`[Calendar] API response status: ${res.status} ${res.statusText}`);
+                if (!res.ok) {
+                    // Handle specific error cases
+                    if (res.status === 404) {
+                        throw new Error(`Plant not found (ID: ${window.plantId}). Check that the plant ID is correct.`);
+                    } else if (res.status === 403) {
+                        throw new Error('Permission denied: You do not have access to this plant data.');
+                    } else {
+                        throw new Error(`Network response error: ${res.status} ${res.statusText}`);
+                    }
+                }
+                return res.json().catch(err => {
+                    console.error('[Calendar] Error parsing JSON response:', err);
+                    throw new Error('Invalid JSON response from server');
+                });
             })
             .then(data => {
-                console.log(`[Calendar] Data received successfully for ${selectedDate.toDateString()}`, {
+                console.log(`[Calendar] Data received successfully for ${selectedDate.toDateString()}`);
+                
+                // Validate response format
+                if (!data) {
+                    throw new Error('Empty response from server');
+                }
+                
+                // Log data statistics
+                console.log('[Calendar] Data statistics:', {
                     energyDataPoints: Object.keys(data.energy_chart || {}).length,
                     batteryDataPoints: Object.keys(data.battery_price || {}).length,
-                    savingsDataPoints: Object.keys(data.battery_savings || {}).length
+                    savingsDataPoints: Object.keys(data.battery_savings || {}).length,
+                    responseSize: JSON.stringify(data).length + ' bytes'
                 });
                 
-                // Update chart data variables
-                energyData = data.energy_chart || {};
-                batteryPriceData = data.battery_price || {};
-                batterySavingsData = data.battery_savings || {};
+                // Log detailed data for debugging
+                console.log(`[Calendar] === DETAILED FETCHED DATA (${selectedDate.toLocaleDateString()}) ===`);
+                console.log('[Calendar] Energy Chart Data:', data.energy_chart);
+                console.log('[Calendar] Battery Price Data:', data.battery_price);
+                console.log('[Calendar] Battery Savings Data:', data.battery_savings);
+                
+                // Log sample data points for each chart type
+                const logSampleData = (dataObj, label) => {
+                    const keys = Object.keys(dataObj || {});
+                    if (keys.length > 0) {
+                        const sampleKey = keys[0];
+                        console.log(`[Calendar] Sample ${label} data point:`, {
+                            timestamp: sampleKey,
+                            formattedTime: formatLabelDate(sampleKey),
+                            values: dataObj[sampleKey]
+                        });
+                    } else {
+                        console.warn(`[Calendar] No data points found for ${label} chart`);
+                    }
+                };
+                
+                logSampleData(data.energy_chart, 'Energy');
+                logSampleData(data.battery_price, 'Battery Price');
+                logSampleData(data.battery_savings, 'Battery Savings');
+                
+                // Update chart data variables and log the update
+                console.log('[Calendar] Updating chart data variables with fetched data');
+                
+                const previousEnergyCount = Object.keys(window.energyData || {}).length;
+                const previousBatteryCount = Object.keys(window.batteryPriceData || {}).length;
+                const previousSavingsCount = Object.keys(window.batterySavingsData || {}).length;
+                
+                // Make sure we're updating the global variables
+                window.energyData = data.energy_chart || {};
+                window.batteryPriceData = data.battery_price || {};
+                window.batterySavingsData = data.battery_savings || {};
+                
+                // Log the changes in data points
+                console.log('[Calendar] Data points changed:', {
+                    energy: {
+                        before: previousEnergyCount,
+                        after: Object.keys(window.energyData).length,
+                        difference: Object.keys(window.energyData).length - previousEnergyCount
+                    },
+                    batteryPrice: {
+                        before: previousBatteryCount,
+                        after: Object.keys(window.batteryPriceData).length,
+                        difference: Object.keys(window.batteryPriceData).length - previousBatteryCount
+                    },
+                    batterySavings: {
+                        before: previousSavingsCount,
+                        after: Object.keys(window.batterySavingsData).length,
+                        difference: Object.keys(window.batterySavingsData).length - previousSavingsCount
+                    }
+                });
                 
                 // Remove old charts if they exist
+                console.log('[Calendar] Removing old chart instances');
                 ['energyChart','batteryChart','savingsChart'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el && el.chartInstance) {
+                        console.log(`[Calendar] Destroying chart instance: ${id}`);
                         el.chartInstance.destroy();
                         el.chartInstance = null;
                     }
                 });
                 
                 // Re-render charts
+                console.log('[Calendar] Calling renderAllCharts() to update the UI');
                 renderAllCharts();
                 
                 // Hide loading indicator
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('hidden');
+                    console.log('[Calendar] Hiding loading indicator');
+                }
+                
+                // Notify user of success
+                showNotification(`Data loaded for ${selectedDate.toLocaleDateString()}`, 'success');
+                
+                console.timeEnd('[Calendar] Data fetch duration');
+                console.log(`[Calendar] === END OF DATA FETCH FOR ${selectedDate.toDateString()} ===`);
             })
             .catch(err => {
                 console.error(`[Calendar] Error fetching plant data for date ${selectedDate.toDateString()}:`, err);
                 
-                // Show error notification
-                const errorMsg = `Failed to load data for ${selectedDate.toDateString()}: ${err.message}`;
+                // Show detailed error notification based on error type
+                let errorMsg;
+                if (err.message.includes('Plant not found')) {
+                    errorMsg = `Plant ID issue: ${err.message}`;
+                } else if (err.message.includes('Permission denied')) {
+                    errorMsg = `Access denied: ${err.message}`;
+                } else {
+                    errorMsg = `Failed to load data for ${selectedDate.toLocaleDateString()}: ${err.message}`;
+                }
+                
                 showNotification(errorMsg, 'error');
                 
                 // Hide loading indicator
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('hidden');
+                    console.log('[Calendar] Hiding loading indicator after error');
+                }
+                
+                // Update dashboard to show error state
+                const chartElements = ['energyChart', 'batteryChart', 'savingsChart'];
+                chartElements.forEach(chartId => {
+                    const chartElement = document.getElementById(chartId);
+                    if (chartElement && chartElement.parentElement) {
+                        chartElement.parentElement.innerHTML = 
+                            `<div class="text-center py-8 px-4">
+                                <div class="text-red-500 text-xl mb-2">⚠️ Data Loading Error</div>
+                                <p class="text-gray-600 mb-4">${err.message}</p>
+                                <p class="text-sm text-gray-500">
+                                    Try refreshing the page or selecting a different date.
+                                </p>
+                            </div>`;
+                    }
+                });
+                
+                console.timeEnd('[Calendar] Data fetch duration');
+                console.log(`[Calendar] === FETCH ERROR FOR ${selectedDate.toDateString()} ===`);
             });
     }
 
     function renderAllCharts() {
+        console.log('[Calendar] === RENDERING ALL CHARTS ===');
+        console.log('[Calendar] Chart data summary:', {
+            energyDataPoints: Object.keys(window.energyData || {}).length,
+            batteryPriceDataPoints: Object.keys(window.batteryPriceData || {}).length,
+            batterySavingsDataPoints: Object.keys(window.batterySavingsData || {}).length
+        });
+        
         // --- ENERGY CHART ---
         if (typeof Chart !== 'undefined') {
             // Remove and recreate canvases to avoid Chart.js errors
@@ -957,7 +1201,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Copy the chart rendering logic from the main block
             // --- ENERGY CHART RENDER ---
             try {
-                const entries = Object.entries(energyData).sort(([a], [b]) => new Date(a) - new Date(b));
+                console.log('[Calendar] Rendering energy chart with data points:', Object.keys(window.energyData || {}).length);
+                const entries = Object.entries(window.energyData || {}).sort(([a], [b]) => new Date(a) - new Date(b));
                 const labels = entries.map(([ts]) => formatLabelDate(ts));
                 const pvData = entries.map(([, v]) => v.pv_p / 1000);
                 const batteryData = entries.map(([, v]) => v.battery_p / 1000);
@@ -989,7 +1234,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- BATTERY CHART RENDER ---
             try {
-                const entries = Object.entries(batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
+                console.log('[Calendar] Rendering battery chart with data points:', Object.keys(window.batteryPriceData || {}).length);
+                const entries = Object.entries(window.batteryPriceData || {}).sort(([a], [b]) => new Date(a) - new Date(b));
                 const labels = entries.map(([ts]) => formatLabelDate(ts));
                 const batteryData = entries.map(([, v]) => v.battery_p / 1000);
                 const tariffData = entries.map(([, v]) => v.tariff);
@@ -1013,7 +1259,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- BATTERY SAVINGS CHART RENDER ---
             try {
-                const entries = Object.entries(batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+                console.log('[Calendar] Rendering savings chart with data points:', Object.keys(window.batterySavingsData || {}).length);
+                const entries = Object.entries(window.batterySavingsData || {}).sort(([a], [b]) => new Date(a) - new Date(b));
                 const labels = entries.map(([ts]) => formatLabelDate(ts));
                 const savingsData = entries.map(([, v]) => v.battery_savings);
                 const totalSavings = savingsData.reduce((acc, val) => acc + parseFloat(val || 0), 0);
@@ -1047,6 +1294,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.max = today.toISOString().slice(0, 10);
         
         dateInput.addEventListener('change', function() {
+            console.log(`[Calendar] Date input change detected: ${this.value}`);
+            
             // Validate selected date is not in the future
             const selectedDate = new Date(this.value);
             const currentDate = new Date();
@@ -1061,12 +1310,31 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const formattedDate = this.value.replace(/-/g, '');
             console.log(`[Calendar] Date changed to: ${this.value} (${formattedDate})`);
-            fetchAndUpdateCharts(formattedDate);
+            console.log(`[Calendar] Fetching data for date: ${selectedDate.toDateString()}`);
+            
+            // Call the fetch function with the formatted date
+            try {
+                fetchAndUpdateCharts(formattedDate);
+            } catch (err) {
+                console.error('[Calendar] Error while fetching and updating charts:', err);
+                showNotification('Error updating charts. See console for details.', 'error');
+            }
         });
         
         // Trigger change event on page load to fetch today's data by default
-        console.log('[Calendar] Initial load - fetching data for default date');
-        dateInput.dispatchEvent(new Event('change'));
+        console.log('[Calendar] ===== INITIAL PAGE LOAD - FETCHING DEFAULT DATE DATA =====');
+        console.log(`[Calendar] Default date set to: ${dateInput.value}`);
+        
+        // Add a small delay to ensure the DOM is fully loaded before fetching data
+        setTimeout(() => {
+            try {
+                console.log('[Calendar] Dispatching date change event for initial data load');
+                dateInput.dispatchEvent(new Event('change'));
+            } catch (err) {
+                console.error('[Calendar] Error during initial data load:', err);
+                showNotification('Error loading initial data. Please try refreshing the page.', 'error');
+            }
+        }, 100);
     }
     if (prevBtn) {
         prevBtn.addEventListener('click', function() {
@@ -1167,33 +1435,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        let plantId = @json($plant->uid);
+        // Use the global plantId to ensure it's available for chart downloads
+        if (!window.plantId) {
+            console.error('[Download] Plant ID missing for downloads');
+            
+            // One more attempt to get the plant ID from URL
+            const pathSegments = window.location.pathname.split('/');
+            for (let i = 0; i < pathSegments.length; i++) {
+                if (pathSegments[i] === 'plants' && i + 1 < pathSegments.length) {
+                    window.plantId = pathSegments[i + 1];
+                    console.log('[Download] Recovered plant ID from URL:', window.plantId);
+                    break;
+                }
+            }
+        }
+        
         // ENERGY
         document.getElementById('downloadPNG-energy').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('energyChart', 'energy', plantId, 'png');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('energyChart', 'energy', window.plantId, 'png');
         });
         document.getElementById('downloadPDF-energy').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('energyChart', 'energy', plantId, 'pdf');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
         });
         // BATTERY
         document.getElementById('downloadPNG-battery').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('batteryChart', 'battery', plantId, 'png');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('batteryChart', 'battery', window.plantId, 'png');
         });
         document.getElementById('downloadPDF-battery').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('batteryChart', 'battery', plantId, 'pdf');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
         });
         // SAVINGS
         document.getElementById('downloadPNG-savings').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('savingsChart', 'savings', plantId, 'png');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('savingsChart', 'savings', window.plantId, 'png');
         });
         document.getElementById('downloadPDF-savings').addEventListener('click', function(e) {
             e.preventDefault();
-            sendChartToBackend('savingsChart', 'savings', plantId, 'pdf');
+            if (!window.plantId) {
+                showNotification('Cannot download chart: Plant ID is missing', 'error');
+                return;
+            }
+            sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
         });
     });
     </script>
