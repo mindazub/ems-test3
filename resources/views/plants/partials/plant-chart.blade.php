@@ -1,9 +1,27 @@
-<!-- Add calendar controls above each chart -->
-<div class="flex items-center justify-center mb-2 gap-2" id="energy-calendar-controls">
-                <button id="energy-prev" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Previous hour">&#8592;</button>
-                <input type="date" id="energy-date" class="border rounded px-2 py-1" />
-                <button id="energy-next" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" title="Next hour">&#8594;</button>
-            </div>
+<!-- Calendar controls with complete day selection -->
+<div class="flex flex-col items-center justify-center mb-4 gap-2" id="energy-calendar-controls">
+    <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Date to View</h3>
+    <div class="flex flex-col md:flex-row items-center gap-3">
+        <div class="flex items-center gap-2 p-1 bg-gray-50 border rounded-lg">
+            <button id="energy-prev" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" title="Previous day">&#8592;</button>
+            <input type="date" id="energy-date" class="border rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <button id="energy-next" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" title="Next day">&#8594;</button>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="energy-today" class="px-4 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 shadow-sm font-medium transition duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Show today's data">Today</button>
+            <button id="energy-yesterday" class="px-4 py-1.5 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 shadow-sm font-medium transition duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Show yesterday's data">Yesterday</button>
+        </div>
+    </div>
+    <div id="loading-indicator" class="hidden mt-2">
+        <div class="flex items-center">
+            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm font-medium text-gray-700">Loading data...</span>
+        </div>
+    </div>
+</div>
 
 
 
@@ -230,6 +248,56 @@ const verticalLinePlugin = {
     }
 };
 Chart.register(verticalLinePlugin);
+
+// Show notification message to user
+function showNotification(message, type = 'info') {
+    // Create notification element if it doesn't exist
+    let notificationContainer = document.getElementById('chart-notifications');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'chart-notifications';
+        notificationContainer.className = 'fixed top-4 right-4 z-50 flex flex-col gap-2';
+        document.body.appendChild(notificationContainer);
+    }
+    
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = 'p-4 rounded-md shadow-md transform transition-all duration-300 max-w-sm ' + 
+        (type === 'error' ? 'bg-red-50 border-l-4 border-red-500 text-red-700' : 
+         type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' : 
+         'bg-blue-50 border-l-4 border-blue-500 text-blue-700');
+    
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex-1">${message}</div>
+            <button class="ml-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    // Add close button functionality
+    notification.querySelector('button').addEventListener('click', () => {
+        notification.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => notification.remove(), 300);
+    });
+    
+    // Add to container and remove after timeout
+    notificationContainer.appendChild(notification);
+    
+    // Automatically remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+    
+    // Log to console as well
+    console[type === 'error' ? 'error' : type === 'success' ? 'info' : 'log'](`[Notification] ${message}`);
+}
 
 // Format date for chart labels
 function formatLabelDate(dateString) {
@@ -782,6 +850,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('energy-date');
     const prevBtn = document.getElementById('energy-prev');
     const nextBtn = document.getElementById('energy-next');
+    const todayBtn = document.getElementById('energy-today');
+    const yesterdayBtn = document.getElementById('energy-yesterday');
 
     // Set default date to today if empty
     if (dateInput && !dateInput.value) {
@@ -794,17 +864,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchAndUpdateCharts(dateStr) {
         if (!plantId) return;
-        const url = `/plants/${plantId}/data?start=${dateStr}`;
+        
+        // Show loading indicator
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+        
+        // Convert selected date to Unix timestamps (start/end of day)
+        let selectedDate;
+        try {
+            // Handle different date string formats
+            if (dateStr.includes('-')) {
+                selectedDate = new Date(dateStr);
+            } else {
+                selectedDate = new Date(dateStr.substring(0, 4) + '-' + dateStr.substring(4, 6) + '-' + dateStr.substring(6, 8));
+            }
+            
+            // If invalid date, default to today
+            if (isNaN(selectedDate.getTime())) {
+                console.error(`[Calendar] Invalid date: ${dateStr}, defaulting to today`);
+                selectedDate = new Date();
+            }
+        } catch (e) {
+            console.error(`[Calendar] Error parsing date: ${dateStr}`, e);
+            selectedDate = new Date();
+        }
+        
+        // Calculate start/end timestamps (Unix seconds)
+        const startOfDay = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
+        const endOfDay = Math.floor(new Date(selectedDate).setHours(23, 59, 59, 999) / 1000);
+        
+        console.log(`[Calendar] Fetching data for ${selectedDate.toDateString()}. Timestamps: start=${startOfDay}, end=${endOfDay}`);
+        
+        const url = `/plants/${plantId}/data?start=${startOfDay}&end=${endOfDay}`;
         fetch(url)
             .then(res => {
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error(`Network response error: ${res.status} ${res.statusText}`);
                 return res.json();
             })
             .then(data => {
+                console.log(`[Calendar] Data received successfully for ${selectedDate.toDateString()}`, {
+                    energyDataPoints: Object.keys(data.energy_chart || {}).length,
+                    batteryDataPoints: Object.keys(data.battery_price || {}).length,
+                    savingsDataPoints: Object.keys(data.battery_savings || {}).length
+                });
+                
                 // Update chart data variables
                 energyData = data.energy_chart || {};
                 batteryPriceData = data.battery_price || {};
                 batterySavingsData = data.battery_savings || {};
+                
                 // Remove old charts if they exist
                 ['energyChart','batteryChart','savingsChart'].forEach(id => {
                     const el = document.getElementById(id);
@@ -813,12 +921,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         el.chartInstance = null;
                     }
                 });
+                
                 // Re-render charts
                 renderAllCharts();
+                
+                // Hide loading indicator
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
             })
             .catch(err => {
-                console.error('Error fetching plant data for date', dateStr, err);
-                // Optionally show a user-facing error
+                console.error(`[Calendar] Error fetching plant data for date ${selectedDate.toDateString()}:`, err);
+                
+                // Show error notification
+                const errorMsg = `Failed to load data for ${selectedDate.toDateString()}: ${err.message}`;
+                showNotification(errorMsg, 'error');
+                
+                // Hide loading indicator
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
             });
     }
 
@@ -924,25 +1042,98 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (dateInput) {
+        // Set max date to today
+        const today = new Date();
+        dateInput.max = today.toISOString().slice(0, 10);
+        
         dateInput.addEventListener('change', function() {
-            fetchAndUpdateCharts(this.value.replace(/-/g, ''));
+            // Validate selected date is not in the future
+            const selectedDate = new Date(this.value);
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+            
+            if (selectedDate > currentDate) {
+                const todayStr = currentDate.toISOString().slice(0, 10);
+                console.log(`[Calendar] Future date selected (${this.value}), resetting to today (${todayStr})`);
+                showNotification('Cannot select future dates', 'info');
+                this.value = todayStr;
+            }
+            
+            const formattedDate = this.value.replace(/-/g, '');
+            console.log(`[Calendar] Date changed to: ${this.value} (${formattedDate})`);
+            fetchAndUpdateCharts(formattedDate);
         });
+        
+        // Trigger change event on page load to fetch today's data by default
+        console.log('[Calendar] Initial load - fetching data for default date');
+        dateInput.dispatchEvent(new Event('change'));
     }
     if (prevBtn) {
         prevBtn.addEventListener('click', function() {
             if (!dateInput.value) return;
-            const d = new Date(dateInput.value);
-            d.setDate(d.getDate() - 1);
-            dateInput.value = d.toISOString().slice(0, 10);
-            dateInput.dispatchEvent(new Event('change'));
+            try {
+                const d = new Date(dateInput.value);
+                if (isNaN(d.getTime())) throw new Error('Invalid date');
+                
+                d.setDate(d.getDate() - 1);
+                dateInput.value = d.toISOString().slice(0, 10);
+                console.log(`[Calendar] Previous button clicked. Set date to: ${dateInput.value}`);
+                dateInput.dispatchEvent(new Event('change'));
+            } catch (e) {
+                console.error('[Calendar] Error navigating to previous day:', e);
+                showNotification('Could not navigate to previous day due to invalid date', 'error');
+            }
         });
     }
+    
     if (nextBtn) {
         nextBtn.addEventListener('click', function() {
             if (!dateInput.value) return;
-            const d = new Date(dateInput.value);
-            d.setDate(d.getDate() + 1);
-            dateInput.value = d.toISOString().slice(0, 10);
+            try {
+                const d = new Date(dateInput.value);
+                if (isNaN(d.getTime())) throw new Error('Invalid date');
+                
+                // Don't allow selecting future dates
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const nextDay = new Date(d);
+                nextDay.setDate(nextDay.getDate() + 1);
+                nextDay.setHours(0, 0, 0, 0);
+                
+                if (nextDay > today) {
+                    console.log('[Calendar] Attempted to navigate beyond today');
+                    showNotification('Cannot select future dates', 'info');
+                    return;
+                }
+                
+                dateInput.value = nextDay.toISOString().slice(0, 10);
+                console.log(`[Calendar] Next button clicked. Set date to: ${dateInput.value}`);
+                dateInput.dispatchEvent(new Event('change'));
+            } catch (e) {
+                console.error('[Calendar] Error navigating to next day:', e);
+                showNotification('Could not navigate to next day due to invalid date', 'error');
+            }
+        });
+    }
+    
+    if (todayBtn) {
+        todayBtn.addEventListener('click', function() {
+            const today = new Date();
+            dateInput.value = today.toISOString().slice(0, 10);
+            console.log(`[Calendar] Today button clicked. Set date to: ${dateInput.value}`);
+            showNotification('Showing data for today: ' + today.toLocaleDateString(), 'success');
+            dateInput.dispatchEvent(new Event('change'));
+        });
+    }
+    
+    if (yesterdayBtn) {
+        yesterdayBtn.addEventListener('click', function() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            dateInput.value = yesterday.toISOString().slice(0, 10);
+            console.log(`[Calendar] Yesterday button clicked. Set date to: ${dateInput.value}`);
+            showNotification('Showing data for yesterday: ' + yesterday.toLocaleDateString(), 'success');
             dateInput.dispatchEvent(new Event('change'));
         });
     }

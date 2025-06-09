@@ -468,4 +468,139 @@ class PlantController extends Controller
         // dd($id);
         return view('plants.show', compact('plant', 'user', 'id'));
     }
+    
+    /**
+     * Get plant data with date range filtering.
+     * 
+     * @param string $id Plant ID
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getData($id, Request $request)
+    {
+        // Validate timestamp parameters
+        $request->validate([
+            'start' => 'required|numeric',
+            'end' => 'required|numeric',
+        ]);
+
+        $start = $request->input('start');
+        $end = $request->input('end');
+        
+        \Log::info('Fetching plant data with date range', [
+            'plant_id' => $id,
+            'start_timestamp' => $start,
+            'end_timestamp' => $end,
+            'start_date' => date('Y-m-d H:i:s', $start),
+            'end_date' => date('Y-m-d H:i:s', $end)
+        ]);
+
+        // Use Guzzle to fetch data from the API
+        $client = new \GuzzleHttp\Client();
+        $url = "http://127.0.0.1:5001/plant_view/{$id}";
+        $query = [
+            'start' => $start,
+            'end' => $end
+        ];
+        
+        $url .= '?' . http_build_query($query);
+        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        
+        try {
+            $response = $client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 10,
+            ]);
+            
+            $data = json_decode($response->getBody()->getContents(), true);
+            
+            // Process the data and format for charts
+            $result = $this->formatDataForCharts($data);
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching plant data from API', [
+                'plant_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json(['error' => 'Failed to fetch plant data'], 500);
+        }
+    }
+    
+    /**
+     * Format data for chart display
+     * 
+     * @param array $data Raw data from API
+     * @return array Formatted chart data
+     */
+    private function formatDataForCharts($data)
+    {
+        $result = [
+            'energy_chart' => [],
+            'battery_price' => [],
+            'battery_savings' => []
+        ];
+        
+        // Process raw data into chart format
+        $aggregatedSnapshots = $data['aggregated_data_snapshots'] ?? [];
+        
+        foreach ($aggregatedSnapshots as $snapshot) {
+            // Convert snapshot to object if it's an array
+            if (is_array($snapshot)) {
+                $snapshot = (object) $snapshot;
+            }
+            
+            // Use timestamp or dt (convert to ISO string)
+            $timestamp = null;
+            if (!empty($snapshot->timestamp)) {
+                $timestamp = $snapshot->timestamp;
+            } elseif (!empty($snapshot->dt)) {
+                // Convert Unix timestamp to ISO string
+                $timestamp = date('c', $snapshot->dt);
+            }
+
+            if ($timestamp) {
+                // Energy chart data
+                $result['energy_chart'][$timestamp] = [
+                    'pv_p' => $snapshot->pv_p ?? 0,
+                    'battery_p' => $snapshot->battery_p ?? 0,
+                    'grid_p' => $snapshot->grid_p ?? 0
+                ];
+                
+                // Battery price data
+                $result['battery_price'][$timestamp] = [
+                    'battery_p' => $snapshot->battery_p ?? 0,
+                    'tariff' => $snapshot->tariff ?? 0.15 // Default tariff if missing
+                ];
+                
+                // Battery savings data
+                $batterySavings = $snapshot->battery_savings ?? null;
+                
+                // Calculate savings if missing but battery power and tariff are available
+                if ($batterySavings === null && isset($snapshot->battery_p)) {
+                    $batteryPower = floatval($snapshot->battery_p);
+                    $tariff = floatval($snapshot->tariff ?? 0.15);
+                    
+                    // Battery discharging (positive) means saving money
+                    if ($batteryPower > 0) {
+                        $batterySavings = ($batteryPower / 1000) * $tariff; // Convert W to kW
+                    } else {
+                        $batterySavings = 0; // No savings when charging
+                    }
+                }
+                
+                if ($batterySavings !== null) {
+                    $result['battery_savings'][$timestamp] = [
+                        'battery_savings' => $batterySavings
+                    ];
+                }
+            }
+        }
+        
+        return $result;
+    }
 }

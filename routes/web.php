@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('plants', PlantController::class);
     Route::resource('devices', DeviceController::class);
 
+    // Add new route for plant data with date parameters
+    Route::get('/plants/{plant}/data', [PlantController::class, 'getData'])->name('plants.data');
+    
     // Download PNG, CSV, PDF
 
     //
