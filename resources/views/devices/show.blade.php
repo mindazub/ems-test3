@@ -2,7 +2,7 @@
     <x-slot name="header">
         <h2 class="text-2xl font-bold mb-4">Device Details</h2>
     </x-slot>
-    <div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-8 mt-8">
+    <div class="max-w-7xl mx-auto bg-white shadow rounded-lg py-6 px-4">
         <table class="table-auto w-full mb-6">
             <tbody>
                 <tr>
