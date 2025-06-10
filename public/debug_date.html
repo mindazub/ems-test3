@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Date Debug</title>
+</head>
+
+<body>
+    <h1>Date Debugging</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        function log(message) {
+            output.innerHTML += message + '<br>';
+            console.log(message);
+        }
+
+        // Current date and time
+        const now = new Date();
+        log('Current Date: ' + now.toString());
+        log('Current UTC: ' + now.toUTCString());
+        log('Current ISO: ' + now.toISOString());
+
+        // Today's date calculation
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        log('Today string: ' + todayStr);
+
+        // Start of day calculation
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        log('Start of day: ' + startOfDay.toString());
+        log('Start of day timestamp: ' + Math.floor(startOfDay.getTime() / 1000));
+
+        // Expected timestamp for today 00:00 EEST
+        log('Expected timestamp for today 00:00 EEST should be: 1749502800');
+
+        // Check timezone offset
+        log('Timezone offset (minutes): ' + now.getTimezoneOffset());
+        log('Timezone offset (hours): ' + (now.getTimezoneOffset() / 60));
+
+        // Calculate what the timestamps should be to match server EEST
+        const serverTimezoneOffset = -180; // EEST is UTC+3, so -180 minutes
+        const localTimezoneOffset = now.getTimezoneOffset();
+        const offsetDifference = serverTimezoneOffset - localTimezoneOffset;
+
+        log('---');
+        log('Server timezone offset (EEST): ' + serverTimezoneOffset + ' minutes');
+        log('Local timezone offset: ' + localTimezoneOffset + ' minutes');
+        log('Offset difference: ' + offsetDifference + ' minutes');
+
+        // Adjusted calculation
+        const adjustedStartOfDay = new Date(startOfDay.getTime() + (offsetDifference * 60 * 1000));
+        log('Adjusted start of day: ' + adjustedStartOfDay.toString());
+        log('Adjusted start of day timestamp: ' + Math.floor(adjustedStartOfDay.getTime() / 1000));
+
+        // Test different approaches
+        log('---');
+        log('Testing different approaches:');
+
+        // Approach 1: Force EEST timezone
+        const eestDate = new Date('2025-06-10T00:00:00+03:00');
+        log('EEST forced date: ' + eestDate.toString());
+        log('EEST forced timestamp: ' + Math.floor(eestDate.getTime() / 1000));
+
+        // Approach 2: Manual calculation based on UTC
+        const utcMidnight = Date.UTC(2025, 5, 10, 0, 0, 0, 0); // Month is 0-indexed
+        const eestMidnight = utcMidnight - (3 * 60 * 60 * 1000); // Subtract 3 hours to get UTC midnight for EEST 00:00
+        log('UTC midnight for June 10: ' + Math.floor(utcMidnight / 1000));
+        log('EEST midnight calculated: ' + Math.floor(eestMidnight / 1000));
+
+        // Approach 3: Use local time but offset to EEST
+        const localMidnight = new Date(2025, 5, 10, 0, 0, 0, 0).getTime();
+        const eestOffset = 3 * 60 * 60 * 1000; // EEST is UTC+3
+        const utcOffset = now.getTimezoneOffset() * 60 * 1000;
+        const correctedTimestamp = Math.floor((localMidnight + utcOffset - eestOffset) / 1000);
+        log('Corrected timestamp for EEST: ' + correctedTimestamp);
+    </script>
+</body>
+
+</html>

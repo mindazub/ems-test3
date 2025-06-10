@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Today's Data</title>
+</head>
+
+<body>
+    <h1>Testing Today's Data API Call</h1>
+    <button onclick="testTodayData()">Test Today's Data</button>
+    <div id="result"></div>
+
+    <script>
+        function testTodayData() {
+            // Simulate the same calculation as the main app
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const date = now.getDate();
+
+            // Create UTC midnight for today
+            const utcMidnight = Date.UTC(year, month, date, 0, 0, 0, 0);
+            // Convert to EEST midnight (EEST is UTC+3, so subtract 3 hours)
+            const eestMidnightUTC = utcMidnight - (3 * 60 * 60 * 1000);
+            const startOfDay = Math.floor(eestMidnightUTC / 1000);
+
+            console.log('Testing today\'s data calculation:');
+            console.log('Current date:', now.toString());
+            console.log('UTC midnight:', new Date(utcMidnight).toISOString());
+            console.log('EEST midnight UTC:', new Date(eestMidnightUTC).toISOString());
+            console.log('Start of day timestamp:', startOfDay);
+            console.log('Expected timestamp for today: 1749502800');
+
+            const url = `/plants/65f20fa1-047a-4379-8464-59f1d94be3c7/data?start=${startOfDay}`;
+            console.log('Making API call to:', url);
+
+            fetch(url)
+                .then(resp => resp.json())
+                .then(data => {
+                    console.log('API Response:', data);
+                    document.getElementById('result').innerHTML =
+                        `<h3>Results:</h3>
+                         <p>Timestamp calculated: ${startOfDay}</p>
+                         <p>Expected: 1749502800</p>
+                         <p>Match: ${startOfDay === 1749502800 ? 'YES' : 'NO'}</p>
+                         <p>Data points received: ${Object.keys(data.energy_chart || {}).length}</p>`;
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('result').innerHTML = `<p>Error: ${err.message}</p>`;
+                });
+        }
+    </script>
+</body>
+
+</html>

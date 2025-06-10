@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Plant;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class PlantController extends Controller
 {
@@ -472,41 +471,53 @@ class PlantController extends Controller
     /**
      * Get plant data with date range filtering.
      * 
-     * @param string $id Plant ID
+     * @param string $plant Plant ID
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getData($id, Request $request)
+    public function getData($plant, Request $request)
     {
         // Validate timestamp parameters
         $request->validate([
             'start' => 'required|numeric',
-            'end' => 'required|numeric',
+            'end' => 'nullable|numeric',
         ]);
 
         $start = $request->input('start');
         $end = $request->input('end');
         
+        // Check if it's today based on whether end parameter is provided
+        $isToday = !$request->has('end') || $end === null;
+        
         \Log::info('Fetching plant data with date range', [
-            'plant_id' => $id,
+            'plant_id' => $plant,
             'start_timestamp' => $start,
             'end_timestamp' => $end,
+            'is_today' => $isToday,
             'start_date' => date('Y-m-d H:i:s', $start),
-            'end_date' => date('Y-m-d H:i:s', $end)
+            'end_date' => $end ? date('Y-m-d H:i:s', $end) : 'N/A (today - until now)',
         ]);
 
         // Use Guzzle to fetch data from the API
         $client = new \GuzzleHttp\Client();
-        $url = "http://127.0.0.1:5001/plant_view/{$id}";
-        $query = [
-            'start' => $start,
-            'end' => $end
-        ];
+        $url = "http://127.0.0.1:5001/plant_view/{$plant}";
         
-        $url .= '?' . http_build_query($query);
+        // Build query parameters - simple logic
+        if ($isToday) {
+            // For today: only start parameter
+            $url .= "?start={$start}";
+            \Log::info('API call for TODAY: using only start parameter', ['url' => $url]);
+        } else {
+            // For historical dates: both start and end parameters
+            $url .= "?start={$start}&end={$end}";
+            \Log::info('API call for HISTORICAL date: using both start and end parameters', ['url' => $url]);
+        }
+        
         $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
         
         try {
+            \Log::info('Making API request', ['url' => $url]);
+            
             $response = $client->request('GET', $url, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $token,
@@ -517,14 +528,27 @@ class PlantController extends Controller
             
             $data = json_decode($response->getBody()->getContents(), true);
             
+            \Log::info('API response received', [
+                'data_keys' => array_keys($data ?? []),
+                'snapshots_count' => count($data['aggregated_data_snapshots'] ?? [])
+            ]);
+            
             // Process the data and format for charts
             $result = $this->formatDataForCharts($data);
+            
+            \Log::info('Formatted result', [
+                'result_keys' => array_keys($result),
+                'energy_chart_count' => count($result['energy_chart'] ?? []),
+                'battery_price_count' => count($result['battery_price'] ?? []),
+                'battery_savings_count' => count($result['battery_savings'] ?? [])
+            ]);
             
             return response()->json($result);
         } catch (\Exception $e) {
             \Log::error('Error fetching plant data from API', [
-                'plant_id' => $id,
-                'error' => $e->getMessage()
+                'plant_id' => $plant,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json(['error' => 'Failed to fetch plant data'], 500);

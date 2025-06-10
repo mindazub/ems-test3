@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Frontend Timezone Test</title>
+</head>
+
+<body>
+    <h1>Frontend Timezone Calculation Test</h1>
+    <div id="output"></div>
+
+    <script>
+        function testTimezoneCalculations() {
+            const output = document.getElementById('output');
+            let results = '<h2>Test Results:</h2>\n';
+
+            // Test today's date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const date = today.getDate();
+
+            results += `<p><strong>Today:</strong> ${today.toString()}</p>\n`;
+            results += `<p><strong>Today components:</strong> Year=${year}, Month=${month}, Date=${date}</p>\n`;
+
+            // Calculate EEST timezone offset (same as our JavaScript)
+            const utcMidnight = Date.UTC(year, month, date, 0, 0, 0, 0);
+            const eestMidnightUTC = utcMidnight - (3 * 60 * 60 * 1000);
+            const startOfDay = Math.floor(eestMidnightUTC / 1000);
+
+            results += `<p><strong>UTC midnight:</strong> ${new Date(utcMidnight).toISOString()}</p>\n`;
+            results += `<p><strong>EEST midnight UTC:</strong> ${new Date(eestMidnightUTC).toISOString()}</p>\n`;
+            results += `<p><strong>Start of day timestamp:</strong> ${startOfDay}</p>\n`;
+            results += `<p><strong>Start of day converts to:</strong> ${new Date(startOfDay * 1000).toString()}</p>\n`;
+
+            // Check if this matches our PHP calculation
+            const expectedTimestamp = 1749502800; // From our PHP test
+            const matches = startOfDay === expectedTimestamp;
+            results += `<p><strong>Expected timestamp:</strong> ${expectedTimestamp}</p>\n`;
+            results += `<p><strong>Match:</strong> <span style="color: ${matches ? 'green' : 'red'}">${matches ? 'YES' : 'NO'}</span></p>\n`;
+
+            if (!matches) {
+                results += `<p><strong>Difference:</strong> ${startOfDay - expectedTimestamp} seconds</p>\n`;
+            }
+
+            // Test a formatted date string (like from date picker)
+            const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+            const formattedDateStr = todayStr.replace(/-/g, '');
+            results += `<p><strong>Today string:</strong> ${todayStr}</p>\n`;
+            results += `<p><strong>Formatted date string:</strong> ${formattedDateStr}</p>\n`;
+
+            // Test date parsing (like in our fetchAndUpdateCharts function)
+            const parts = [formattedDateStr.slice(0, 4), formattedDateStr.slice(4, 6), formattedDateStr.slice(6, 8)];
+            const selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            results += `<p><strong>Parsed date:</strong> ${selectedDate.toString()}</p>\n`;
+
+            // Check if isToday logic works
+            const todayYear = today.getFullYear();
+            const todayMonth = today.getMonth();
+            const todayDate = today.getDate();
+
+            const selectedYear = selectedDate.getFullYear();
+            const selectedMonth = selectedDate.getMonth();
+            const selectedDay = selectedDate.getDate();
+
+            const isToday = (selectedYear === todayYear && selectedMonth === todayMonth && selectedDay === todayDate);
+            results += `<p><strong>Is today check:</strong> <span style="color: ${isToday ? 'green' : 'red'}">${isToday ? 'YES' : 'NO'}</span></p>\n`;
+
+            output.innerHTML = results;
+        }
+
+        // Run test when page loads
+        document.addEventListener('DOMContentLoaded', testTimezoneCalculations);
+    </script>
+</body>
+
+</html>

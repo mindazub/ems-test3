@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Device;
 use App\Models\MainFeed;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class DeviceController extends Controller
 {
@@ -147,8 +146,6 @@ class DeviceController extends Controller
 
         Device::create($validated);
 
-        Cache::forget('devices.with.mainFeed.parent');
-
         return redirect()->route('devices.index')->with('message', 'Device created successfully.');
     }
 
@@ -178,16 +175,12 @@ class DeviceController extends Controller
 
         $device->update($validatedData);
 
-        Cache::forget('devices.with.mainFeed.parent');
-
         return redirect()->route('devices.index')->with('message', 'Device updated successfully.');
     }
 
     public function destroy(Device $device)
     {
         $device->delete();
-
-        Cache::forget('devices.with.mainFeed.parent');
 
         return redirect()->route('devices.index')->with('message', 'Device deleted successfully.');
     }
