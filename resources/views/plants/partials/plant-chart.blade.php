@@ -335,73 +335,368 @@ window.energyData = {};
 window.batteryPriceData = {};
 window.batterySavingsData = {};
 window.chartInstances = {};
+window.availableDates = new Set(); // Store available data dates
 
-// Get plant ID and user preferences from backend
-try {
-    window.plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
-    window.userTimeFormat = @json($user ? $user->getTimeFormat() : '24');
-    window.userTimeOffset = @json($user ? $user->getTimeOffset() : 0);
-    console.log('Plant ID from backend:', window.plantId);
-    console.log('User time format preference:', window.userTimeFormat);
-    console.log('User time offset preference:', window.userTimeOffset, 'hours');
-} catch (e) {
-    console.error('Error getting data from JSON:', e);
-    window.userTimeFormat = '24'; // Default fallback
-    window.userTimeOffset = 0; // Default fallback
-}
-
-if (!window.plantId) {
-    const pathSegments = window.location.pathname.split('/');
-    const plantIdFromUrl = pathSegments.find((segment, index) => {
-        return index > 0 && pathSegments[index-1] === 'plants' && /^[a-zA-Z0-9-]+$/.test(segment);
-    });
+// Enhanced Plant ID detection with multiple fallback methods
+function detectPlantId() {
+    let plantId = null;
     
-    if (plantIdFromUrl) {
-        console.log('Plant ID from URL:', plantIdFromUrl);
-        window.plantId = plantIdFromUrl;
+    // Method 1: Backend JSON data
+    try {
+        plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
+        if (plantId) {
+            console.log('✓ Plant ID from backend JSON:', plantId);
+            return plantId;
+        }
+    } catch (e) {
+        console.log('Backend JSON method failed:', e);
     }
-}
-
-if (!window.plantId) {
-    const calendarControls = document.getElementById('energy-calendar-controls');
-    if (calendarControls && calendarControls.dataset.plantId) {
-        window.plantId = calendarControls.dataset.plantId;
-        console.log('Plant ID from data attribute:', window.plantId);
-    }
-}
-
-if (!window.plantId) {
-    console.error('WARNING: Plant ID is missing!');
-}
-
-// Function to fetch and update charts with fresh data (no cache)
-function fetchAndUpdateCharts(dateStr) {
-    console.log('=== FETCH AND UPDATE CHARTS ===');
-    console.log('Input dateStr:', dateStr);
     
+    // Method 2: URL path parsing
+    try {
+        const pathSegments = window.location.pathname.split('/');
+        console.log('URL path segments:', pathSegments);
+        
+        // Look for /plants/{id} pattern
+        const plantsIndex = pathSegments.indexOf('plants');
+        if (plantsIndex !== -1 && plantsIndex + 1 < pathSegments.length) {
+            plantId = pathSegments[plantsIndex + 1];
+            if (plantId && /^[a-zA-Z0-9-_]+$/.test(plantId)) {
+                console.log('✓ Plant ID from URL path:', plantId);
+                return plantId;
+            }
+        }
+    } catch (e) {
+        console.log('URL parsing method failed:', e);
+    }
+    
+    // Method 3: Data attribute
+    try {
+        const calendarControls = document.getElementById('energy-calendar-controls');
+        if (calendarControls && calendarControls.dataset.plantId) {
+            plantId = calendarControls.dataset.plantId;
+            console.log('✓ Plant ID from data attribute:', plantId);
+            return plantId;
+        }
+    } catch (e) {
+        console.log('Data attribute method failed:', e);
+    }
+    
+    // Method 4: Search all elements with data-plant-id
+    try {
+        const elementsWithPlantId = document.querySelectorAll('[data-plant-id]');
+        for (const element of elementsWithPlantId) {
+            if (element.dataset.plantId) {
+                plantId = element.dataset.plantId;
+                console.log('✓ Plant ID from element search:', plantId);
+                return plantId;
+            }
+        }
+    } catch (e) {
+        console.log('Element search method failed:', e);
+    }
+    
+    return null;
+}
+
+// Initialize Plant ID and user preferences
+window.plantId = detectPlantId();
+window.userTimeFormat = @json($user ? $user->getTimeFormat() : '24');
+window.userTimeOffset = @json($user ? $user->getTimeOffset() : 0);
+
+console.log('=== INITIALIZATION ===');
+console.log('Plant ID detected:', window.plantId);
+console.log('User time format:', window.userTimeFormat);
+console.log('User time offset:', window.userTimeOffset, 'hours');
+
+if (!window.plantId) {
+    console.error('❌ CRITICAL: Plant ID detection failed completely!');
+    showNotification('Error: Plant ID is missing. Charts may not work correctly.', 'error');
+}
+
+// Function to fetch available data dates from backend
+async function fetchAvailableDates() {
     if (!window.plantId) {
-        showNotification('Cannot fetch data: Plant ID is missing', 'error');
+        console.error('Cannot fetch available dates: Plant ID is missing');
+        return;
+    }
+    
+    try {
+        console.log('Fetching available dates...');
+        const response = await fetch(`/plants/${window.plantId}/available-dates`, {
+            credentials: 'same-origin',
+            cache: 'no-cache'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.dates && Array.isArray(data.dates)) {
+                window.availableDates = new Set(data.dates);
+                console.log('Available dates loaded:', Array.from(window.availableDates));
+                updateDateInputConstraints();
+                updateNavigationButtons();
+                return;
+            }
+        }
+        
+        // Fallback: if endpoint doesn't exist, check a range of recent dates
+        console.log('Available dates endpoint not found, using fallback method...');
+        await checkDateRangeFallback();
+        
+    } catch (error) {
+        console.log('Error fetching available dates, using fallback:', error);
+        await checkDateRangeFallback();
+    }
+}
+
+// Fallback method: check recent dates for data availability
+async function checkDateRangeFallback() {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 45); // Check last 45 days for better performance
+    
+    const availableDates = new Set();
+    const dateList = [];
+    
+    // Build list of dates to check
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        dateList.push(dateStr);
+    }
+    
+    // Check dates in batches of 5 to avoid overwhelming the API
+    const batchSize = 5;
+    for (let i = 0; i < dateList.length; i += batchSize) {
+        const batch = dateList.slice(i, i + batchSize);
+        const batchPromises = batch.map(dateStr => checkDateHasData(dateStr));
+        
+        try {
+            const results = await Promise.all(batchPromises);
+            results.forEach((result, index) => {
+                if (result.hasData && result.dataPoints >= 3) {
+                    availableDates.add(batch[index]);
+                }
+            });
+            
+            // Small delay between batches to be nice to the API
+            if (i + batchSize < dateList.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        } catch (error) {
+            console.error('Error in batch checking:', error);
+            // Continue with next batch even if this one fails
+        }
+    }
+    
+    window.availableDates = availableDates;
+    console.log('Available dates (fallback):', Array.from(window.availableDates).slice(-10)); // Show last 10
+    updateDateInputConstraints();
+    updateNavigationButtons();
+}
+
+// Check if a specific date has data
+async function checkDateHasData(dateStr) {
+    try {
+        const [year, month, day] = dateStr.split('-');
+        const selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        const utcMidnight = Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
+        const eestMidnightUTC = utcMidnight - (3 * 60 * 60 * 1000);
+        const startOfDay = Math.floor(eestMidnightUTC / 1000);
+        const endOfDay = startOfDay + (24 * 60 * 60) - 1;
+        
+        const response = await fetch(`/plants/${window.plantId}/data?start=${startOfDay}&end=${endOfDay}&check_only=1`, {
+            credentials: 'same-origin',
+            cache: 'no-cache'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Check if we have meaningful data (at least 3 data points)
+            const energyDataCount = data.energy_chart ? Object.keys(data.energy_chart).length : 0;
+            const batteryDataCount = data.battery_price ? Object.keys(data.battery_price).length : 0;
+            const savingsDataCount = data.battery_savings ? Object.keys(data.battery_savings).length : 0;
+            
+            const totalDataPoints = energyDataCount + batteryDataCount + savingsDataCount;
+            const hasData = totalDataPoints >= 3; // Require at least 3 data points
+            
+            return { hasData, dataPoints: totalDataPoints };
+        }
+        
+        return { hasData: false, dataPoints: 0 };
+    } catch (error) {
+        console.log('Error checking date:', dateStr, error);
+        return { hasData: false, dataPoints: 0 };
+    }
+}
+
+// Update date input constraints based on available dates
+function updateDateInputConstraints() {
+    const dateInput = document.getElementById('energy-date');
+    if (!dateInput) return;
+    
+    // Add custom validation styles for unavailable dates
+    if (!document.getElementById('date-constraint-styles')) {
+        const style = document.createElement('style');
+        style.id = 'date-constraint-styles';
+        style.textContent = `
+            input[type="date"]::-webkit-calendar-picker-indicator {
+                filter: opacity(0.8);
+            }
+            input[type="date"]:invalid {
+                border-color: #ef4444;
+                box-shadow: 0 0 0 1px #ef4444;
+            }
+            .date-input-disabled {
+                opacity: 0.6;
+                background-color: #f3f4f6;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Set min and max dates based on available data
+    if (window.availableDates.size > 0) {
+        const sortedDates = Array.from(window.availableDates).sort();
+        const earliestDate = sortedDates[0];
+        const latestDate = sortedDates[sortedDates.length - 1];
+        
+        // Set hard limits
+        dateInput.min = earliestDate;
+        dateInput.max = latestDate;
+        
+        console.log('Date constraints updated:', {
+            min: earliestDate, 
+            max: latestDate,
+            availableCount: sortedDates.length
+        });
+        
+        // Add custom validation
+        dateInput.addEventListener('input', function() {
+            const selectedDate = this.value;
+            if (selectedDate && !window.availableDates.has(selectedDate)) {
+                this.setCustomValidity('No data available for this date');
+                this.classList.add('date-input-disabled');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('date-input-disabled');
+            }
+        });
+    }
+}
+
+// Update navigation button states
+function updateNavigationButtons() {
+    const dateInput = document.getElementById('energy-date');
+    const prevButton = document.getElementById('energy-prev');
+    const nextButton = document.getElementById('energy-next');
+    
+    if (!dateInput || !prevButton || !nextButton) return;
+    
+    const currentDate = dateInput.value;
+    if (!currentDate) return;
+    
+    // Check if previous date has data
+    const prevDate = new Date(currentDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateStr = prevDate.toISOString().split('T')[0];
+    const hasPrevData = window.availableDates.has(prevDateStr);
+    
+    // Check if next date has data
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const nextDateStr = nextDate.toISOString().split('T')[0];
+    const hasNextData = window.availableDates.has(nextDateStr);
+    
+    // Update button states
+    prevButton.disabled = !hasPrevData;
+    nextButton.disabled = !hasNextData;
+    
+    // Update button appearance
+    if (hasPrevData) {
+        prevButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        prevButton.classList.add('hover:bg-gray-300');
+        prevButton.title = 'Previous day';
+    } else {
+        prevButton.classList.add('opacity-50', 'cursor-not-allowed');
+        prevButton.classList.remove('hover:bg-gray-300');
+        prevButton.title = 'No data available for previous day';
+    }
+    
+    if (hasNextData) {
+        nextButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        nextButton.classList.add('hover:bg-gray-300');
+        nextButton.title = 'Next day';
+    } else {
+        nextButton.classList.add('opacity-50', 'cursor-not-allowed');
+        nextButton.classList.remove('hover:bg-gray-300');
+        nextButton.title = 'No data available for next day';
+    }
+    
+    console.log('Navigation buttons updated:', {
+        current: currentDate,
+        prevAvailable: hasPrevData,
+        nextAvailable: hasNextData
+    });
+}
+
+// Enhanced fetch and update function with better error handling
+function fetchAndUpdateCharts(dateStr) {
+    console.log('=== FETCH AND UPDATE CHARTS START ===');
+    console.log('Input dateStr:', dateStr);
+    console.log('Current Plant ID:', window.plantId);
+    
+    // Validate Plant ID before proceeding
+    if (!window.plantId) {
+        console.error('❌ Cannot fetch data: Plant ID is missing');
+        showNotification('Cannot load chart data: Plant ID is missing', 'error');
+        
+        // Still render empty charts to show timeline structure
+        window.energyData = {};
+        window.batteryPriceData = {};
+        window.batterySavingsData = {};
+        renderChartsAndTables();
         return;
     }
     
     const loadingIndicator = document.getElementById('loading-indicator');
     if (loadingIndicator) loadingIndicator.classList.remove('hidden');
     
-    // Parse dateStr as local date
+    // Parse dateStr as local date with better validation
     let selectedDate;
     let parts;
-    if (dateStr && dateStr.includes('-')) {
-        parts = dateStr.split('-');
-    } else if (dateStr) {
-        parts = [dateStr.slice(0,4), dateStr.slice(4,6), dateStr.slice(6,8)];
-    } else {
-        // Default to today
-        const today = new Date();
-        parts = [today.getFullYear().toString(), (today.getMonth() + 1).toString().padStart(2, '0'), today.getDate().toString().padStart(2, '0')];
-    }
     
-    selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    if (isNaN(selectedDate.getTime())) selectedDate = new Date();
+    try {
+        if (dateStr && dateStr.includes('-')) {
+            // YYYY-MM-DD format
+            parts = dateStr.split('-');
+        } else if (dateStr && dateStr.length === 8) {
+            // YYYYMMDD format
+            parts = [dateStr.slice(0,4), dateStr.slice(4,6), dateStr.slice(6,8)];
+        } else if (dateStr) {
+            console.warn('Unexpected date format:', dateStr);
+            parts = [dateStr.slice(0,4), dateStr.slice(4,6), dateStr.slice(6,8)];
+        } else {
+            // Default to today
+            const today = new Date();
+            parts = [
+                today.getFullYear().toString(), 
+                (today.getMonth() + 1).toString().padStart(2, '0'), 
+                today.getDate().toString().padStart(2, '0')
+            ];
+        }
+        
+        selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        
+        if (isNaN(selectedDate.getTime())) {
+            console.error('Invalid date parsed from:', dateStr, 'parts:', parts);
+            selectedDate = new Date(); // Fallback to today
+        }
+    } catch (e) {
+        console.error('Date parsing error:', e, 'dateStr:', dateStr);
+        selectedDate = new Date(); // Fallback to today
+    }
     
     console.log('Parsed selected date:', selectedDate.toDateString());
     
@@ -417,10 +712,9 @@ function fetchAndUpdateCharts(dateStr) {
     
     const isToday = (selectedYear === todayYear && selectedMonth === todayMonth && selectedDay === todayDate);
     
-    console.log(`Date comparison: Selected(${selectedYear}-${selectedMonth+1}-${selectedDay}) vs Today(${todayYear}-${todayMonth+1}-${todayDate}) = isToday: ${isToday}`);
+    console.log(`📅 Date comparison: Selected(${selectedYear}-${selectedMonth+1}-${selectedDay}) vs Today(${todayYear}-${todayMonth+1}-${todayDate}) = isToday: ${isToday}`);
     
     // Calculate start of day (00:00:00) in EEST timezone (UTC+3)
-    // We need to ensure timestamps are calculated relative to EEST, not browser's local timezone
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
     const date = selectedDate.getDate();
@@ -431,29 +725,29 @@ function fetchAndUpdateCharts(dateStr) {
     const eestMidnightUTC = utcMidnight - (3 * 60 * 60 * 1000);
     const startOfDay = Math.floor(eestMidnightUTC / 1000);
     
-    console.log(`Selected date: ${selectedDate.toDateString()}`);
-    console.log(`UTC midnight: ${new Date(utcMidnight).toISOString()}`);
-    console.log(`EEST midnight UTC: ${new Date(eestMidnightUTC).toISOString()}`);
-    console.log(`Start of day timestamp: ${startOfDay}`);
-    console.log(`Start of day converts to: ${new Date(startOfDay * 1000).toString()}`);
+    console.log(`🕒 Time calculations:`);
+    console.log(`  Selected date: ${selectedDate.toDateString()}`);
+    console.log(`  UTC midnight: ${new Date(utcMidnight).toISOString()}`);
+    console.log(`  EEST midnight UTC: ${new Date(eestMidnightUTC).toISOString()}`);
+    console.log(`  Start of day timestamp: ${startOfDay}`);
+    console.log(`  Start of day converts to: ${new Date(startOfDay * 1000).toString()}`);
     
     let url;
     if (isToday) {
         // For today: only use start parameter (from midnight until now)
         url = `/plants/${window.plantId}/data?start=${startOfDay}&_t=${Date.now()}`;
-        console.log('Fetching TODAY data from:', url);
+        console.log('🌅 Fetching TODAY data from:', url);
     } else {
         // For historical dates: use both start and end (full day 00:00-23:59)
-        // End of day is 23:59:59.999 EEST
         const eestEndOfDayUTC = utcMidnight + (24 * 60 * 60 * 1000) - 1 - (3 * 60 * 60 * 1000);
         const endOfDay = Math.floor(eestEndOfDayUTC / 1000);
         url = `/plants/${window.plantId}/data?start=${startOfDay}&end=${endOfDay}&_t=${Date.now()}`;
-        console.log('Fetching HISTORICAL data from:', url);
-        console.log(`End of day timestamp: ${endOfDay}, converts to: ${new Date(endOfDay * 1000).toString()}`);
+        console.log('📊 Fetching HISTORICAL data from:', url);
+        console.log(`  End of day timestamp: ${endOfDay}, converts to: ${new Date(endOfDay * 1000).toString()}`);
     }
     
     // Clear existing chart data before fetching new data
-    console.log('Clearing existing chart data...');
+    console.log('🧹 Clearing existing chart data...');
     window.energyData = {};
     window.batteryPriceData = {};
     window.batterySavingsData = {};
@@ -467,13 +761,14 @@ function fetchAndUpdateCharts(dateStr) {
         }
     })
         .then(resp => {
+            console.log(`📡 API Response: ${resp.status} ${resp.statusText}`);
             if (!resp.ok) {
                 throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
             }
             return resp.json();
         })
         .then(data => {
-            console.log('Received fresh data:', data);
+            console.log('✅ Received fresh data:', data);
             
             // Always use fresh data - no cache
             window.energyData = data.energy_chart || {};
@@ -485,140 +780,280 @@ function fetchAndUpdateCharts(dateStr) {
             const hasBatteryData = Object.keys(window.batteryPriceData).length > 0;
             const hasSavingsData = Object.keys(window.batterySavingsData).length > 0;
             
-            console.log(`Data summary: Energy(${Object.keys(window.energyData).length}), Battery(${Object.keys(window.batteryPriceData).length}), Savings(${Object.keys(window.batterySavingsData).length})`);
+            console.log(`📈 Data summary: Energy(${Object.keys(window.energyData).length}), Battery(${Object.keys(window.batteryPriceData).length}), Savings(${Object.keys(window.batterySavingsData).length})`);
             
-            if (!hasEnergyData && !hasBatteryData && !hasSavingsData) {
-                showNotification('No chart data available for the selected date. Try selecting a different date.', 'info');
-            }
-            
-            // Render charts and tables with fresh data
+            // Always render charts (even with empty data to show full timeline)
             renderChartsAndTables();
             if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            
+            // Show appropriate message based on data availability
+            if (!hasEnergyData && !hasBatteryData && !hasSavingsData) {
+                if (isToday) {
+                    showNotification('No data available yet today. Charts will update as new data arrives.', 'info');
+                } else {
+                    showNotification('No chart data available for the selected date. Showing empty timeline.', 'info');
+                }
+            } else {
+                console.log('✅ Charts updated successfully with data');
+            }
         })
         .catch(err => {
+            console.error('❌ Error fetching chart data:', err);
+            
             if (loadingIndicator) loadingIndicator.classList.add('hidden');
-            showNotification('Error fetching chart data. See console for details.', 'error');
-            console.error('Error fetching chart data:', err);
+            
+            // Even on error, render empty charts with full timeline
+            window.energyData = {};
+            window.batteryPriceData = {};
+            window.batterySavingsData = {};
+            renderChartsAndTables();
+            
+            // Show appropriate error message
+            if (err.message.includes('404')) {
+                showNotification('Plant data endpoint not found. Please check the plant ID.', 'error');
+            } else if (err.message.includes('500')) {
+                showNotification('Server error while fetching data. Please try again later.', 'error');
+            } else {
+                showNotification('Network error fetching chart data. Showing empty timeline.', 'error');
+            }
         });
+}
+
+// Generate full 24-hour timeline with 30-minute intervals
+function generateFullTimeline() {
+    const timeline = [];
+    for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+            const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            timeline.push(timeStr);
+        }
+    }
+    return timeline;
+}
+
+// Function to map data to full timeline
+function mapDataToTimeline(energyData, timeline) {
+    const mappedData = {
+        pv: new Array(timeline.length).fill(null),
+        battery: new Array(timeline.length).fill(null),
+        grid: new Array(timeline.length).fill(null)
+    };
+    
+    if (!energyData || Object.keys(energyData).length === 0) {
+        return mappedData;
+    }
+    
+    const entries = Object.entries(energyData).sort(([a], [b]) => new Date(a) - new Date(b));
+    
+    entries.forEach(([timestamp, values]) => {
+        const date = new Date(timestamp);
+        // Apply user's time offset for display
+        const offsetHours = window.userTimeOffset || 0;
+        if (offsetHours !== 0) {
+            date.setTime(date.getTime() + (offsetHours * 60 * 60 * 1000));
+        }
+        
+        const hour = date.getHours();
+        const minute = date.getMinutes();
+        
+        // Round to nearest 30-minute interval
+        const roundedMinute = minute < 15 ? 0 : (minute < 45 ? 30 : 60);
+        const finalHour = roundedMinute === 60 ? (hour + 1) % 24 : hour;
+        const finalMinute = roundedMinute === 60 ? 0 : roundedMinute;
+        
+        const timeStr = `${finalHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+        const timeIndex = timeline.indexOf(timeStr);
+        
+        if (timeIndex !== -1) {
+            mappedData.pv[timeIndex] = values.pv_p / 1000;
+            mappedData.battery[timeIndex] = values.battery_p / 1000;
+            mappedData.grid[timeIndex] = values.grid_p / 1000;
+        }
+    });
+    
+    return mappedData;
 }
 
 // Function to render all charts and tables
 function renderChartsAndTables() {
+    const fullTimeline = generateFullTimeline();
+    
     // --- ENERGY CHART ---
     const energyChartElem = document.getElementById('energyChart');
-    if (energyChartElem && window.energyData && Object.keys(window.energyData).length > 0) {
-        const entries = Object.entries(window.energyData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const labels = entries.map(([ts]) => formatLabelDate(ts));
-        const pvData = entries.map(([, v]) => v.pv_p / 1000);
-        const batteryData = entries.map(([, v]) => v.battery_p / 1000);
-        const gridData = entries.map(([, v]) => v.grid_p / 1000);
+    if (energyChartElem) {
+        const mappedData = mapDataToTimeline(window.energyData, fullTimeline);
         
         if (window.chartInstances.energy) window.chartInstances.energy.destroy();
         
         window.chartInstances.energy = new Chart(energyChartElem, {
             type: 'line',
             data: {
-                labels,
+                labels: fullTimeline,
                 datasets: [
                     {
                         label: 'PV (kW)', 
-                        data: pvData,
+                        data: mappedData.pv,
                         borderColor: 'rgba(0,123,255,1)', 
                         backgroundColor: 'rgba(0,123,255,0.15)', 
                         fill: true, 
-                        pointRadius: 2, 
-                        pointHoverRadius: 12
+                        pointRadius: 1, 
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
                     },
                     {
                         label: 'Battery (kW)', 
-                        data: batteryData,
+                        data: mappedData.battery,
                         borderColor: 'rgba(220,53,69,1)', 
                         backgroundColor: 'rgba(220,53,69,0.12)', 
                         fill: true, 
-                        pointRadius: 2, 
-                        pointHoverRadius: 12
+                        pointRadius: 1, 
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
                     },
                     {
                         label: 'Grid (kW)', 
-                        data: gridData,
+                        data: mappedData.grid,
                         borderColor: 'rgba(40,167,69,1)', 
                         backgroundColor: 'rgba(40,167,69,0.12)', 
                         fill: true, 
-                        pointRadius: 2, 
-                        pointHoverRadius: 12
+                        pointRadius: 1, 
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'top', padding: 30 } },
+                plugins: { 
+                    legend: { position: 'top', padding: 30 },
+                    tooltip: {
+                        filter: function(tooltipItem) {
+                            return tooltipItem.parsed.y !== null;
+                        }
+                    }
+                },
                 interaction: { mode: 'index', intersect: false },
-                elements: { point: { radius: 4, hoverRadius: 12 } },
+                elements: { point: { radius: 2, hoverRadius: 8 } },
                 scales: {
                     y: {
                         title: { display: true, text: 'Power (kW)' },
-                        ticks: { font: { size: 14 } },
-                        grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#ccc' }
+                        ticks: { font: { size: 12 } },
+                        grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#e5e7eb' }
                     },
-                    x: { ticks: { font: { size: 14 } }, border: { display: true, width: 4 } }
+                    x: { 
+                        ticks: { 
+                            font: { size: 10 },
+                            maxTicksLimit: 24,
+                            callback: function(value, index) {
+                                const time = this.getLabelForValue(value);
+                                return time.endsWith(':00') ? time : '';
+                            }
+                        }, 
+                        border: { display: true, width: 2 },
+                        grid: { color: '#f3f4f6' }
+                    }
                 }
             }
         });
         
-        // Fill Energy Data Table
+        // Fill Energy Data Table with actual data only
         const energyTable = document.getElementById('energyDataTableBody');
-        if (energyTable) {
+        if (energyTable && window.energyData && Object.keys(window.energyData).length > 0) {
             energyTable.innerHTML = '';
+            const entries = Object.entries(window.energyData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
                 energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td></tr>`;
             });
+        } else if (energyTable) {
+            energyTable.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No energy data available for the selected date</td></tr>';
         }
-    } else if (energyChartElem) {
-        energyChartElem.parentElement.innerHTML = '<div class="text-center text-gray-400 py-12">No energy chart data available for the selected date.</div>';
     }
     
     // --- BATTERY CHART ---
     const batteryChartElem = document.getElementById('batteryChart');
-    if (batteryChartElem && window.batteryPriceData && Object.keys(window.batteryPriceData).length > 0) {
-        const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const labels = entries.map(([ts]) => formatLabelDate(ts));
-        const batteryData = entries.map(([, v]) => v.battery_p / 1000);
-        const tariffData = entries.map(([, v]) => v.tariff);
+    if (batteryChartElem) {
+        const batteryMappedData = {
+            battery: new Array(fullTimeline.length).fill(null),
+            tariff: new Array(fullTimeline.length).fill(null)
+        };
+        
+        if (window.batteryPriceData && Object.keys(window.batteryPriceData).length > 0) {
+            const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
+            
+            entries.forEach(([timestamp, values]) => {
+                const date = new Date(timestamp);
+                // Apply user's time offset for display
+                const offsetHours = window.userTimeOffset || 0;
+                if (offsetHours !== 0) {
+                    date.setTime(date.getTime() + (offsetHours * 60 * 60 * 1000));
+                }
+                
+                const hour = date.getHours();
+                const minute = date.getMinutes();
+                
+                // Round to nearest 30-minute interval
+                const roundedMinute = minute < 15 ? 0 : (minute < 45 ? 30 : 60);
+                const finalHour = roundedMinute === 60 ? (hour + 1) % 24 : hour;
+                const finalMinute = roundedMinute === 60 ? 0 : roundedMinute;
+                
+                const timeStr = `${finalHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+                const timeIndex = fullTimeline.indexOf(timeStr);
+                
+                if (timeIndex !== -1) {
+                    batteryMappedData.battery[timeIndex] = values.battery_p / 1000;
+                    batteryMappedData.tariff[timeIndex] = values.tariff;
+                }
+            });
+        }
         
         if (window.chartInstances.battery) window.chartInstances.battery.destroy();
         
         window.chartInstances.battery = new Chart(batteryChartElem, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: fullTimeline,
                 datasets: [
                     {
                         label: 'Battery Power (kW)',
-                        data: batteryData,
+                        data: batteryMappedData.battery,
                         borderColor: 'rgba(220,53,69,1)',
                         backgroundColor: 'rgba(220,53,69,0.1)',
                         fill: true,
                         yAxisID: 'y',
-                        pointRadius: 2,
-                        pointHoverRadius: 12
+                        pointRadius: 1,
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
                     },
                     {
                         label: 'Energy Price (€/kWh)',
-                        data: tariffData,
+                        data: batteryMappedData.tariff,
                         borderColor: 'rgba(75,192,192,1)',
                         backgroundColor: 'rgba(75,192,192,0.1)',
                         fill: false,
                         yAxisID: 'y1',
-                        pointRadius: 2,
-                        pointHoverRadius: 12
+                        pointRadius: 1,
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
+                plugins: { 
+                    legend: { position: 'top' },
+                    tooltip: {
+                        filter: function(tooltipItem) {
+                            return tooltipItem.parsed.y !== null;
+                        }
+                    }
+                },
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
@@ -626,38 +1061,79 @@ function renderChartsAndTables() {
                         display: true,
                         position: 'left',
                         title: { display: true, text: 'Battery Power (kW)' },
-                        grid: { color: '#ccc' }
+                        grid: { color: '#e5e7eb' },
+                        ticks: { font: { size: 12 } }
                     },
                     y1: {
                         type: 'linear',
                         display: true,
                         position: 'right',
                         title: { text: 'Energy Price (€/kWh)' },
-                        grid: { display: false }
+                        grid: { display: false },
+                        ticks: { font: { size: 12 } }
+                    },
+                    x: { 
+                        ticks: { 
+                            font: { size: 10 },
+                            maxTicksLimit: 24,
+                            callback: function(value, index) {
+                                const time = this.getLabelForValue(value);
+                                return time.endsWith(':00') ? time : '';
+                            }
+                        },
+                        grid: { color: '#f3f4f6' }
                     }
                 }
             }
         });
         
-        // Fill Battery Data Table
+        // Fill Battery Data Table with actual data only
         const batteryTable = document.getElementById('batteryDataTableBody');
-        if (batteryTable) {
+        if (batteryTable && window.batteryPriceData && Object.keys(window.batteryPriceData).length > 0) {
             batteryTable.innerHTML = '';
+            const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
                 batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td></tr>`;
             });
+        } else if (batteryTable) {
+            batteryTable.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No battery data available for the selected date</td></tr>';
         }
-    } else if (batteryChartElem) {
-        batteryChartElem.parentElement.innerHTML = '<div class="text-center text-gray-400 py-12">No battery power data available for the selected date.</div>';
     }
     
     // --- BATTERY SAVINGS CHART ---
     const savingsChartElem = document.getElementById('savingsChart');
-    if (savingsChartElem && window.batterySavingsData && Object.keys(window.batterySavingsData).length > 0) {
-        const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
-        const savingsLabels = entries.map(([ts]) => formatLabelDate(ts));
-        const savingsData = entries.map(([, v]) => v.battery_savings);
-        const totalSavings = savingsData.reduce((acc, val) => acc + parseFloat(val || 0), 0);
+    if (savingsChartElem) {
+        const savingsMappedData = new Array(fullTimeline.length).fill(null);
+        let totalSavings = 0;
+        
+        if (window.batterySavingsData && Object.keys(window.batterySavingsData).length > 0) {
+            const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+            
+            entries.forEach(([timestamp, values]) => {
+                const date = new Date(timestamp);
+                // Apply user's time offset for display
+                const offsetHours = window.userTimeOffset || 0;
+                if (offsetHours !== 0) {
+                    date.setTime(date.getTime() + (offsetHours * 60 * 60 * 1000));
+                }
+                
+                const hour = date.getHours();
+                const minute = date.getMinutes();
+                
+                // Round to nearest 30-minute interval
+                const roundedMinute = minute < 15 ? 0 : (minute < 45 ? 30 : 60);
+                const finalHour = roundedMinute === 60 ? (hour + 1) % 24 : hour;
+                const finalMinute = roundedMinute === 60 ? 0 : roundedMinute;
+                
+                const timeStr = `${finalHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+                const timeIndex = fullTimeline.indexOf(timeStr);
+                
+                if (timeIndex !== -1) {
+                    savingsMappedData[timeIndex] = values.battery_savings;
+                    totalSavings += parseFloat(values.battery_savings || 0);
+                }
+            });
+        }
         
         const batterySavingsTotal = document.getElementById('batterySavingsTotal');
         if (batterySavingsTotal) batterySavingsTotal.textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
@@ -667,164 +1143,382 @@ function renderChartsAndTables() {
         window.chartInstances.savings = new Chart(savingsChartElem, {
             type: 'bar',
             data: {
-                labels: savingsLabels,
+                labels: fullTimeline,
                 datasets: [{
                     label: 'Battery Savings (€)',
-                    data: savingsData,
-                    backgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)'),
-                    hoverBackgroundColor: savingsData.map(val => val >= 0 ? 'rgba(25,135,84,1)' : 'rgba(220,53,69,1)')
+                    data: savingsMappedData,
+                    backgroundColor: savingsMappedData.map(val => 
+                        val === null ? 'transparent' : 
+                        val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)'
+                    ),
+                    hoverBackgroundColor: savingsMappedData.map(val => 
+                        val === null ? 'transparent' : 
+                        val >= 0 ? 'rgba(25,135,84,1)' : 'rgba(220,53,69,1)'
+                    ),
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        filter: function(tooltipItem) {
+                            return tooltipItem.parsed.y !== null;
+                        }
+                    }
+                },
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: { beginAtZero: true },
-                    x: { ticks: { font: { size: 14 } } }
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: true, text: 'Savings (€)' },
+                        ticks: { font: { size: 12 } },
+                        grid: { color: '#e5e7eb' }
+                    },
+                    x: { 
+                        ticks: { 
+                            font: { size: 10 },
+                            maxTicksLimit: 24,
+                            callback: function(value, index) {
+                                const time = this.getLabelForValue(value);
+                                return time.endsWith(':00') ? time : '';
+                            }
+                        },
+                        grid: { color: '#f3f4f6' }
+                    }
                 }
             }
         });
         
-        // Fill Savings Data Table
+        // Fill Savings Data Table with actual data only
         const savingsTable = document.getElementById('batterySavingsDataTableBody');
-        if (savingsTable) {
+        if (savingsTable && window.batterySavingsData && Object.keys(window.batterySavingsData).length > 0) {
             savingsTable.innerHTML = '';
+            const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
                 savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td></tr>`;
             });
+        } else if (savingsTable) {
+            savingsTable.innerHTML = '<tr><td colspan="2" class="px-4 py-8 text-center text-gray-400">No savings data available for the selected date</td></tr>';
         }
-    } else if (savingsChartElem) {
-        savingsChartElem.parentElement.innerHTML = '<div class="text-center text-gray-400 py-12">No battery savings data available for the selected date.</div>';
     }
 }
 
-// Main initialization - set up date picker and fetch today's data
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing dashboard with Plant ID:', window.plantId);
+// Helper function to find nearest available date
+function findNearestAvailableDate(targetDate, direction = 'both') {
+    if (window.availableDates.size === 0) return null;
     
+    const sortedDates = Array.from(window.availableDates).sort();
+    const target = new Date(targetDate);
+    
+    if (direction === 'backward') {
+        // Find latest date before target
+        for (let i = sortedDates.length - 1; i >= 0; i--) {
+            const availableDate = new Date(sortedDates[i]);
+            if (availableDate < target) {
+                return sortedDates[i];
+            }
+        }
+        return null;
+    } else if (direction === 'forward') {
+        // Find earliest date after target
+        for (let i = 0; i < sortedDates.length; i++) {
+            const availableDate = new Date(sortedDates[i]);
+            if (availableDate > target) {
+                return sortedDates[i];
+            }
+        }
+        return null;
+    } else {
+        // Find nearest date (both directions)
+        let nearestDate = null;
+        let minDiff = Infinity;
+        
+        sortedDates.forEach(dateStr => {
+            const availableDate = new Date(dateStr);
+            const diff = Math.abs(availableDate - target);
+            if (diff < minDiff) {
+                minDiff = diff;
+                nearestDate = dateStr;
+            }
+        });
+        
+        return nearestDate;
+    }
+}
+
+// Helper function to find latest available date
+function findLatestAvailableDate() {
+    if (window.availableDates.size === 0) return null;
+    const sortedDates = Array.from(window.availableDates).sort();
+    return sortedDates[sortedDates.length - 1];
+}
+
+// Enhanced initialization with robust auto-loading
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DASHBOARD INITIALIZATION START ===');
+    console.log('Plant ID available:', window.plantId);
+    console.log('Current time:', new Date().toString());
+    
+    // Critical check: abort if Plant ID is still missing
     if (!window.plantId) {
-        showNotification('Error: Plant ID is missing. Some features may not work correctly.', 'error');
+        console.error('❌ CRITICAL: Cannot initialize dashboard without Plant ID');
+        showNotification('Critical Error: Plant ID is missing. Dashboard cannot function properly.', 'error');
+        
+        // Still render empty charts as fallback
+        window.energyData = {};
+        window.batteryPriceData = {};
+        window.batterySavingsData = {};
+        renderChartsAndTables();
         return;
     }
     
+    // Step 1: Initialize empty charts immediately to show timeline structure
+    console.log('🎨 Rendering initial empty charts...');
+    window.energyData = {};
+    window.batteryPriceData = {};
+    window.batterySavingsData = {};
+    renderChartsAndTables();
+    
     const dateInput = document.getElementById('energy-date');
-    if (dateInput) {
-        // Get current date in user's local timezone
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
-        
-        console.log('Today detected as:', todayStr, 'Current time:', now.toString());
-        
-        dateInput.value = todayStr;
-        dateInput.max = todayStr;
-        
-        // Prevent selecting future dates
-        dateInput.addEventListener('change', function() {
-            const selectedDateStr = this.value;
-            console.log('Date changed to:', selectedDateStr);
+    if (!dateInput) {
+        console.error('❌ Date input element not found');
+        showNotification('Error: Date picker not found', 'error');
+        return;
+    }
+    
+    // Step 2: Setup date picker with today's date
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    
+    console.log(`📅 Today detected as: ${todayStr}`);
+    console.log(`📅 Current time: ${now.toString()}`);
+    
+    dateInput.value = todayStr;
+    dateInput.max = todayStr;
+    
+    // Step 3: Setup event listeners before loading data
+    setupDateInputEventListeners(dateInput, todayStr);
+    setupNavigationButtons(dateInput, todayStr);
+    
+    // Step 4: IMMEDIATELY load today's data (highest priority)
+    console.log('🚀 IMMEDIATE: Loading today\'s data...');
+    const todayFormatted = todayStr.replace(/-/g, '');
+    fetchAndUpdateCharts(todayFormatted);
+    
+    // Step 5: Fetch available dates in background (low priority, non-blocking)
+    console.log('🔄 BACKGROUND: Starting available dates fetch...');
+    setTimeout(async () => {
+        try {
+            console.log('📊 Fetching available dates in background...');
+            await fetchAvailableDates();
+            console.log('✅ Available dates loaded successfully');
+            updateNavigationButtons();
             
-            if (!selectedDateStr) {
-                console.log('Empty date selected, ignoring');
-                return;
+            // Check if today actually has data, provide user guidance if not
+            if (window.availableDates.size > 0 && !window.availableDates.has(todayStr)) {
+                const latestAvailable = findLatestAvailableDate();
+                if (latestAvailable && latestAvailable !== todayStr) {
+                    console.log(`ℹ️ Today has no data, latest available: ${latestAvailable}`);
+                    
+                    // Gentle suggestion to user without being intrusive
+                    setTimeout(() => {
+                        const userChoice = confirm(
+                            `No data available for today (${todayStr}). ` +
+                            `Would you like to view the latest available data from ${latestAvailable}?`
+                        );
+                        
+                        if (userChoice) {
+                            dateInput.value = latestAvailable;
+                            const latestFormatted = latestAvailable.replace(/-/g, '');
+                            fetchAndUpdateCharts(latestFormatted);
+                            showNotification(`Switched to latest available data: ${latestAvailable}`, 'success');
+                        }
+                    }, 3000); // Wait 3 seconds before suggesting
+                }
+            } else if (window.availableDates.size > 0 && window.availableDates.has(todayStr)) {
+                console.log('✅ Today has data available');
             }
             
-            // Create dates in local timezone for proper comparison
-            const selectedDate = new Date(selectedDateStr);
+        } catch (error) {
+            console.warn('⚠️ Available dates loading failed (non-critical):', error);
+            // This is non-critical - today's data was already loaded
+        }
+    }, 200); // Small delay to avoid blocking initial page render
+    
+    console.log('✅ Dashboard initialization completed successfully');
+});
+
+// Setup date input event listeners
+function setupDateInputEventListeners(dateInput, todayStr) {
+    dateInput.addEventListener('change', function() {
+        const selectedDateStr = this.value;
+        console.log('📅 Date changed to:', selectedDateStr);
+        
+        if (!selectedDateStr) {
+            console.log('Empty date selected, ignoring');
+            return;
+        }
+        
+        // Validate Plant ID before proceeding
+        if (!window.plantId) {
+            console.error('❌ Cannot change date: Plant ID missing');
+            showNotification('Cannot change date: Plant ID is missing', 'error');
+            return;
+        }
+        
+        // Check if selected date has available data (if available dates are loaded)
+        if (window.availableDates.size > 0 && !window.availableDates.has(selectedDateStr)) {
+            console.log('Selected date has no data, finding nearest available date');
+            const nearestDate = findNearestAvailableDate(selectedDateStr);
+            if (nearestDate) {
+                this.value = nearestDate;
+                showNotification(`No data available for ${selectedDateStr}. Showing nearest available date: ${nearestDate}`, 'info');
+            } else {
+                // Fallback to latest available date
+                const latestDate = findLatestAvailableDate();
+                if (latestDate) {
+                    this.value = latestDate;
+                    showNotification(`No data available for ${selectedDateStr}. Showing latest available date: ${latestDate}`, 'info');
+                } else {
+                    showNotification('No data available for any date', 'error');
+                    return;
+                }
+            }
+        }
+        
+        // Create dates in local timezone for proper comparison
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        console.log('Date comparison:');
+        console.log('- Selected:', selectedDate.toDateString(), selectedDate.getTime());
+        console.log('- Today:', today.toDateString(), today.getTime());
+        console.log('- Is future?', selectedDate > today);
+        
+        // Only prevent dates that are actually in the future (tomorrow or later)
+        if (selectedDate > today) {
+            console.log('Future date blocked, resetting to today or latest available');
+            const latestAvailable = findLatestAvailableDate();
+            
+            // Use today if it has data, otherwise use latest available date
+            if (window.availableDates.has(todayStr)) {
+                this.value = todayStr;
+            } else if (latestAvailable) {
+                this.value = latestAvailable;
+            } else {
+                this.value = todayStr; // Fallback to today even if no data
+            }
+            showNotification('Cannot select future dates', 'info');
+            return;
+        }
+        
+        // Valid date selected - fetch data
+        const formattedDate = this.value.replace(/-/g, '');
+        console.log('✅ Fetching data for formatted date:', formattedDate);
+        fetchAndUpdateCharts(formattedDate);
+        updateNavigationButtons();
+    });
+}
+
+// Setup navigation button event listeners
+function setupNavigationButtons(dateInput, todayStr) {
+    const prevButton = document.getElementById('energy-prev');
+    const nextButton = document.getElementById('energy-next');
+
+    if (prevButton) {
+        prevButton.addEventListener('click', function() {
+            if (this.disabled) return;
+            
+            const currentDate = new Date(dateInput.value);
+            if (isNaN(currentDate.getTime())) return;
+            
+            // Go to previous day
+            currentDate.setDate(currentDate.getDate() - 1);
+            
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const newDateStr = `${year}-${month}-${day}`;
+            
+            // Check if the date has data
+            if (window.availableDates.size > 0 && !window.availableDates.has(newDateStr)) {
+                console.log('Previous day has no data, finding nearest available date');
+                const nearestDate = findNearestAvailableDate(newDateStr, 'backward');
+                if (nearestDate) {
+                    dateInput.value = nearestDate;
+                    showNotification(`No data for ${newDateStr}. Showing nearest date: ${nearestDate}`, 'info');
+                } else {
+                    showNotification('No previous data available', 'info');
+                    return;
+                }
+            } else {
+                dateInput.value = newDateStr;
+            }
+            
+            console.log('Previous day clicked, setting date to:', dateInput.value);
+            
+            // Trigger the change event to fetch data
+            const changeEvent = new Event('change', { bubbles: true });
+            dateInput.dispatchEvent(changeEvent);
+        });
+    }
+
+    if (nextButton) {
+        nextButton.addEventListener('click', function() {
+            if (this.disabled) return;
+            
+            const currentDate = new Date(dateInput.value);
+            if (isNaN(currentDate.getTime())) return;
+            
+            // Go to next day
+            currentDate.setDate(currentDate.getDate() + 1);
+            
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const newDateStr = `${year}-${month}-${day}`;
+            
+            console.log('Next day clicked, checking date:', newDateStr);
+            
+            // Check if new date is in the future
+            const newDate = new Date(newDateStr);
             const todayDate = new Date(todayStr);
             
-            console.log('Date comparison:');
-            console.log('- Selected:', selectedDate.toDateString(), selectedDate.getTime());
-            console.log('- Today:', todayDate.toDateString(), todayDate.getTime());
-            console.log('- Is future?', selectedDate > todayDate);
-            
-            // Only prevent dates that are actually in the future (tomorrow or later)
-            if (selectedDate > todayDate) {
-                console.log('Future date blocked, resetting to today');
-                this.value = todayStr;
+            if (newDate > todayDate) {
+                console.log('Next day would be in future, blocking');
                 showNotification('Cannot select future dates', 'info');
                 return;
             }
             
-            // Valid date selected - fetch data
-            const formattedDate = selectedDateStr.replace(/-/g, '');
-            console.log('Fetching data for formatted date:', formattedDate);
-            fetchAndUpdateCharts(formattedDate);
-        });
-
-        // Add Previous/Next button functionality
-        const prevButton = document.getElementById('energy-prev');
-        const nextButton = document.getElementById('energy-next');
-
-        if (prevButton) {
-            prevButton.addEventListener('click', function() {
-                const currentDate = new Date(dateInput.value);
-                if (isNaN(currentDate.getTime())) return;
-                
-                // Go to previous day
-                currentDate.setDate(currentDate.getDate() - 1);
-                
-                const year = currentDate.getFullYear();
-                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                const day = String(currentDate.getDate()).padStart(2, '0');
-                const newDateStr = `${year}-${month}-${day}`;
-                
-                console.log('Previous day clicked, setting date to:', newDateStr);
-                dateInput.value = newDateStr;
-                
-                // Trigger the change event to fetch data
-                const changeEvent = new Event('change', { bubbles: true });
-                dateInput.dispatchEvent(changeEvent);
-            });
-        }
-
-        if (nextButton) {
-            nextButton.addEventListener('click', function() {
-                const currentDate = new Date(dateInput.value);
-                if (isNaN(currentDate.getTime())) return;
-                
-                // Go to next day
-                currentDate.setDate(currentDate.getDate() + 1);
-                
-                const year = currentDate.getFullYear();
-                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                const day = String(currentDate.getDate()).padStart(2, '0');
-                const newDateStr = `${year}-${month}-${day}`;
-                
-                console.log('Next day clicked, setting date to:', newDateStr);
-                
-                // Check if new date is in the future
-                const newDate = new Date(newDateStr);
-                const todayDate = new Date(todayStr);
-                
-                if (newDate > todayDate) {
-                    console.log('Next day would be in future, blocking');
-                    showNotification('Cannot select future dates', 'info');
+            // Check if the date has data
+            if (window.availableDates.size > 0 && !window.availableDates.has(newDateStr)) {
+                console.log('Next day has no data, finding nearest available date');
+                const nearestDate = findNearestAvailableDate(newDateStr, 'forward');
+                if (nearestDate && new Date(nearestDate) <= todayDate) {
+                    dateInput.value = nearestDate;
+                    showNotification(`No data for ${newDateStr}. Showing nearest date: ${nearestDate}`, 'info');
+                } else {
+                    showNotification('No future data available', 'info');
                     return;
                 }
-                
+            } else {
                 dateInput.value = newDateStr;
-                
-                // Trigger the change event to fetch data
-                const changeEvent = new Event('change', { bubbles: true });
-                dateInput.dispatchEvent(changeEvent);
-            });
-        }
-        
-        // Always fetch today's data on load
-        setTimeout(() => {
-            const todayFormatted = todayStr.replace(/-/g, '');
-            console.log('Fetching today\'s data:', todayFormatted);
-            fetchAndUpdateCharts(todayFormatted);
-        }, 500);
-    } else {
-        console.error('Date input element not found');
-        showNotification('Error: Date picker not found', 'error');
+            }
+            
+            // Trigger the change event to fetch data
+            const changeEvent = new Event('change', { bubbles: true });
+            dateInput.dispatchEvent(changeEvent);
+        });
     }
-});
+}
 
 </script>
 

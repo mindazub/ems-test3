@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Load Test - EMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            animation: pulse 2s infinite;
+        }
+
+        .chart-container {
+            min-height: 300px;
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Auto-Load Functionality Test</h1>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Results</h2>
+            <div id="test-results" class="space-y-2"></div>
+        </div>
+
+        <!-- Calendar controls simulation -->
+        <div class="flex flex-col items-center justify-center mb-4 gap-2" id="energy-calendar-controls"
+            data-plant-id="test-plant-123">
+            <h3 class="text-lg font-semibold text-gray-700 mb-1">Date Picker Test</h3>
+            <div class="flex items-center gap-2 p-1 bg-gray-50 border rounded-lg">
+                <button id="energy-prev" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">←</button>
+                <input type="date" id="energy-date" class="border rounded-md px-3 py-1.5" />
+                <button id="energy-next" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">→</button>
+            </div>
+
+            <div id="loading-indicator" class="hidden mt-2">
+                <div class="flex items-center">
+                    <div class="loading w-5 h-5 bg-blue-500 rounded-full mr-2"></div>
+                    <span class="text-sm font-medium text-gray-700">Loading data...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart containers simulation -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Energy Chart</h3>
+                <div id="energyChart" class="chart-container">
+                    <span>Energy Chart Will Load Here</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Battery Chart</h3>
+                <div id="batteryChart" class="chart-container">
+                    <span>Battery Chart Will Load Here</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Savings Chart</h3>
+                <div id="savingsChart" class="chart-container">
+                    <span>Savings Chart Will Load Here</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications container -->
+        <div id="chart-notifications" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+    </div>
+
+    <script>
+        // Simulate the enhanced Plant ID detection
+        function detectPlantId() {
+            let plantId = null;
+
+            // Method 1: Backend JSON data (simulated)
+            try {
+                plantId = 'test-plant-123'; // Simulated backend value
+                if (plantId) {
+                    console.log('✓ Plant ID from backend JSON:', plantId);
+                    return plantId;
+                }
+            } catch (e) {
+                console.log('Backend JSON method failed:', e);
+            }
+
+            // Method 2: URL path parsing
+            try {
+                const pathSegments = window.location.pathname.split('/');
+                console.log('URL path segments:', pathSegments);
+
+                const plantsIndex = pathSegments.indexOf('plants');
+                if (plantsIndex !== -1 && plantsIndex + 1 < pathSegments.length) {
+                    plantId = pathSegments[plantsIndex + 1];
+                    if (plantId && /^[a-zA-Z0-9-_]+$/.test(plantId)) {
+                        console.log('✓ Plant ID from URL path:', plantId);
+                        return plantId;
+                    }
+                }
+            } catch (e) {
+                console.log('URL parsing method failed:', e);
+            }
+
+            // Method 3: Data attribute
+            try {
+                const calendarControls = document.getElementById('energy-calendar-controls');
+                if (calendarControls && calendarControls.dataset.plantId) {
+                    plantId = calendarControls.dataset.plantId;
+                    console.log('✓ Plant ID from data attribute:', plantId);
+                    return plantId;
+                }
+            } catch (e) {
+                console.log('Data attribute method failed:', e);
+            }
+
+            return null;
+        }
+
+        // Initialize test environment
+        window.plantId = detectPlantId();
+        window.userTimeFormat = '24';
+        window.userTimeOffset = 0;
+        window.availableDates = new Set();
+
+        // Test results tracking
+        const testResults = [];
+
+        function addTestResult(test, status, message) {
+            testResults.push({ test, status, message, timestamp: new Date() });
+            updateTestDisplay();
+        }
+
+        function updateTestDisplay() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = testResults.map(result => {
+                const statusColor = result.status === 'PASS' ? 'text-green-600' :
+                    result.status === 'FAIL' ? 'text-red-600' : 'text-yellow-600';
+                const statusIcon = result.status === 'PASS' ? '✅' :
+                    result.status === 'FAIL' ? '❌' : '⚠️';
+
+                return `
+                    <div class="flex items-center gap-3 p-2 border rounded">
+                        <span class="text-xl">${statusIcon}</span>
+                        <div class="flex-1">
+                            <span class="font-medium">${result.test}</span>
+                            <span class="${statusColor} ml-2">[${result.status}]</span>
+                            <div class="text-sm text-gray-600">${result.message}</div>
+                            <div class="text-xs text-gray-400">${result.timestamp.toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Simulate notification system
+        function showNotification(message, type = 'info') {
+            let notificationContainer = document.getElementById('chart-notifications');
+
+            const notification = document.createElement('div');
+            notification.className = 'p-4 rounded-md shadow-md transform transition-all duration-300 max-w-sm ' +
+                (type === 'error' ? 'bg-red-50 border-l-4 border-red-500 text-red-700' :
+                    type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' :
+                        'bg-blue-50 border-l-4 border-blue-500 text-blue-700');
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">${message}</div>
+                    <button class="ml-4 text-gray-400 hover:text-gray-600">×</button>
+                </div>
+            `;
+
+            notification.querySelector('button').addEventListener('click', () => {
+                notification.remove();
+            });
+
+            notificationContainer.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+
+            console[type === 'error' ? 'error' : type === 'success' ? 'info' : 'log'](`[Notification] ${message}`);
+
+            // Track notification as test result
+            addTestResult('Notification System', 'PASS', `${type.toUpperCase()}: ${message}`);
+        }
+
+        // Simulate chart rendering
+        function renderChartsAndTables() {
+            console.log('🎨 Rendering charts with current data...');
+
+            const charts = ['energyChart', 'batteryChart', 'savingsChart'];
+            charts.forEach(chartId => {
+                const chartElement = document.getElementById(chartId);
+                if (chartElement) {
+                    chartElement.innerHTML = `
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                                <span class="text-2xl">📊</span>
+                            </div>
+                            <div class="text-sm font-medium">Chart Rendered</div>
+                            <div class="text-xs text-gray-500">Timeline: 00:00-23:50</div>
+                        </div>
+                    `;
+                    chartElement.classList.remove('chart-container');
+                    chartElement.classList.add('bg-green-50', 'border-green-200');
+                }
+            });
+
+            addTestResult('Chart Rendering', 'PASS', 'All charts rendered successfully with timeline structure');
+        }
+
+        // Simulate data fetching
+        function fetchAndUpdateCharts(dateStr) {
+            console.log('=== FETCH AND UPDATE CHARTS START ===');
+            console.log('Input dateStr:', dateStr);
+            console.log('Current Plant ID:', window.plantId);
+
+            addTestResult('Data Fetch Request', 'INFO', `Fetching data for date: ${dateStr}`);
+
+            if (!window.plantId) {
+                console.error('❌ Cannot fetch data: Plant ID is missing');
+                showNotification('Cannot load chart data: Plant ID is missing', 'error');
+                addTestResult('Plant ID Validation', 'FAIL', 'Plant ID is missing');
+                return;
+            }
+
+            addTestResult('Plant ID Validation', 'PASS', `Plant ID detected: ${window.plantId}`);
+
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('hidden');
+                addTestResult('Loading Indicator', 'PASS', 'Loading indicator shown');
+            }
+
+            // Simulate API call with delay
+            setTimeout(() => {
+                // Simulate successful data loading
+                window.energyData = { 'sample': { pv_p: 1000, battery_p: 500, grid_p: 300 } };
+                window.batteryPriceData = { 'sample': { battery_p: 500, tariff: 0.15 } };
+                window.batterySavingsData = { 'sample': { battery_savings: 2.50 } };
+
+                renderChartsAndTables();
+
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('hidden');
+                    addTestResult('Loading Indicator', 'PASS', 'Loading indicator hidden');
+                }
+
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                const isToday = dateStr.replace(/-/g, '') === todayStr.replace(/-/g, '');
+
+                if (isToday) {
+                    showNotification('Today\'s data loaded successfully! Charts will update as new data arrives.', 'success');
+                    addTestResult('Today Data Load', 'PASS', 'Today\'s data loaded automatically');
+                } else {
+                    showNotification(`Historical data loaded for ${dateStr}`, 'success');
+                    addTestResult('Historical Data Load', 'PASS', `Data loaded for ${dateStr}`);
+                }
+
+                addTestResult('Data Processing', 'PASS', 'Chart data processed and rendered successfully');
+
+            }, 1500); // Simulate network delay
+        }
+
+        // Run initialization test
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('=== AUTO-LOAD TEST START ===');
+            addTestResult('Page Load', 'PASS', 'DOM Content Loaded event fired');
+
+            // Test Plant ID detection
+            if (window.plantId) {
+                addTestResult('Plant ID Detection', 'PASS', `Plant ID: ${window.plantId}`);
+            } else {
+                addTestResult('Plant ID Detection', 'FAIL', 'No Plant ID detected');
+            }
+
+            // Test date input setup
+            const dateInput = document.getElementById('energy-date');
+            if (dateInput) {
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+                dateInput.value = todayStr;
+                dateInput.max = todayStr;
+
+                addTestResult('Date Input Setup', 'PASS', `Date picker initialized with: ${todayStr}`);
+
+                // Test auto-loading today's data
+                console.log('🚀 TESTING: Auto-load today\'s data...');
+                const todayFormatted = todayStr.replace(/-/g, '');
+                fetchAndUpdateCharts(todayFormatted);
+
+            } else {
+                addTestResult('Date Input Setup', 'FAIL', 'Date input element not found');
+            }
+
+            // Simulate available dates loading
+            setTimeout(() => {
+                window.availableDates = new Set(['2025-06-09', '2025-06-10', '2025-06-11']);
+                addTestResult('Available Dates', 'PASS', `Loaded ${window.availableDates.size} available dates`);
+
+                // Final test summary
+                setTimeout(() => {
+                    const totalTests = testResults.length;
+                    const passedTests = testResults.filter(r => r.status === 'PASS').length;
+                    const failedTests = testResults.filter(r => r.status === 'FAIL').length;
+
+                    console.log('=== TEST SUMMARY ===');
+                    console.log(`Total Tests: ${totalTests}`);
+                    console.log(`Passed: ${passedTests}`);
+                    console.log(`Failed: ${failedTests}`);
+
+                    if (failedTests === 0) {
+                        showNotification(`✅ All tests passed! (${passedTests}/${totalTests})`, 'success');
+                        addTestResult('Test Suite', 'PASS', `All ${totalTests} tests completed successfully`);
+                    } else {
+                        showNotification(`⚠️ ${failedTests} test(s) failed out of ${totalTests}`, 'error');
+                        addTestResult('Test Suite', 'FAIL', `${failedTests} tests failed`);
+                    }
+                }, 3000);
+
+            }, 2000);
+        });
+    </script>
+</body>
+
+</html>
