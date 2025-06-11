@@ -40,13 +40,59 @@
                             @csrf
                             @method('PUT')
                             <h3 class="text-lg font-semibold mb-2">Preferences</h3>
+                            
+                            @if ($errors->any())
+                                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                            
                             <div class="mb-4">
                                 <label for="time_format" class="block font-medium mb-1">Time Format (Timeline/Charts)</label>
-                                <select name="time_format" id="time_format" class="form-select rounded border-gray-300">
-                                    <option value="24" {{ ($user->settings['time_format'] ?? '24') == '24' ? 'selected' : '' }}>24-hour</option>
-                                    <option value="12" {{ ($user->settings['time_format'] ?? '24') == '12' ? 'selected' : '' }}>12-hour (AM/PM)</option>
+                                <select name="time_format" id="time_format" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" onchange="updateTimeFormatPreview()">
+                                    @php
+                                        $currentTimeFormat = $user->getTimeFormat();
+                                    @endphp
+                                    <option value="24" {{ $currentTimeFormat == '24' ? 'selected' : '' }}>24-hour (e.g., 14:30)</option>
+                                    <option value="12" {{ $currentTimeFormat == '12' ? 'selected' : '' }}>12-hour (e.g., 2:30 PM)</option>
                                 </select>
+                                <p class="text-sm text-gray-600 mt-1">Current setting: <strong id="current-format">{{ $currentTimeFormat == '24' ? '24-hour format' : '12-hour format' }}</strong></p>
+                                <p class="text-sm text-blue-600 mt-1" id="preview-text">Preview: <span id="time-preview">{{ $currentTimeFormat == '24' ? '14:30:45' : '2:30:45 PM' }}</span></p>
                             </div>
+                            
+                            <script>
+                                function updateTimeFormatPreview() {
+                                    const select = document.getElementById('time_format');
+                                    const currentFormat = document.getElementById('current-format');
+                                    const timePreview = document.getElementById('time-preview');
+                                    const now = new Date();
+                                    
+                                    if (select.value === '24') {
+                                        currentFormat.textContent = '24-hour format';
+                                        timePreview.textContent = now.toLocaleTimeString('en-GB', { 
+                                            hour12: false, 
+                                            hour: '2-digit', 
+                                            minute: '2-digit', 
+                                            second: '2-digit' 
+                                        });
+                                    } else {
+                                        currentFormat.textContent = '12-hour format';
+                                        timePreview.textContent = now.toLocaleTimeString('en-US', { 
+                                            hour12: true, 
+                                            hour: '2-digit', 
+                                            minute: '2-digit', 
+                                            second: '2-digit' 
+                                        });
+                                    }
+                                }
+                                
+                                // Update preview on page load
+                                document.addEventListener('DOMContentLoaded', updateTimeFormatPreview);
+                            </script>
                             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Save Preferences</button>
                         </form>
                     </div>

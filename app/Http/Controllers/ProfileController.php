@@ -57,4 +57,33 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    /**
+     * Update the user's settings.
+     */
+    public function updateSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'time_format' => 'required|in:12,24'
+        ]);
+        
+        $user = $request->user();
+        
+        // Get current settings or initialize as empty array
+        $settings = $user->settings ?? [];
+        
+        // Make sure we have an array
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        
+        // Update time format
+        $settings['time_format'] = $request->input('time_format');
+        
+        // Save the updated settings
+        $user->settings = $settings;
+        $user->save();
+        
+        return Redirect::route('profile.edit')->with('status', 'settings-updated');
+    }
 }

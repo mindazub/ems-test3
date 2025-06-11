@@ -26,8 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/profile/settings', [ProfileController::class, 'updateSettings'])->name('profile.update.settings');
 
     Route::resource('plants', PlantController::class);
+    Route::get('/plants/{plant}', [PlantController::class, 'showRemote'])->name('plants.show');
     Route::resource('devices', DeviceController::class);
 
     // Add new route for plant data with date parameters
@@ -43,20 +45,6 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/plants/{plant}/save-chart-image', [DownloadController::class, 'saveChartImage'])
     ->name('plants.save_chart_image');
-
-    Route::put('/profile/settings', function (Request $request) {
-        $user = $request->user();
-        $settings = $user->settings;
-        if (is_string($settings)) {
-            $settings = json_decode($settings, true) ?: [];
-        } elseif (!is_array($settings)) {
-            $settings = [];
-        }
-        $settings['time_format'] = $request->input('time_format', '24');
-        $user->settings = $settings;
-        $user->save();
-        return redirect()->route('profile.edit')->with('status', 'settings-updated');
-    })->name('profile.update.settings');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -74,8 +62,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 });
-
-Route::get('/plants/{plant}', [App\Http\Controllers\PlantController::class, 'showRemote'])->name('plants.show');
 
 // Route::get('/plants/remote/{id}', [App\Http\Controllers\PlantController::class, 'showRemote'])->name('plants.show.remote');
 

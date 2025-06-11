@@ -297,7 +297,6 @@ function showNotification(message, type = 'info') {
 
 // Format date for chart labels
 function formatLabelDate(dateString) {
-    const options = { hour: '2-digit', minute: '2-digit' };
     try {
         let date;
         if (typeof dateString === 'number' || /^\d+$/.test(dateString)) {
@@ -310,6 +309,14 @@ function formatLabelDate(dateString) {
             console.log('Invalid date encountered:', dateString);
             return dateString;
         }
+        
+        // Use user's time format preference
+        const use12Hour = window.userTimeFormat === '12';
+        const options = { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: use12Hour
+        };
         
         return date.toLocaleTimeString([], options);
     } catch (e) {
@@ -324,12 +331,15 @@ window.batteryPriceData = {};
 window.batterySavingsData = {};
 window.chartInstances = {};
 
-// Get plant ID from multiple sources
+// Get plant ID and user time format preference from backend
 try {
     window.plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
+    window.userTimeFormat = @json($user ? $user->getTimeFormat() : '24');
     console.log('Plant ID from backend:', window.plantId);
+    console.log('User time format preference:', window.userTimeFormat);
 } catch (e) {
-    console.error('Error getting plant ID from JSON:', e);
+    console.error('Error getting data from JSON:', e);
+    window.userTimeFormat = '24'; // Default fallback
 }
 
 if (!window.plantId) {

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
         'uuid',
+        'settings',
     ];
 
     protected static function boot()
@@ -33,6 +34,12 @@ class User extends Authenticatable
         static::creating(function ($model) {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
+            }
+            // Set default settings when creating a new user
+            if (empty($model->settings)) {
+                $model->settings = [
+                    'time_format' => '24'
+                ];
             }
         });
     }
@@ -75,5 +82,53 @@ class User extends Authenticatable
     public function hasRole(string $role)
     {
         return $this->role === $role;
+    }
+
+    /**
+     * Get the user's preferred time format
+     * 
+     * @return string
+     */
+    public function getTimeFormat(): string
+    {
+        return $this->settings['time_format'] ?? '24';
+    }
+
+    /**
+     * Format a time according to user's preference
+     * 
+     * @param string|\Carbon\Carbon $time
+     * @return string
+     */
+    public function formatTime($time): string
+    {
+        if (is_string($time)) {
+            $time = \Carbon\Carbon::parse($time);
+        }
+        
+        if ($this->getTimeFormat() === '12') {
+            return $time->format('g:i:s A'); // 2:30:45 PM
+        } else {
+            return $time->format('H:i:s'); // 14:30:45
+        }
+    }
+
+    /**
+     * Format a datetime according to user's preference
+     * 
+     * @param string|\Carbon\Carbon $datetime
+     * @return string
+     */
+    public function formatDateTime($datetime): string
+    {
+        if (is_string($datetime)) {
+            $datetime = \Carbon\Carbon::parse($datetime);
+        }
+        
+        if ($this->getTimeFormat() === '12') {
+            return $datetime->format('Y-m-d g:i:s A'); // 2025-06-11 2:30:45 PM
+        } else {
+            return $datetime->format('Y-m-d H:i:s'); // 2025-06-11 14:30:45
+        }
     }
 }
