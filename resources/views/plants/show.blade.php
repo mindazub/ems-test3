@@ -40,6 +40,40 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
+        
+        /* Map legend styling */
+        .map-legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+        
+        .map-legend-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .legend-icon {
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
     </style>
 
     <div class="py-6">
@@ -82,28 +116,23 @@
                                                     @elseif(in_array($metaKey, ['Latitude', 'Longitude']))
                                                         <span class="font-mono text-green-700">{{ $metaValue }}</span>
                                                     @elseif($metaKey === 'Status')
-                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                            @if($metaValue === 'Working') bg-green-100 text-green-800
-                                                            @elseif($metaValue === 'Maintenance') bg-yellow-100 text-yellow-800
-                                                            @elseif($metaValue === 'Offline') bg-red-100 text-red-800
-                                                            @else bg-gray-100 text-gray-800
-                                                            @endif">
-                                                            @if($metaValue === 'Working')
-                                                                <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
-                                                                    <circle cx="4" cy="4" r="3" />
-                                                                </svg>
-                                                            @endif
-                                                            {{ $metaValue }}
-                                                        </span>
+                                                        @if($metaValue === 'Working')
+                                                            <span class="bg-green-100 text-green-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">{{ $metaValue }}</span>
+                                                        @elseif($metaValue === 'Maintenance')
+                                                            <span class="bg-yellow-100 text-yellow-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-yellow-900 dark:text-yellow-300">{{ $metaValue }}</span>
+                                                        @elseif($metaValue === 'Offline')
+                                                            <span class="bg-red-100 text-red-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-red-900 dark:text-red-300">{{ $metaValue }}</span>
+                                                        @else
+                                                            <span class="bg-gray-100 text-gray-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-gray-300">{{ $metaValue }}</span>
+                                                        @endif
                                                     @elseif($metaKey === 'Capacity')
                                                         <span class="font-semibold text-indigo-700">
                                                             {{ number_format($metaValue / 1000) }} kWh
                                                         </span>
                                                     @elseif(str_contains($metaKey, 'Updated at') || str_contains($metaKey, 'Date'))
-                                                        <span class="text-gray-600">
-                                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                            </svg>
+   
+                                                    <span class="text-gray-600">
+
                                                             {{ $metaValue }}
                                                         </span>
                                                     @else
@@ -133,7 +162,15 @@
                         <!-- Right Side: Map -->
                         <div class="min-w-0 w-full">
                             <h3 class="text-lg font-semibold mb-3">Map Location</h3>
-                            <div id="map" class="rounded-lg shadow border border-gray-200 w-full max-w-full" style="height: 277px;"></div>
+                            <div class="relative">
+                                <div id="map" class="rounded-lg shadow border border-gray-200 w-full max-w-full"></div>
+                                <div class="map-legend">
+                                    <div class="map-legend-item">
+                                        <div class="legend-icon"></div>
+                                        <span class="text-gray-700 font-medium">Plant Location</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -155,10 +192,37 @@
     <script>
         // --- LEAFLET MAP INIT ---
         document.addEventListener('DOMContentLoaded', function() {
+            // Function to adjust map height to match table
+            function adjustMapHeight() {
+                const tableContainer = document.querySelector('.table-container');
+                const mapContainer = document.getElementById('map');
+                
+                if (tableContainer && mapContainer) {
+                    // Get just the table height (without the back button)
+                    const tableHeight = tableContainer.offsetHeight;
+                    
+                    // Set map height to match table exactly
+                    mapContainer.style.height = tableHeight + 'px';
+                    
+                    // Invalidate map size and recenter to ensure proper rendering
+                    if (window.mapInstance) {
+                        setTimeout(() => {
+                            window.mapInstance.invalidateSize();
+                            // Recenter the map to ensure marker is in the center
+                            const currentCenter = window.mapInstance.getCenter();
+                            window.mapInstance.setView(currentCenter, window.mapInstance.getZoom());
+                        }, 150);
+                    }
+                }
+            }
+            
             // Prefer plant_metadata lat/lng if available, else fallback
             let lat = @json($plant->metadata_flat['Latitude'] ?? $plant->latitude ?? 0);
             let lng = @json($plant->metadata_flat['Longitude'] ?? $plant->longitude ?? 0);
             const map = L.map('map').setView([lat, lng], 13);
+            
+            // Store map instance globally for height adjustments
+            window.mapInstance = map;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
@@ -168,9 +232,24 @@
             L.marker([lat, lng])
                 .addTo(map)
                 .bindPopup(
-                    "<strong>{{ $plant->name ?? $plant->uid }}</strong><br>Lat: " + lat + "<br>Lng: " + lng
+                    "<strong>{{ $plant->name ?? $plant->uid }}</strong><br>" +
+                    "Lat: " + lat + "<br>" +
+                    "Long: " + lng
                 )
                 .openPopup();
+            
+            // Ensure the marker is centered in the map view
+            map.setView([lat, lng], 13);
+            
+            // Adjust map height after map is loaded and center the marker
+            setTimeout(() => {
+                adjustMapHeight();
+                // Re-center after height adjustment to ensure marker is visible and centered
+                map.setView([lat, lng], 13);
+            }, 200);
+            
+            // Adjust map height on window resize
+            window.addEventListener('resize', adjustMapHeight);
         });
     </script>
 </x-app-layout>
