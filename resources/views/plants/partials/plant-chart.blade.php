@@ -5,7 +5,9 @@
     <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Date to View</h3>
     <div class="flex flex-col md:flex-row items-center gap-3">
         <div class="flex items-center gap-2 p-1 bg-gray-50 border rounded-lg">
+            <button id="energy-prev" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" title="Previous day">&#8592;</button>
             <input type="date" id="energy-date" class="border rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <button id="energy-next" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" title="Next day">&#8594;</button>
         </div>
     </div>
     
@@ -374,6 +376,9 @@ if (!window.plantId) {
 
 // Function to fetch and update charts with fresh data (no cache)
 function fetchAndUpdateCharts(dateStr) {
+    console.log('=== FETCH AND UPDATE CHARTS ===');
+    console.log('Input dateStr:', dateStr);
+    
     if (!window.plantId) {
         showNotification('Cannot fetch data: Plant ID is missing', 'error');
         return;
@@ -397,6 +402,8 @@ function fetchAndUpdateCharts(dateStr) {
     
     selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
     if (isNaN(selectedDate.getTime())) selectedDate = new Date();
+    
+    console.log('Parsed selected date:', selectedDate.toDateString());
     
     // Check if selected date is today
     const today = new Date();
@@ -433,19 +440,32 @@ function fetchAndUpdateCharts(dateStr) {
     let url;
     if (isToday) {
         // For today: only use start parameter (from midnight until now)
-        url = `/plants/${window.plantId}/data?start=${startOfDay}`;
+        url = `/plants/${window.plantId}/data?start=${startOfDay}&_t=${Date.now()}`;
         console.log('Fetching TODAY data from:', url);
     } else {
         // For historical dates: use both start and end (full day 00:00-23:59)
         // End of day is 23:59:59.999 EEST
         const eestEndOfDayUTC = utcMidnight + (24 * 60 * 60 * 1000) - 1 - (3 * 60 * 60 * 1000);
         const endOfDay = Math.floor(eestEndOfDayUTC / 1000);
-        url = `/plants/${window.plantId}/data?start=${startOfDay}&end=${endOfDay}`;
+        url = `/plants/${window.plantId}/data?start=${startOfDay}&end=${endOfDay}&_t=${Date.now()}`;
         console.log('Fetching HISTORICAL data from:', url);
         console.log(`End of day timestamp: ${endOfDay}, converts to: ${new Date(endOfDay * 1000).toString()}`);
     }
     
-    fetch(url, { credentials: 'same-origin' })
+    // Clear existing chart data before fetching new data
+    console.log('Clearing existing chart data...');
+    window.energyData = {};
+    window.batteryPriceData = {};
+    window.batterySavingsData = {};
+    
+    fetch(url, { 
+        credentials: 'same-origin',
+        cache: 'no-cache',  // Force no cache
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
+    })
         .then(resp => {
             if (!resp.ok) {
                 throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
@@ -705,19 +725,94 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prevent selecting future dates
         dateInput.addEventListener('change', function() {
             const selectedDateStr = this.value;
-            const selectedDate = new Date(selectedDateStr + 'T00:00:00'); // Ensure local timezone
-            const todayDate = new Date(todayStr + 'T00:00:00'); // Ensure local timezone
+            console.log('Date changed to:', selectedDateStr);
             
-            console.log('Selected date:', selectedDateStr, 'vs Today:', todayStr);
+            if (!selectedDateStr) {
+                console.log('Empty date selected, ignoring');
+                return;
+            }
             
+            // Create dates in local timezone for proper comparison
+            const selectedDate = new Date(selectedDateStr);
+            const todayDate = new Date(todayStr);
+            
+            console.log('Date comparison:');
+            console.log('- Selected:', selectedDate.toDateString(), selectedDate.getTime());
+            console.log('- Today:', todayDate.toDateString(), todayDate.getTime());
+            console.log('- Is future?', selectedDate > todayDate);
+            
+            // Only prevent dates that are actually in the future (tomorrow or later)
             if (selectedDate > todayDate) {
+                console.log('Future date blocked, resetting to today');
                 this.value = todayStr;
                 showNotification('Cannot select future dates', 'info');
                 return;
             }
-            const formattedDate = this.value.replace(/-/g, '');
+            
+            // Valid date selected - fetch data
+            const formattedDate = selectedDateStr.replace(/-/g, '');
+            console.log('Fetching data for formatted date:', formattedDate);
             fetchAndUpdateCharts(formattedDate);
         });
+
+        // Add Previous/Next button functionality
+        const prevButton = document.getElementById('energy-prev');
+        const nextButton = document.getElementById('energy-next');
+
+        if (prevButton) {
+            prevButton.addEventListener('click', function() {
+                const currentDate = new Date(dateInput.value);
+                if (isNaN(currentDate.getTime())) return;
+                
+                // Go to previous day
+                currentDate.setDate(currentDate.getDate() - 1);
+                
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const newDateStr = `${year}-${month}-${day}`;
+                
+                console.log('Previous day clicked, setting date to:', newDateStr);
+                dateInput.value = newDateStr;
+                
+                // Trigger the change event to fetch data
+                const changeEvent = new Event('change', { bubbles: true });
+                dateInput.dispatchEvent(changeEvent);
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener('click', function() {
+                const currentDate = new Date(dateInput.value);
+                if (isNaN(currentDate.getTime())) return;
+                
+                // Go to next day
+                currentDate.setDate(currentDate.getDate() + 1);
+                
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const newDateStr = `${year}-${month}-${day}`;
+                
+                console.log('Next day clicked, setting date to:', newDateStr);
+                
+                // Check if new date is in the future
+                const newDate = new Date(newDateStr);
+                const todayDate = new Date(todayStr);
+                
+                if (newDate > todayDate) {
+                    console.log('Next day would be in future, blocking');
+                    showNotification('Cannot select future dates', 'info');
+                    return;
+                }
+                
+                dateInput.value = newDateStr;
+                
+                // Trigger the change event to fetch data
+                const changeEvent = new Event('change', { bubbles: true });
+                dateInput.dispatchEvent(changeEvent);
+            });
+        }
         
         // Always fetch today's data on load
         setTimeout(() => {
