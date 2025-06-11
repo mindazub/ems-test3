@@ -10,9 +10,41 @@
     {{-- DataTables plain CSS --}}
     <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 
-    <div id="page-content" class="py-12">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="bg-white rounded-lg shadow">
+    <div id="page-content" class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Hero Image Section -->
+            <div class="hero-image-container relative w-full h-64 md:h-80 lg:h-96 mb-12 rounded-xl overflow-hidden">
+                <img src="{{ asset('images/EMS-showoff.jpg') }}" 
+                     alt="EMS Dashboard Showcase" 
+                     class="w-full h-full object-cover object-center">
+                
+                <!-- Content overlay -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="hero-content text-center text-white max-w-4xl px-8">
+                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+                            Your Plant Portfolio
+                        </h1>
+                        <p class="text-xl md:text-2xl opacity-90 mb-6">
+                            Manage and monitor all your energy plants from one centralized dashboard
+                        </p>
+                        <div class="flex flex-wrap justify-center items-center gap-4">
+                            <div class="bg-white/25 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/40">
+                                <span class="text-lg font-medium">{{ $plants->count() }} Active Plants</span>
+                            </div>
+                            <div class="bg-white/25 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/40">
+                                <span class="text-lg font-medium">Real-time Monitoring</span>
+                            </div>
+                            <div class="bg-green-500/40 backdrop-blur-sm rounded-lg px-6 py-3 border border-green-400/60">
+                                <span class="text-lg font-medium">● Live Data</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-6">
 
                     @if (session('message'))
@@ -25,13 +57,24 @@
                         </div>
                     @endif
 
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="mb-0 text-lg font-bold">Plants Table</h3>
-
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Plants Overview</h3>
+                            <p class="text-sm text-gray-500 mt-1">Total: {{ $plants->count() }} plants</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                                <span class="live-indicator relative">
+                                    <span class="live-dot w-2.5 h-2.5 bg-red-500 rounded-full block"></span>
+                                    <span class="live-pulse absolute top-0 left-0 w-2.5 h-2.5 bg-red-400 rounded-full animate-ping"></span>
+                                </span>
+                                <span class="live-text">Live Data</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table id="plantsTable" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plant ID</th>
@@ -84,11 +127,23 @@
                 }
             });
 
-            $('#plantsTable').on('click', '.clickable-row', function(e) {
-                if ($(e.target).is('a') || $(e.target).is('button') || $(e.target).closest('form').length) {
+            // Make table rows clickable
+            $(document).on('click', '.clickable-row', function(e) {
+                // Don't trigger row click if user clicked on a link or button
+                if ($(e.target).is('a') || $(e.target).is('button') || $(e.target).closest('a').length || $(e.target).closest('button').length) {
                     return;
                 }
-                window.location = $(this).data("href");
+                
+                // Get the URL from data-href attribute and navigate
+                const url = $(this).data('href');
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+
+            // Add hover effect for better UX
+            $(document).on('mouseenter', '.clickable-row', function() {
+                $(this).addClass('cursor-pointer');
             });
         });
     </script>
@@ -106,6 +161,7 @@
     </script>
 
     <style>
+        /* DataTables styling improvements */
         .dataTables_length select {
             appearance: none !important;
             -webkit-appearance: none !important;
@@ -118,6 +174,110 @@
             padding: 0.25rem 0.75rem 0.25rem 0.5rem;
             font-size: 0.875rem;
             box-shadow: none;
+        }
+
+        /* Hero image enhancements */
+        .hero-image-container {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-image-container img {
+            filter: blur(3px);
+            transform: scale(1.05);
+        }
+
+        .hero-image-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(30, 41, 59, 0.6) 50%, rgba(51, 65, 85, 0.5) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Table enhancements */
+        .clickable-row {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background-color: #e0e7ff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .clickable-row:active {
+            transform: translateY(0);
+            background-color: #c7d2fe !important;
+        }
+
+        /* Ensure links in the actions column are still clickable */
+        .clickable-row td a {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Live data indicator enhancements */
+        .live-indicator {
+            display: inline-block;
+        }
+
+        .live-dot {
+            animation: pulse-glow 2s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+
+        .live-text {
+            animation: text-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+                background-color: #ef4444;
+            }
+            50% {
+                box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+                background-color: #dc2626;
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                background-color: #ef4444;
+            }
+        }
+
+        @keyframes text-glow {
+            0%, 100% {
+                color: #166534;
+                text-shadow: none;
+            }
+            50% {
+                color: #15803d;
+                text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+            }
+        }
+
+        /* Responsive image adjustments */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 1.875rem;
+                line-height: 2.25rem;
+            }
+            
+            .hero-content p {
+                font-size: 1rem;
+                line-height: 1.5rem;
+            }
         }
     </style>
 </x-app-layout>
