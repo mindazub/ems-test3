@@ -556,6 +556,95 @@ class PlantController extends Controller
     }
     
     /**
+     * Get available data dates for a plant.
+     * 
+     * @param string $plant Plant ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAvailableDates($plant)
+    {
+        try {
+            // Use Guzzle to fetch data from the API for the last 60 days
+            $client = new \GuzzleHttp\Client();
+            $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+            
+            $availableDates = [];
+            $today = new \DateTime();
+            $startDate = clone $today;
+            $startDate->modify('-60 days'); // Check last 60 days
+            
+            // Check each day for data availability
+            $current = clone $startDate;
+            while ($current <= $today) {
+                $dateStr = $current->format('Y-m-d');
+                
+                // Calculate start and end timestamps for the day in EEST
+                $dayStart = clone $current;
+                $dayStart->setTime(0, 0, 0);
+                $utcMidnight = $dayStart->getTimestamp() - (3 * 60 * 60); // EEST offset
+                $startOfDay = $utcMidnight;
+                $endOfDay = $startOfDay + (24 * 60 * 60) - 1;
+                
+                // Make API request to check for data
+                $url = "http://127.0.0.1:5001/plant_view/{$plant}?start={$startOfDay}&end={$endOfDay}";
+                
+                try {
+                    $response = $client->request('GET', $url, [
+                        'headers' => [
+                            'Authorization' => 'Bearer ' . $token,
+                            'Accept' => 'application/json',
+                        ],
+                        'timeout' => 5,
+                    ]);
+                    
+                    $data = json_decode($response->getBody()->getContents(), true);
+                    
+                    // Check if we have any meaningful data
+                    $hasData = false;
+                    if (!empty($data['aggregated_data_snapshots'])) {
+                        $snapshots = $data['aggregated_data_snapshots'];
+                        if (count($snapshots) > 0) {
+                            $hasData = true;
+                        }
+                    }
+                    
+                    if ($hasData) {
+                        $availableDates[] = $dateStr;
+                    }
+                    
+                } catch (\Exception $e) {
+                    // Skip this date if API call fails
+                    \Log::debug("Failed to check data for date {$dateStr}: " . $e->getMessage());
+                }
+                
+                $current->modify('+1 day');
+            }
+            
+            \Log::info('Available dates calculated', [
+                'plant_id' => $plant,
+                'dates_count' => count($availableDates),
+                'dates' => $availableDates
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'dates' => $availableDates
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching available dates', [
+                'plant_id' => $plant,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch available dates'
+            ], 500);
+        }
+    }
+
+    /**
      * Format data for chart display
      * 
      * @param array $data Raw data from API

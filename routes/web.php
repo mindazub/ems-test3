@@ -38,9 +38,10 @@ Route::middleware('auth')->group(function () {
     // Add new route for plant data with date parameters
     Route::get('/plants/{plant}/data', [PlantController::class, 'getData'])->name('plants.data');
     
+    // Add route for available dates
+    Route::get('/plants/{plant}/available-dates', [PlantController::class, 'getAvailableDates'])->name('plants.available-dates');
+    
     // Download PNG, CSV, PDF
-
-    //
     Route::get('/plants/{plant}/download/{chart}/{type}', [DownloadController::class, 'download'])
     ->name('plants.download');
     Route::post('/charts/upload', [ChartUploadController::class, 'store'])
