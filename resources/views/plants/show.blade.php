@@ -10,6 +10,37 @@
 
     {{-- Only Leaflet CSS needed --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    
+    <style>
+        /* Ensure grid layout works properly */
+        @media (min-width: 1024px) {
+            .plant-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 1.5rem !important;
+            }
+            .plant-grid > div {
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+        }
+        
+        /* Prevent table from overflowing its container */
+        .table-container {
+            overflow: hidden;
+            max-width: 100%;
+        }
+        
+        .table-container table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        
+        .table-container td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
 
     <div class="py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,19 +56,21 @@
                     </div>
 
                     <!-- Main Content: Table + Map in 50/50 layout -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
+                    <div class="plant-grid grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        <!-- Left Side: General Info Table -->
+                        <div class="min-w-0 w-full">
                             <h2 class="text-lg font-semibold mb-3">General Info</h2>
-                            <div class="bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                            <div class="table-container bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm max-w-full">
                                 @if(!empty($plant->metadata_flat))
-                                    <table class="min-w-full">
-                                        <tbody class="divide-y divide-gray-200">
-                                            @foreach($plant->metadata_flat as $metaKey => $metaValue)
-                                                <tr class="hover:bg-gray-50 transition-colors">
-                                                    <td class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 w-2/5 border-r border-gray-200">
-                                                        {{ $metaKey }}
-                                                    </td>
-                                                    <td class="px-3 py-2 text-sm text-gray-700">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full table-fixed">
+                                            <tbody class="divide-y divide-gray-200">
+                                                @foreach($plant->metadata_flat as $metaKey => $metaValue)
+                                                    <tr class="hover:bg-gray-50 transition-colors">
+                                                        <td class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 border-r border-gray-200 w-2/5 break-words">
+                                                            {{ $metaKey }}
+                                                        </td>
+                                                        <td class="px-3 py-2 text-sm text-gray-700 w-3/5 break-words">
                                                     @if(is_array($metaValue))
                                                         <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                                             {{ json_encode($metaValue) }}
@@ -64,7 +97,7 @@
                                                         </span>
                                                     @elseif($metaKey === 'Capacity')
                                                         <span class="font-semibold text-indigo-700">
-                                                            {{ number_format($metaValue) }} kW
+                                                            {{ number_format($metaValue / 1000) }} kWh
                                                         </span>
                                                     @elseif(str_contains($metaKey, 'Updated at') || str_contains($metaKey, 'Date'))
                                                         <span class="text-gray-600">
@@ -75,12 +108,12 @@
                                                         </span>
                                                     @else
                                                         {{ $metaValue }}
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                                    @endif                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                             @else
                                 <div class="px-4 py-6 text-center text-gray-500">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,9 +131,9 @@
                         </div>
 
                         <!-- Right Side: Map -->
-                        <div>
+                        <div class="min-w-0 w-full">
                             <h3 class="text-lg font-semibold mb-3">Map Location</h3>
-                            <div id="map" class="rounded-lg shadow border border-gray-200" style="height: 400px;"></div>
+                            <div id="map" class="rounded-lg shadow border border-gray-200 w-full max-w-full" style="height: 277px;"></div>
                         </div>
                     </div>
                 </div>
