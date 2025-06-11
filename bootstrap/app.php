@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'admin.debugbar' => \App\Http\Middleware\AdminDebugbarMiddleware::class,
+        ]);
+        
+        // Apply debugbar middleware to all web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\AdminDebugbarMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
