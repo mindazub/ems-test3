@@ -2,8 +2,10 @@
     <x-slot name="header">
         <h2 class="text-2xl font-bold mb-4">Device Details</h2>
     </x-slot>
-    <div class="max-w-7xl mx-auto bg-white shadow rounded-lg py-6 px-4">
-        <table class="table-auto w-full mb-6">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white shadow rounded-lg p-6">
+                <table class="table-auto w-full mb-6">
             <tbody>
                 <tr>
                     <th class="text-left pr-4">ID</th>
@@ -58,6 +60,8 @@
             @if($device['plant_uid'] && ($device['plant_full_uid'] ?? false))
                 <a href="{{ url('/plants/' . $device['plant_full_uid']) }}" class="text-green-700 hover:underline">&larr; Back to Plant</a>
             @endif
+        </div>
+            </div>
         </div>
     </div>
 </x-app-layout>
