@@ -9,10 +9,7 @@
         </div>
     </div>
     
-    <!-- Data availability notice -->
-    <div class="text-sm text-gray-600 text-center max-w-md">
-        <p>📊 Charts show data from local midnight to current time for the selected date. If no data is available, try selecting a previous date.</p>
-    </div>
+
     
     <div id="loading-indicator" class="hidden mt-2">
         <div class="flex items-center">
@@ -295,7 +292,7 @@ function showNotification(message, type = 'info') {
     console[type === 'error' ? 'error' : type === 'success' ? 'info' : 'log'](`[Notification] ${message}`);
 }
 
-// Format date for chart labels
+// Format date for chart labels with time offset
 function formatLabelDate(dateString) {
     try {
         let date;
@@ -308,6 +305,12 @@ function formatLabelDate(dateString) {
         if (isNaN(date.getTime())) {
             console.log('Invalid date encountered:', dateString);
             return dateString;
+        }
+        
+        // Apply user's time offset (visual shift only)
+        const offsetHours = window.userTimeOffset || 0;
+        if (offsetHours !== 0) {
+            date = new Date(date.getTime() + (offsetHours * 60 * 60 * 1000));
         }
         
         // Use user's time format preference
@@ -331,15 +334,18 @@ window.batteryPriceData = {};
 window.batterySavingsData = {};
 window.chartInstances = {};
 
-// Get plant ID and user time format preference from backend
+// Get plant ID and user preferences from backend
 try {
     window.plantId = @json($plant->uid ?? $plant->uuid ?? $plant->id ?? null);
     window.userTimeFormat = @json($user ? $user->getTimeFormat() : '24');
+    window.userTimeOffset = @json($user ? $user->getTimeOffset() : 0);
     console.log('Plant ID from backend:', window.plantId);
     console.log('User time format preference:', window.userTimeFormat);
+    console.log('User time offset preference:', window.userTimeOffset, 'hours');
 } catch (e) {
     console.error('Error getting data from JSON:', e);
     window.userTimeFormat = '24'; // Default fallback
+    window.userTimeOffset = 0; // Default fallback
 }
 
 if (!window.plantId) {

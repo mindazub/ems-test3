@@ -30,7 +30,10 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('plants', PlantController::class);
     Route::get('/plants/{plant}', [PlantController::class, 'showRemote'])->name('plants.show');
-    Route::resource('devices', DeviceController::class);
+    
+    // Device routes - exclude 'show' from resource and define it manually
+    Route::resource('devices', DeviceController::class)->except(['show']);
+    Route::get('/devices/{id}', [DeviceController::class, 'show'])->name('devices.show');
 
     // Add new route for plant data with date parameters
     Route::get('/plants/{plant}/data', [PlantController::class, 'getData'])->name('plants.data');

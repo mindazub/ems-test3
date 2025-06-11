@@ -10,16 +10,12 @@ class DeviceController extends Controller
 {
     public function index()
     {
-        // Fetch plant_view JSON (simulate API call for now)
-        $jsonPath = public_path('plant_view_65f20fa1-047a-4379-8464-59f1d94be3c7_1748955255.json');
-        $data = [];
-        if (file_exists($jsonPath)) {
-            $data = json_decode(file_get_contents($jsonPath), true);
-        }
-        $plantUid = $data['plant_metadata']['uid'] ?? null;
-        $plantName = $plantUid;
         $devices = collect();
-        // Helper to flatten device tree
+        
+        // Get all plants to search for devices across all of them
+        $allPlants = $this->getAllPlants();
+        
+        // Helper to flatten device tree from API response
         $flattenDevices = function($devicesArr, $plantUid, $plantName, $parentDevice = null, $controller = null, $feed = null) use (&$flattenDevices) {
             $flat = collect();
             foreach ($devicesArr as $device) {
@@ -44,30 +40,37 @@ class DeviceController extends Controller
             }
             return $flat;
         };
-        // Walk controllers/main feeds/devices
-        if (!empty($data['controllers'])) {
-            foreach ($data['controllers'] as $controller) {
-                foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
-                    $devicesArr = $feed['main_feed_devices'] ?? [];
-                    $devices = $devices->merge($flattenDevices($devicesArr, $plantUid, $plantName, null, $controller, $feed));
+        
+        // Search for devices in each plant
+        foreach ($allPlants as $plantId) {
+            $plantData = $this->getPlantData($plantId);
+            if ($plantData) {
+                $plantUid = $plantData['plant_metadata']['uid'] ?? null;
+                $plantName = $plantUid; // Using UID as name for now
+                
+                // Walk controllers/main feeds/devices
+                if (!empty($plantData['controllers'])) {
+                    foreach ($plantData['controllers'] as $controller) {
+                        foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
+                            $devicesArr = $feed['main_feed_devices'] ?? [];
+                            $devices = $devices->merge($flattenDevices($devicesArr, $plantUid, $plantName, null, $controller, $feed));
+                        }
+                    }
                 }
             }
         }
-        return view('devices.index', [ 'devices' => $devices ]);
+        
+        return view('devices.index', ['devices' => $devices]);
     }
 
     public function show($id)
     {
-        // Fetch plant_view JSON (simulate API call for now)
-        $jsonPath = public_path('plant_view_65f20fa1-047a-4379-8464-59f1d94be3c7_1748955255.json');
-        $data = [];
-        if (file_exists($jsonPath)) {
-            $data = json_decode(file_get_contents($jsonPath), true);
-        }
         $deviceInfo = null;
-        $plantUid = $data['plant_metadata']['uid'] ?? null;
-        $plantName = $plantUid;
-        // Flatten all devices
+        
+        // Get all plants to search for the device
+        $allPlants = $this->getAllPlants();
+        
+        // Helper to flatten device tree and find specific device
         $flattenDevices = function($devicesArr, $plantUid, $plantName, $parentDevice = null, $controller = null, $feed = null) use (&$flattenDevices) {
             $flat = collect();
             foreach ($devicesArr as $device) {
@@ -99,22 +102,39 @@ class DeviceController extends Controller
             }
             return $flat;
         };
-        $allDevices = collect();
-        if (!empty($data['controllers'])) {
-            foreach ($data['controllers'] as $controller) {
-                foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
-                    $devicesArr = $feed['main_feed_devices'] ?? [];
-                    $allDevices = $allDevices->merge($flattenDevices($devicesArr, $plantUid, $plantName, null, $controller, $feed));
+
+        // Search through all plants to find the device
+        foreach ($allPlants as $plantId) {
+            $plantData = $this->getPlantData($plantId);
+            if ($plantData) {
+                $plantUid = $plantData['plant_metadata']['uid'] ?? null;
+                $plantName = $plantUid; // Using UID as name for now
+                
+                $allDevices = collect();
+                if (!empty($plantData['controllers'])) {
+                    foreach ($plantData['controllers'] as $controller) {
+                        foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
+                            $devicesArr = $feed['main_feed_devices'] ?? [];
+                            $allDevices = $allDevices->merge($flattenDevices($devicesArr, $plantUid, $plantName, null, $controller, $feed));
+                        }
+                    }
+                }
+                
+                // Check if the device exists in this plant
+                $deviceInfo = $allDevices->first(function($d) use ($id) {
+                    return $d['full_uid'] === $id;
+                });
+                
+                if ($deviceInfo) {
+                    break; // Found the device, stop searching
                 }
             }
         }
-        // Only match by full_uid
-        $deviceInfo = $allDevices->first(function($d) use ($id) {
-            return $d['full_uid'] === $id;
-        });
+        
         if (!$deviceInfo) {
             abort(404, 'Device not found');
         }
+        
         return view('devices.show', ['device' => $deviceInfo]);
     }
 
@@ -183,5 +203,69 @@ class DeviceController extends Controller
         $device->delete();
 
         return redirect()->route('devices.index')->with('message', 'Device deleted successfully.');
+    }
+    
+    /**
+     * Get list of all plant IDs from the plant list API
+     */
+    private function getAllPlants()
+    {
+        $plantListUuid = '6a36660d-daae-48dd-a4fe-000b191b13d8';
+        $url = "http://127.0.0.1:5001/plant_list/{$plantListUuid}";
+        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        
+        $client = new \GuzzleHttp\Client();
+        
+        try {
+            $response = $client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 5,
+            ]);
+            
+            $body = $response->getBody()->getContents();
+            $data = json_decode($body, true);
+            $plantsArr = $data['plants'] ?? [];
+            
+            // Extract plant UIDs for API calls
+            return collect($plantsArr)->pluck('uid')->filter()->toArray();
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching plant list from API', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+    
+    /**
+     * Get plant data from the plant view API
+     */
+    private function getPlantData($plantId)
+    {
+        $url = "http://127.0.0.1:5001/plant_view/{$plantId}";
+        $token = 'f9c2f80e1c0e5b6a3f7f40e6f2e9c9d0af7eaabc6b37a4d9728e26452b81fc13';
+        
+        $client = new \GuzzleHttp\Client();
+        
+        try {
+            $response = $client->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 5,
+            ]);
+            
+            $body = $response->getBody()->getContents();
+            return json_decode($body, true);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching plant data from API', [
+                'plant_id' => $plantId,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 }

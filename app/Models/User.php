@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role',
         'uuid',
         'settings',
+        'time_offset',
     ];
 
     protected static function boot()
@@ -130,5 +131,51 @@ class User extends Authenticatable
         } else {
             return $datetime->format('Y-m-d H:i:s'); // 2025-06-11 14:30:45
         }
+    }
+
+    /**
+     * Get the user's time offset in hours
+     * 
+     * @return int
+     */
+    public function getTimeOffset(): int
+    {
+        return $this->time_offset ?? 0;
+    }
+
+    /**
+     * Check if user has a time offset set
+     * 
+     * @return bool
+     */
+    public function hasTimeOffset(): bool
+    {
+        return $this->time_offset !== null && $this->time_offset !== 0;
+    }
+
+    /**
+     * Apply time offset to a timestamp for display purposes only
+     * This shifts the visual timeline but doesn't change the data
+     * 
+     * @param string|int|\Carbon\Carbon $timestamp
+     * @return \Carbon\Carbon
+     */
+    public function applyTimeOffset($timestamp): \Carbon\Carbon
+    {
+        if (is_string($timestamp) && ctype_digit($timestamp)) {
+            // Unix timestamp as string
+            $time = \Carbon\Carbon::createFromTimestamp((int)$timestamp);
+        } elseif (is_numeric($timestamp)) {
+            // Unix timestamp as number
+            $time = \Carbon\Carbon::createFromTimestamp($timestamp);
+        } elseif (is_string($timestamp)) {
+            // Date string
+            $time = \Carbon\Carbon::parse($timestamp);
+        } else {
+            // Already Carbon instance
+            $time = $timestamp;
+        }
+        
+        return $time->addHours($this->getTimeOffset());
     }
 }

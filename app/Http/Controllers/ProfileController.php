@@ -64,7 +64,8 @@ class ProfileController extends Controller
     public function updateSettings(Request $request): RedirectResponse
     {
         $request->validate([
-            'time_format' => 'required|in:12,24'
+            'time_format' => 'required|in:12,24',
+            'time_offset' => 'required|integer|min:-23|max:23'
         ]);
         
         $user = $request->user();
@@ -79,6 +80,9 @@ class ProfileController extends Controller
         
         // Update time format
         $settings['time_format'] = $request->input('time_format');
+        
+        // Update time offset (stored as separate column)
+        $user->time_offset = $request->input('time_offset');
         
         // Save the updated settings
         $user->settings = $settings;
