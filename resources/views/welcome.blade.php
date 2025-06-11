@@ -30,25 +30,7 @@
                         <img src="{{ asset('images/edislab_monitoring.png') }}" alt="EDISLAB Logo" class="h-8 w-auto">
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <!-- Dark Mode Toggle -->
-                    <button id="darkModeToggle"
-                        class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                        title="Toggle Dark Mode">
-                        <!-- Sun Icon -->
-                        <svg id="sunIcon" class="w-5 h-5 text-yellow-400 dark:hidden" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 3v1m0 16v1m8.66-12.34l-.7.7M4.34 4.34l-.7.7M21 12h1M2 12H1m16.24 4.24l-.7-.7M4.34 19.66l-.7-.7M12 5a7 7 0 100 14 7 7 0 000-14z" />
-                        </svg>
-                        <!-- Moon Icon -->
-                        <svg id="moonIcon" class="w-5 h-5 hidden dark:inline text-white" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                        </svg>
-                    </button>
-
+                <div class="flex items-center space-x-4">                
                     <!-- Auth Buttons -->
                     <a href="{{ route('login') }}"
                         class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition">Login</a>
