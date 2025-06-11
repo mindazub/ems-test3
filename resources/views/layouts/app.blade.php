@@ -25,7 +25,7 @@
 </head>
 
 <body class="font-sans antialiased font-base">
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100 flex flex-col">
         @include('layouts.navigation')
 
         @auth
@@ -41,12 +41,12 @@
             @endif
         @endauth
 
-
-
         <!-- Page Content -->
-        <main>
+        <main class="flex-1">
             {{ $slot }}
         </main>
+
+        @include('layouts.partials.footer')
     </div>
     @stack('scripts')
     <script src="//unpkg.com/alpinejs" defer></script>
