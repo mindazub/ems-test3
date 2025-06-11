@@ -63,13 +63,10 @@
                             <p class="text-sm text-gray-500 mt-1">Total: {{ $plants->count() }} plants</p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                                <span class="live-indicator relative">
-                                    <span class="live-dot w-2.5 h-2.5 bg-red-500 rounded-full block"></span>
-                                    <span class="live-pulse absolute top-0 left-0 w-2.5 h-2.5 bg-red-400 rounded-full animate-ping"></span>
-                                </span>
-                                <span class="live-text">Live Data</span>
-                            </div>
+                            <span class="live-data-badge inline-flex items-center text-sm font-bold px-4 py-2 rounded-full shadow-lg">
+                                <span class="w-2 h-2 bg-white rounded-full mr-2 animate-ping"></span>
+                                Live Data
+                            </span>
                         </div>
                     </div>
 
@@ -227,46 +224,6 @@
             z-index: 10;
         }
 
-        /* Live data indicator enhancements */
-        .live-indicator {
-            display: inline-block;
-        }
-
-        .live-dot {
-            animation: pulse-glow 2s ease-in-out infinite;
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        }
-
-        .live-text {
-            animation: text-glow 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-                background-color: #ef4444;
-            }
-            50% {
-                box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
-                background-color: #dc2626;
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-                background-color: #ef4444;
-            }
-        }
-
-        @keyframes text-glow {
-            0%, 100% {
-                color: #166534;
-                text-shadow: none;
-            }
-            50% {
-                color: #15803d;
-                text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
-            }
-        }
-
         /* Responsive image adjustments */
         @media (max-width: 768px) {
             .hero-content h1 {
@@ -277,6 +234,25 @@
             .hero-content p {
                 font-size: 1rem;
                 line-height: 1.5rem;
+            }
+        }
+
+        /* Live Data Badge Enhanced Visibility */
+        .live-data-badge {
+            background-color: #ef4444 !important;
+            color: white !important;
+            animation: live-glow 2s ease-in-out infinite;
+            border: 2px solid #dc2626;
+        }
+
+        @keyframes live-glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+                background-color: #ef4444;
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+                background-color: #dc2626;
             }
         }
     </style>
