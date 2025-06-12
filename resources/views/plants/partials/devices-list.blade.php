@@ -1,86 +1,3 @@
-@if (!function_exists('__device_row_blade'))
-    @php
-    function __device_row_blade($device, $level = 0, $parentKey = '') {
-        // Determine if device is parent: has assigned_devices and parameters does not have slave_id
-        $hasChildren = !empty($device->assigned_devices);
-        $parameters = (array)($device->parameters ?? []);
-        $isParent = $hasChildren && !array_key_exists('slave_id', $parameters);
-        $rowKey = $parentKey . ($device->id ?? $device->uid ?? uniqid());
-        echo '<tr x-data="{ open: false }" data-device-id="' . ($device->id ?? $device->uid ?? '') . '">';
-        // Expand/Collapse Icon
-        echo '<td class="w-10 text-center">';
-        if ($isParent) {
-            echo '<button type="button" class="focus:outline-none" @click="open = !open" :aria-expanded="open" aria-label="Toggle children">';
-            echo '<template x-if="!open"><x-heroicon-o-plus class="w-5 h-5 text-indigo-600 inline" /></template>';
-            echo '<template x-if="open"><x-heroicon-o-minus class="w-5 h-5 text-indigo-600 inline" /></template>';
-            echo '</button>';
-        } else {
-            echo $level > 0 ? str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level) . '↳' : '';
-        }
-        echo '</td>';
-        // ID columns: trimmed for display, full for routing
-        $deviceId = $device->id ?? $device->uid ?? '';
-        $fullId = $device->uid ?? $device->id ?? '';
-        $shortId = substr($deviceId, 0, 8);
-        echo '<td class="px-2 py-2 cursor-pointer">';
-        echo '<a href="' . url('/devices/' . $fullId) . '" class="text-blue-600 hover:underline" title="' . $fullId . '">' . $shortId . '</a>';
-        echo '</td>';
-        // Device info columns
-        echo '<td class="px-2 py-2">' . ($device->device_type ?? '-') . '</td>';
-        echo '<td class="px-2 py-2">' . ($device->device_manufacturer ?? '-') . '</td>';
-        echo '<td class="px-2 py-2">' . ($device->device_model ?? '-') . '</td>';
-        echo '<td class="px-2 py-2">' . ($device->device_status ?? '-') . '</td>';
-        // Assigned To column
-        echo '<td class="px-2 py-2">';
-        if (!empty($device->parent_device_id)) {
-            $parentFullId = $device->parent_device_id;
-            $parentShortId = substr($parentFullId, 0, 8);
-            echo '<a href="' . url('/devices/' . $parentFullId) . '" class="text-blue-600 hover:underline" title="' . $parentFullId . '">' . $parentShortId . '</a>';
-        } else {
-            echo '—';
-        }
-        echo '</td>';
-        // Parent? column
-        echo '<td class="px-2 py-2 text-center">' . ($isParent ? '<span class="text-green-600 font-bold">Yes</span>' : '<span class="text-gray-400">No</span>') . '</td>';
-        echo '</tr>';
-        // Only show children if parent and expanded
-        if ($isParent && $hasChildren) {
-            foreach ($device->assigned_devices as $child) {
-                echo '<tr x-show="open" x-transition>';
-                echo '<td></td>';
-                $childId = isset($child->id) ? $child->id : (isset($child->uid) ? $child->uid : '');
-                $childFullId = isset($child->uid) ? $child->uid : (isset($child->id) ? $child->id : '');
-                $childShortId = substr($childId, 0, 8);
-                echo '<td class="px-2 py-2 pl-8 cursor-pointer" onclick="window.location=\'' . url('/devices/' . $childFullId) . '\'" title="' . $childFullId . '">' . ($childShortId ?: 'N/A') . '</td>';
-                echo '<td class="px-2 py-2">' . ($child->device_type ?? '-') . '</td>';
-                echo '<td class="px-2 py-2">' . ($child->device_manufacturer ?? '-') . '</td>';
-                echo '<td class="px-2 py-2">' . ($child->device_model ?? '-') . '</td>';
-                echo '<td class="px-2 py-2">' . ($child->device_status ?? '-') . '</td>';
-                // Assigned To column for child
-                echo '<td class="px-2 py-2">';
-                if (!empty($child->parent_device_id)) {
-                    $parentFullId = $child->parent_device_id;
-                    $parentShortId = substr($parentFullId, 0, 8);
-                    echo '<a href="' . url('/devices/' . $parentFullId) . '" class="text-blue-600 hover:underline" title="' . $parentFullId . '">' . $parentShortId . '</a>';
-                } else {
-                    echo '—';
-                }
-                echo '</td>';
-                // Recursively check if child is parent
-                $childParams = (array)($child->parameters ?? []);
-                $childIsParent = !empty($child->assigned_devices) && !array_key_exists('slave_id', $childParams);
-                echo '<td class="px-2 py-2 text-center">' . ($childIsParent ? '<span class="text-green-600 font-bold">Yes</span>' : '<span class="text-gray-400">No</span>') . '</td>';
-                echo '</tr>';
-                // Recursively render grandchildren (if any)
-                if ($childIsParent && !empty($child->assigned_devices)) {
-                    __device_row_blade($child, $level + 1, $rowKey . '-');
-                }
-            }
-        }
-    }
-    @endphp
-@endif
-
 <div class="mb-8">
     <div class="bg-white shadow rounded-lg p-6">
         <h3 class="text-lg font-semibold mb-4">Devices by Controller & Feed</h3>
@@ -90,8 +7,8 @@
             @foreach ($plant->controllers as $controller)
                 <div class="mb-6 border-2 border-indigo-200 rounded-lg p-4 bg-indigo-50">
                     <div class="mb-2 flex items-center justify-between">
-                        <h4 class="text-xl font-bold text-indigo-800">Controller #{{ $controller->uid ?? $controller->id ?? 'N/A' }} <span class="text-xs text-gray-500">( CONTROLLER)</span></h4>
-                        <span class="text-xs text-gray-500">Serial No: {{ $controller->serial_number ?? $controller->id ?? 'N/A' }}</span>
+                        <h4 class="text-xl font-bold text-indigo-800">Controller #{{ substr($controller->uid ?? $controller->id ?? 'N/A', 0, 8) }} <span class="text-xs text-gray-500">( CONTROLLER)</span></h4>
+                        <span class="text-xs text-gray-500">Serial No: {{ $controller->serial_number ?? substr($controller->id ?? 'N/A', 0, 8) }}</span>
                     </div>
                     @if (!empty($controller->mainFeeds) && count($controller->mainFeeds))
                         @foreach ($controller->mainFeeds as $feed)
@@ -105,7 +22,7 @@
                                     <table class="min-w-full table-fixed text-sm border rounded">
                                         <thead class="bg-gray-50 border-b">
                                         <tr>
-                                            <th class="w-10"></th>
+                                            <th class="w-10 px-2 py-2"></th>
                                             <th class="px-2 py-2 text-left font-semibold">ID</th>
                                             <th class="px-2 py-2 text-left font-semibold">Type</th>
                                             <th class="px-2 py-2 text-left font-semibold">Manufacturer</th>
@@ -118,10 +35,135 @@
                                         <tbody>
                                         @if (!empty($feed->devices))
                                             @foreach ($feed->devices as $device)
-                                                @php __device_row_blade($device, 0); @endphp
+                                                @php
+                                                    $deviceId = $device->id ?? $device->uid ?? '';
+                                                    $fullId = $device->uid ?? $device->id ?? '';
+                                                    $shortId = substr($deviceId, 0, 8);
+                                                    
+                                                    // Use pre-processed flags from controller (same logic as devices-by-feed)
+                                                    $isParent = $device->is_true_parent ?? false;
+                                                    $hasSlaves = $device->has_slaves_processed ?? false;
+                                                    
+                                                    $parentRowId = 'parent-' . $loop->parent->parent->index . '-' . $loop->parent->index . '-' . $loop->index;
+                                                @endphp
+                                                
+                                                <!-- Parent Device Row -->
+                                                <tr class="hover:bg-gray-50 transition-colors duration-150 {{ $isParent ? 'cursor-pointer' : '' }}" 
+                                                    @if($isParent) onclick="toggleSlaves('{{ $parentRowId }}')" @endif>
+                                                    <td class="px-2 py-2 text-center">
+                                                        @if($isParent)
+                                                            <button type="button" class="focus:outline-none" aria-expanded="false" aria-label="Toggle children">
+                                                                <svg id="icon-{{ $parentRowId }}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-plus w-5 h-5 text-indigo-600 dark:text-indigo-400">
+                                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                                    <path d="M8 12h8"></path>
+                                                                    <path d="M12 8v8"></path>
+                                                                </svg>
+                                                            </button>
+                                                        @else
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle w-5 h-5 text-gray-400">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                            </svg>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-2 py-2">
+                                                        <a href="{{ url('/devices/' . $fullId) }}" 
+                                                           class="text-blue-600 hover:text-blue-800 font-medium"
+                                                           onclick="event.stopPropagation();"
+                                                           title="{{ $fullId }}">
+                                                            {{ $shortId }}
+                                                        </a>
+                                                    </td>
+                                                    <td class="px-2 py-2">{{ $device->device_type ?? '-' }}</td>
+                                                    <td class="px-2 py-2">{{ $device->device_manufacturer ?? '-' }}</td>
+                                                    <td class="px-2 py-2">{{ $device->device_model ?? '-' }}</td>
+                                                    <td class="px-2 py-2">
+                                                        @if(($device->device_status ?? '') === 'Working' || ($device->device_status ?? '') === 'Ready')
+                                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                                {{ $device->device_status }}
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                                {{ $device->device_status ?? 'Unknown' }}
+                                                            </span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-2 py-2">
+                                                        @if(!empty($device->parent_device_id))
+                                                            @php
+                                                                $parentFullId = $device->parent_device_id;
+                                                                $parentShortId = substr($parentFullId, 0, 8);
+                                                            @endphp
+                                                            <a href="{{ url('/devices/' . $parentFullId) }}" 
+                                                               class="text-blue-600 hover:text-blue-800" 
+                                                               title="{{ $parentFullId }}">{{ $parentShortId }}</a>
+                                                        @else
+                                                            —
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-2 py-2 text-center">
+                                                        @if($isParent)
+                                                            <span class="text-green-600 font-bold">Yes</span>
+                                                        @else
+                                                            <span class="text-gray-400">No</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+
+                                                <!-- Slave Devices (Initially Hidden) -->
+                                                @if($isParent)
+                                                    @foreach($device->assigned_devices as $slaveDevice)
+                                                        @php
+                                                            $slaveId = $slaveDevice->id ?? $slaveDevice->uid ?? '';
+                                                            $slaveFullId = $slaveDevice->uid ?? $slaveDevice->id ?? '';
+                                                            $slaveShortId = substr($slaveId, 0, 8);
+                                                        @endphp
+                                                        <tr class="slave-row {{ $parentRowId }} hidden bg-gray-50 border-l-4 border-blue-200">
+                                                            <td class="px-2 py-2 text-center">
+                                                                <span class="text-gray-400 text-sm">→</span>
+                                                            </td>
+                                                            <td class="px-2 py-2 pl-8">
+                                                                <a href="{{ url('/devices/' . $slaveFullId) }}" 
+                                                                   class="text-blue-600 hover:text-blue-800 font-medium"
+                                                                   title="{{ $slaveFullId }}">
+                                                                    {{ $slaveShortId }}
+                                                                </a>
+                                                            </td>
+                                                            <td class="px-2 py-2 text-gray-700">{{ $slaveDevice->device_type ?? '-' }}</td>
+                                                            <td class="px-2 py-2 text-gray-700">{{ $slaveDevice->device_manufacturer ?? '-' }}</td>
+                                                            <td class="px-2 py-2 text-gray-700">{{ $slaveDevice->device_model ?? '-' }}</td>
+                                                            <td class="px-2 py-2">
+                                                                @if(($slaveDevice->device_status ?? '') === 'Working' || ($slaveDevice->device_status ?? '') === 'Ready')
+                                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                                        {{ $slaveDevice->device_status }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                                        {{ $slaveDevice->device_status ?? 'Unknown' }}
+                                                                    </span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="px-2 py-2 text-gray-700">
+                                                                @if(!empty($slaveDevice->parent_device_id))
+                                                                    @php
+                                                                        $slaveParentFullId = $slaveDevice->parent_device_id;
+                                                                        $slaveParentShortId = substr($slaveParentFullId, 0, 8);
+                                                                    @endphp
+                                                                    <a href="{{ url('/devices/' . $slaveParentFullId) }}" 
+                                                                       class="text-blue-600 hover:text-blue-800" 
+                                                                       title="{{ $slaveParentFullId }}">{{ $slaveParentShortId }}</a>
+                                                                @else
+                                                                    —
+                                                                @endif
+                                                            </td>
+                                                            <td class="px-2 py-2 text-center">
+                                                                <span class="text-gray-400">No</span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                @endif
                                             @endforeach
                                         @else
-                                            <tr><td colspan="8" class="text-center text-gray-400 italic">No devices found for this feed.</td></tr>
+                                            <tr><td colspan="8" class="text-center text-gray-400 italic py-4">No devices found for this feed.</td></tr>
                                         @endif
                                         </tbody>
                                     </table>
@@ -138,5 +180,78 @@
         @endif
     </div>
 </div>
+
+<!-- JavaScript for collapsible functionality -->
+<script>
+    function toggleSlaves(parentId) {
+        const slaveRows = document.querySelectorAll(`.${parentId}`);
+        const icon = document.getElementById('icon-' + parentId);
+        
+        if (slaveRows.length > 0) {
+            const isHidden = slaveRows[0].classList.contains('hidden');
+            
+            slaveRows.forEach(row => {
+                if (isHidden) {
+                    row.classList.remove('hidden');
+                    row.classList.add('animate-slideDown');
+                } else {
+                    row.classList.add('hidden');
+                    row.classList.remove('animate-slideDown');
+                }
+            });
+            
+            if (icon) {
+                // Toggle between plus and minus icons
+                if (isHidden) {
+                    // Change to minus icon (circle-minus)
+                    icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path>';
+                    icon.classList.remove('lucide-circle-plus');
+                    icon.classList.add('lucide-circle-minus');
+                } else {
+                    // Change to plus icon (circle-plus)
+                    icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path>';
+                    icon.classList.remove('lucide-circle-minus');
+                    icon.classList.add('lucide-circle-plus');
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Custom CSS for styling -->
+<style>
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            max-height: 200px;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-slideDown {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    /* Status badge styles */
+    .bg-green-100 { background-color: #dcfce7; }
+    .text-green-800 { color: #166534; }
+    .bg-yellow-100 { background-color: #fef3c7; }
+    .text-yellow-800 { color: #92400e; }
+
+    /* Parent device hover effect */
+    .cursor-pointer:hover {
+        background-color: #f8fafc !important;
+    }
+
+    /* Slave device styling */
+    .slave-row {
+        border-left: 4px solid #bfdbfe;
+    }
+</style>
 
 

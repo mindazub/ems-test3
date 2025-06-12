@@ -38,8 +38,14 @@
                         </div>
 
                         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <x-nav-link :href="route('devices.index')" :active="request()->routeIs('devices.*')">
+                            <x-nav-link :href="route('devices.index')" :active="request()->routeIs('devices.*') && !request()->routeIs('devices.by-feed')">
                                 {{ __('Devices') }}
+                            </x-nav-link>
+                        </div>
+
+                        <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                            <x-nav-link :href="route('devices.by-feed')" :active="request()->routeIs('devices.by-feed')">
+                                {{ __('Devices by Feed') }}
                             </x-nav-link>
                         </div>
 

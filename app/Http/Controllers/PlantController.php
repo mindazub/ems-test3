@@ -297,11 +297,31 @@ class PlantController extends Controller
                         $feedObj = (object) $feed;
                         // Use main_feed_devices for devices
                         $devices = $feed->main_feed_devices ?? [];
-                        // Recursively normalize assigned_devices
+                        // Recursively normalize assigned_devices with proper parent logic
                         $normalizeDevice = function ($device) use (&$normalizeDevice) {
                             $deviceObj = (object) $device;
-                            $assigned = $device->assigned_devices ?? [];
-                            $deviceObj->assigned_devices = collect($assigned)->map(fn($d) => $normalizeDevice($d));
+                            
+                            // Apply the same parent determination logic as DeviceController
+                            $hasAssignedDevices = count($device->assigned_devices ?? []) > 0;
+                            $parameters = (array)($device->parameters ?? []);
+                            $hasSlaveId = array_key_exists('slave_id', $parameters);
+                            
+                            // Only devices with assigned_devices AND no slave_id are true parents
+                            $isTrueParent = $hasAssignedDevices && !$hasSlaveId;
+                            
+                            // Add processed flags for the blade template (same as DeviceController)
+                            $deviceObj->is_true_parent = $isTrueParent;
+                            $deviceObj->has_slaves_processed = $isTrueParent;
+                            
+                            // Override assigned_devices: only include them if this is a true parent
+                            if ($isTrueParent) {
+                                $assigned = $device->assigned_devices ?? [];
+                                $deviceObj->assigned_devices = collect($assigned)->map(fn($d) => $normalizeDevice($d));
+                            } else {
+                                // Non-parent devices should not have assigned_devices for display
+                                $deviceObj->assigned_devices = collect();
+                            }
+                            
                             return $deviceObj;
                         };
                         $feedObj->devices = collect($devices)->map(fn($d) => $normalizeDevice($d));

@@ -34,6 +34,9 @@ Route::middleware('auth')->group(function () {
     // Device routes - exclude 'show' from resource and define it manually
     Route::resource('devices', DeviceController::class)->except(['show']);
     Route::get('/devices/{id}', [DeviceController::class, 'show'])->name('devices.show');
+    
+    // Add new route for devices by feed view
+    Route::get('/devices-by-feed', [DeviceController::class, 'devicesByFeed'])->name('devices.by-feed');
 
     // Add new route for plant data with date parameters
     Route::get('/plants/{plant}/data', [PlantController::class, 'getData'])->name('plants.data');

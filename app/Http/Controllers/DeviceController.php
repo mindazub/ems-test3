@@ -206,6 +206,103 @@ class DeviceController extends Controller
     }
     
     /**
+     * Show devices organized by main feed in a collapsible structure
+     */
+    public function devicesByFeed()
+    {
+        $controllerData = collect();
+        
+        // Get all plants to organize devices by controller and feed
+        $allPlants = $this->getAllPlants();
+        
+        foreach ($allPlants as $plantId) {
+            $plantData = $this->getPlantData($plantId);
+            if ($plantData && !empty($plantData['controllers'])) {
+                $plantUid = $plantData['plant_metadata']['uid'] ?? null;
+                $plantName = $plantUid;
+                
+                foreach ($plantData['controllers'] as $controller) {
+                    $controllerUid = $controller['uid'] ?? 'Unknown';
+                    $controllerShortId = $controllerUid !== 'Unknown' ? substr($controllerUid, 0, 8) : 'Unknown';
+                    
+                    // Organize feeds for this controller
+                    $feeds = collect();
+                    
+                    foreach ($controller['controller_main_feeds'] ?? [] as $feed) {
+                        $feedUid = $feed['uid'] ?? null;
+                        $feedId = $feedUid ? substr($feedUid, 0, 8) : 'Unknown';
+                        
+                        // Organize parent devices and their slaves
+                        $parentDevices = collect();
+                        $devicesData = $feed['main_feed_devices'] ?? [];
+                        
+                        foreach ($devicesData as $device) {
+                            // Check device parameters to determine if it's a true parent
+                            $hasAssignedDevices = count($device['assigned_devices'] ?? []) > 0;
+                            $parameters = (array)($device['parameters'] ?? []);
+                            $hasSlaveId = array_key_exists('slave_id', $parameters);
+                            $isTrueParent = $hasAssignedDevices && !$hasSlaveId;
+                            
+                            // Process parent device
+                            $parentDevice = [
+                                'id' => $device['uid'] ?? null,
+                                'short_id' => isset($device['uid']) ? substr($device['uid'], 0, 8) : null,
+                                'type' => $device['device_type'] ?? 'Unknown',
+                                'manufacturer' => $device['device_manufacturer'] ?? 'Unknown',
+                                'model' => $device['device_model'] ?? 'Unknown',
+                                'status' => $device['device_status'] ?? 'Unknown',
+                                'assigned_to' => '—',
+                                'is_parent' => $isTrueParent ? 'Yes' : 'No',
+                                'has_slaves' => $isTrueParent,
+                                'slaves' => collect()
+                            ];
+                            
+                            // Process slave devices only if this is a true parent
+                            if ($isTrueParent) {
+                                foreach ($device['assigned_devices'] ?? [] as $assignedDevice) {
+                                    $slaveDevice = [
+                                        'id' => $assignedDevice['uid'] ?? null,
+                                        'short_id' => isset($assignedDevice['uid']) ? substr($assignedDevice['uid'], 0, 8) : null,
+                                        'type' => $assignedDevice['device_type'] ?? 'Unknown',
+                                        'manufacturer' => $assignedDevice['device_manufacturer'] ?? 'Unknown',
+                                        'model' => $assignedDevice['device_model'] ?? 'Unknown',
+                                        'status' => $assignedDevice['device_status'] ?? 'Unknown',
+                                        'assigned_to' => '—',
+                                        'is_parent' => 'No'
+                                    ];
+                                    $parentDevice['slaves']->push($slaveDevice);
+                                }
+                            }
+                            
+                            $parentDevices->push($parentDevice);
+                        }
+                        
+                        $feedInfo = [
+                            'feed_id' => $feedId,
+                            'feed_uid' => $feedUid,
+                            'parent_devices' => $parentDevices
+                        ];
+                        
+                        $feeds->push($feedInfo);
+                    }
+                    
+                    $controllerInfo = [
+                        'controller_uid' => $controllerUid,
+                        'controller_short_id' => $controllerShortId,
+                        'plant_name' => $plantName,
+                        'feeds' => $feeds,
+                        'serial_no' => 'SRNo230-890a1047' // Mock serial number
+                    ];
+                    
+                    $controllerData->push($controllerInfo);
+                }
+            }
+        }
+        
+        return view('devices.by-feed', ['controllerData' => $controllerData]);
+    }
+    
+    /**
      * Get list of all plant IDs from the plant list API
      */
     private function getAllPlants()
