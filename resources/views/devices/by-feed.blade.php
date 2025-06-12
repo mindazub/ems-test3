@@ -80,7 +80,7 @@
                                                             <tr class="hover:bg-gray-50 transition-colors duration-150 {{ $parentDevice['has_slaves'] ? 'cursor-pointer' : '' }}" 
                                                                 @if($parentDevice['has_slaves']) onclick="toggleSlaves('parent-{{ $loop->parent->parent->index }}-{{ $loop->parent->index }}-{{ $loop->index }}')" @endif>                                                <td class="px-3 py-4 whitespace-nowrap text-center">
                                                     @if($parentDevice['has_slaves'])
-                                                        <button type="button" class="focus:outline-none" aria-expanded="false" aria-label="Toggle children">
+                                                        <button type="button" class="focus:outline-none flex items-center justify-center" aria-expanded="false" aria-label="Toggle children">
                                                             <svg id="icon-parent-{{ $loop->parent->parent->index }}-{{ $loop->parent->index }}-{{ $loop->index }}" 
                                                                  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-plus w-5 h-5 text-indigo-600 dark:text-indigo-400">
                                                                 <circle cx="12" cy="12" r="10"></circle>
@@ -89,9 +89,19 @@
                                                             </svg>
                                                         </button>
                                                     @else
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle w-5 h-5 text-gray-400">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                        </svg>
+                                                        <div class="flex items-center justify-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" 
+                                                                 width="24" height="24" 
+                                                                 viewBox="0 0 24 24" 
+                                                                 fill="none" 
+                                                                 stroke="currentColor" 
+                                                                 stroke-width="2" 
+                                                                 stroke-linecap="round" 
+                                                                 stroke-linejoin="round" 
+                                                                 class="lucide w-5 h-5 text-gray-400 dark:text-gray-500">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                            </svg>
+                                                        </div>
                                                     @endif
                                                 </td>
                                                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -131,7 +141,12 @@
                                                                 @foreach($parentDevice['slaves'] as $slaveDevice)
                                                                     <tr class="slave-row parent-{{ $loop->parent->parent->parent->index }}-{{ $loop->parent->parent->index }}-{{ $loop->parent->index }} hidden bg-gray-50 border-l-4 border-blue-200">
                                                                         <td class="px-3 py-4 whitespace-nowrap text-center">
-                                                                            <span class="text-gray-400 text-sm">→</span>
+                                                                            <div class="flex items-center justify-center">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right w-4 h-4 text-gray-400 dark:text-gray-500">
+                                                                                    <path d="M5 12h14"></path>
+                                                                                    <path d="m12 5 7 7-7 7"></path>
+                                                                                </svg>
+                                                                            </div>
                                                                         </td>
                                                                         <td class="px-6 py-4 whitespace-nowrap pl-8">
                                                                             <a href="{{ route('devices.show', $slaveDevice['id']) }}" 
