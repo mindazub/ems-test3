@@ -29,14 +29,12 @@
                         </p>
                         <div class="flex flex-wrap justify-center items-center gap-4">
                             <div class="bg-white/25 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/40">
-                                <span class="text-lg font-medium">{{ $plants->count() }} Active Plants</span>
+                                <span class="text-lg font-medium">{{ $plants->count() }} Online Plants</span>
                             </div>
                             <div class="bg-white/25 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/40">
-                                <span class="text-lg font-medium">Real-time Monitoring</span>
+                                <span class="text-lg font-medium">0 Offline Plants</span>
                             </div>
-                            <div class="bg-green-500/40 backdrop-blur-sm rounded-lg px-6 py-3 border border-green-400/60">
-                                <span class="text-lg font-medium">● Live Data</span>
-                            </div>
+
                         </div>
                     </div>
                 </div>
