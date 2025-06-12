@@ -52,6 +52,20 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/plants/{plant}/save-chart-image', [DownloadController::class, 'saveChartImage'])
     ->name('plants.save_chart_image');
+    
+    // New routes for saving bulk data
+    Route::post('/plants/{plant}/save-chart-images', [DownloadController::class, 'saveChartImages'])
+    ->name('plants.save_chart_images');
+    Route::post('/plants/{plant}/save-chart-data', [DownloadController::class, 'saveChartData'])
+    ->name('plants.save_chart_data');
+    
+    // Comprehensive plant downloads from show page
+    Route::get('/plants/{plant}/download-report-pdf', [DownloadController::class, 'downloadPlantReport'])
+    ->name('plants.download.report');
+    Route::get('/plants/{plant}/download-all-charts', [DownloadController::class, 'downloadAllCharts']) 
+    ->name('plants.download.charts');
+    Route::get('/plants/{plant}/download-all-csv', [DownloadController::class, 'downloadAllCSV'])
+    ->name('plants.download.csv');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {

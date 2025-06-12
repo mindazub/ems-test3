@@ -157,6 +157,18 @@
                                     Back to All Plants List
                                 </a>
                             </div>
+                            <div class="mt-4">
+                                <button id="download-report-pdf" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                    Download Report PDF
+                                </button>
+                                <button id="download-all-charts" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                    Download Pictures JPG/PNG
+                                </button>
+                                <button id="download-all-csv" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded transition">
+                                    Download Data CSV
+                                </button>
+                            </div>
+ 
                         </div>
 
                         <!-- Right Side: Map -->
@@ -250,6 +262,285 @@
             
             // Adjust map height on window resize
             window.addEventListener('resize', adjustMapHeight);
+        });
+        
+        // SIMPLE WORKING DOWNLOAD SOLUTION
+        document.addEventListener('DOMContentLoaded', function() {
+            const plantId = @json($plant->uid ?? $id);
+            
+            // Show notification function
+            function showNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                    type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                    type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                    'bg-blue-100 text-blue-800 border border-blue-200'
+                }`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 3000);
+            }
+            
+            // Function to get chart image with white background
+            function getChartImageWithWhiteBackground(canvas) {
+                // Create a new canvas with white background
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Set canvas size to match original
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                
+                // Fill with white background
+                tempCtx.fillStyle = '#FFFFFF';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Draw the original chart on top
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // Return the data URL with white background
+                return tempCanvas.toDataURL('image/png');
+            }
+            
+            // Simple window.open download - WORKS LIKE INDIVIDUAL DOWNLOADS
+            function simpleDownload(url, loadingMessage) {
+                showNotification(loadingMessage, 'info');
+                
+                // Use same method as working individual downloads
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => {
+                    showNotification('Download started!', 'success');
+                }, 1000);
+            }
+            
+            // Get current date
+            function getCurrentDate() {
+                return document.getElementById('energy-date')?.value || new Date().toISOString().split('T')[0];
+            }
+            
+            // Download Report PDF - Save images first, then generate PDF
+            document.getElementById('download-report-pdf').addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const btn = this;
+                const originalText = btn.textContent;
+                btn.textContent = 'Generating PDF...';
+                btn.disabled = true;
+                
+                try {
+                    showNotification('Preparing chart images for PDF...', 'info');
+                    
+                    // Wait for charts to be fully rendered
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // First, save chart images to session for PDF generation
+                    const chartImages = {};
+                    const chartTypes = ['energy', 'battery', 'savings'];
+                    let imagesFound = 0;
+                    
+                    chartTypes.forEach(chartType => {
+                        const chartCanvas = document.getElementById(`${chartType}Chart`);
+                        if (chartCanvas) {
+                            // Get chart image with white background for PDF
+                            const imageData = getChartImageWithWhiteBackground(chartCanvas);
+                            if (imageData && imageData.length > 100) { // Basic validation
+                                chartImages[chartType] = imageData;
+                                imagesFound++;
+                                console.log(`✅ Captured ${chartType} chart image (${imageData.length} bytes)`);
+                            } else {
+                                console.warn(`⚠️ Failed to capture ${chartType} chart image`);
+                            }
+                        } else {
+                            console.warn(`⚠️ Chart canvas not found: ${chartType}Chart`);
+                        }
+                    });
+                    
+                    console.log(`📊 Total chart images captured: ${imagesFound}`);
+                    
+                    if (imagesFound > 0) {
+                        // Save images to session for PDF generation
+                        showNotification(`Saving ${imagesFound} chart images...`, 'info');
+                        
+                        const saveResponse = await fetch(`/plants/${plantId}/save-chart-images`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                            },
+                            body: JSON.stringify({
+                                chart_images: chartImages,
+                                date: getCurrentDate()
+                            })
+                        });
+                        
+                        if (!saveResponse.ok) {
+                            const errorText = await saveResponse.text();
+                            console.error('Failed to save chart images:', errorText);
+                            throw new Error('Failed to save chart images for PDF');
+                        }
+                        
+                        const saveResult = await saveResponse.json();
+                        console.log('Chart images saved successfully:', saveResult);
+                    } else {
+                        console.warn('No chart images captured, proceeding with PDF generation anyway');
+                    }
+                    
+                    // Now generate PDF with images and data
+                    showNotification('Generating comprehensive PDF report...', 'info');
+                    const currentDate = getCurrentDate();
+                    const url = `/plants/${plantId}/download-report-pdf?date=${currentDate}`;
+                    simpleDownload(url, 'Generating comprehensive PDF report...');
+                    
+                } catch (error) {
+                    console.error('PDF generation error:', error);
+                    showNotification('Failed to generate PDF report: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            });
+            
+            // Download All Charts - First save images, then download
+            document.getElementById('download-all-charts').addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const btn = this;
+                const originalText = btn.textContent;
+                btn.textContent = 'Preparing Charts...';
+                btn.disabled = true;
+                
+                try {
+                    showNotification('Preparing chart images...', 'info');
+                    
+                    // Collect chart images
+                    const chartImages = {};
+                    const chartTypes = ['energy', 'battery', 'savings'];
+                    
+                    chartTypes.forEach(chartType => {
+                        const chartCanvas = document.getElementById(`${chartType}Chart`);
+                        if (chartCanvas) {
+                            // Get chart image with white background
+                            chartImages[chartType] = getChartImageWithWhiteBackground(chartCanvas);
+                        }
+                    });
+                    
+                    if (Object.keys(chartImages).length === 0) {
+                        throw new Error('No chart images found. Please ensure charts are loaded.');
+                    }
+                    
+                    // Save images to server first
+                    const saveResponse = await fetch(`/plants/${plantId}/save-chart-images`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        },
+                        body: JSON.stringify({
+                            chart_images: chartImages,
+                            date: getCurrentDate()
+                        })
+                    });
+                    
+                    if (!saveResponse.ok) {
+                        throw new Error('Failed to save chart images');
+                    }
+                    
+                    // Now download using simple GET
+                    const currentDate = getCurrentDate();
+                    const url = `/plants/${plantId}/download-all-charts?date=${currentDate}`;
+                    simpleDownload(url, 'Downloading chart images...');
+                    
+                } catch (error) {
+                    showNotification('Failed to download chart images: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            });
+            
+            // Download All CSV - Save data first, then download
+            document.getElementById('download-all-csv').addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const btn = this;
+                const originalText = btn.textContent;
+                btn.textContent = 'Preparing CSV...';
+                btn.disabled = true;
+                
+                try {
+                    showNotification('Preparing CSV data...', 'info');
+                    
+                    // Collect chart data
+                    const chartData = {};
+                    const chartTypes = ['energy', 'battery', 'savings'];
+                    
+                    chartTypes.forEach(chartType => {
+                        const chartCanvas = document.getElementById(`${chartType}Chart`);
+                        if (chartCanvas) {
+                            const chartInstance = Chart.getChart(chartCanvas);
+                            if (chartInstance && chartInstance.data) {
+                                chartData[chartType] = {
+                                    labels: chartInstance.data.labels || [],
+                                    datasets: (chartInstance.data.datasets || []).map(dataset => ({
+                                        label: dataset.label,
+                                        data: dataset.data
+                                    }))
+                                };
+                            }
+                        }
+                    });
+                    
+                    if (Object.keys(chartData).length === 0) {
+                        throw new Error('No chart data found. Please ensure charts are loaded.');
+                    }
+                    
+                    // Save data to server first
+                    const saveResponse = await fetch(`/plants/${plantId}/save-chart-data`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        },
+                        body: JSON.stringify({
+                            chart_data: chartData,
+                            date: getCurrentDate()
+                        })
+                    });
+                    
+                    if (!saveResponse.ok) {
+                        throw new Error('Failed to save chart data');
+                    }
+                    
+                    // Now download using simple GET
+                    const currentDate = getCurrentDate();
+                    const url = `/plants/${plantId}/download-all-csv?date=${currentDate}`;
+                    simpleDownload(url, 'Downloading CSV data...');
+                    
+                } catch (error) {
+                    showNotification('Failed to download CSV data: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            });
         });
     </script>
 </x-app-layout>

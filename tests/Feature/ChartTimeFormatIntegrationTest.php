@@ -38,7 +38,7 @@ class ChartTimeFormatIntegrationTest extends TestCase
 
         // Check that the user's time format preference is passed to JavaScript
         $this->assertStringContainsString('window.userTimeFormat = "12"', $rendered);
-        $this->assertStringContainsString('User time format preference', $rendered);
+        $this->assertStringContainsString('window.userTimeOffset', $rendered);
     }
 
     public function test_chart_defaults_to_24_hour_format_for_guest()

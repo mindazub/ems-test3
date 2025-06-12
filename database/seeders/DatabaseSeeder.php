@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
 
     private function createUsers(): void
     {
+        // Clear existing users first
+        User::truncate();
+        
         User::create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
@@ -60,6 +63,14 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('mantas000'),
             'role' => 'customer',
             'uuid' => '6a36660d-daae-48dd-a4fe-000b191b13d8',
+        ]);
+
+        User::create([
+            'name' => 'javainis',
+            'email' => 'jonas.vaicys@edislab.lt',
+            'password' => bcrypt('Krepsinis1230'),
+            'role' => 'customer',
+            'uuid' => Str::uuid()->toString(),
         ]);
     }
 }

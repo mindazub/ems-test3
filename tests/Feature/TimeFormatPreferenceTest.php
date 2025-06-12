@@ -4,13 +4,15 @@ use App\Models\User;
 
 test('user can update time format preference', function () {
     $user = User::factory()->create([
-        'settings' => ['time_format' => '24']
+        'settings' => ['time_format' => '24'],
+        'time_offset' => 0
     ]);
 
     $response = $this
         ->actingAs($user)
         ->put('/profile/settings', [
             'time_format' => '12',
+            'time_offset' => 0,
         ]);
 
     $response
@@ -47,12 +49,15 @@ test('user can format time according to preference', function () {
 });
 
 test('time format validation rejects invalid values', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'time_offset' => 0
+    ]);
 
     $response = $this
         ->actingAs($user)
         ->put('/profile/settings', [
             'time_format' => 'invalid',
+            'time_offset' => 0,
         ]);
 
     $response->assertSessionHasErrors(['time_format']);

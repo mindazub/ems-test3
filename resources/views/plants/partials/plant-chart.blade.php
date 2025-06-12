@@ -330,6 +330,35 @@ function formatLabelDate(dateString) {
     }
 }
 
+// Format time string (HH:MM) for chart axis labels according to user preference
+function formatChartTimeLabel(timeString) {
+    try {
+        // Parse time string like "14:30" or "08:00"
+        const [hours, minutes] = timeString.split(':').map(Number);
+        
+        if (isNaN(hours) || isNaN(minutes)) {
+            return timeString;
+        }
+        
+        // Create a date object for formatting (use today's date)
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        
+        // Use user's time format preference
+        const use12Hour = window.userTimeFormat === '12';
+        const options = { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: use12Hour
+        };
+        
+        return date.toLocaleTimeString([], options);
+    } catch (e) {
+        console.log('Error formatting chart time label:', e, timeString);
+        return timeString;
+    }
+}
+
 // Global variables for chart data and instances
 window.energyData = {};
 window.batteryPriceData = {};
@@ -950,7 +979,11 @@ function renderChartsAndTables() {
                             maxTicksLimit: 24,
                             callback: function(value, index) {
                                 const time = this.getLabelForValue(value);
-                                return time.endsWith(':00') ? time : '';
+                                // Only show hourly labels for cleaner look
+                                if (time.endsWith(':00')) {
+                                    return formatChartTimeLabel(time);
+                                }
+                                return '';
                             }
                         }, 
                         border: { display: true, width: 2 },
@@ -1078,7 +1111,11 @@ function renderChartsAndTables() {
                             maxTicksLimit: 24,
                             callback: function(value, index) {
                                 const time = this.getLabelForValue(value);
-                                return time.endsWith(':00') ? time : '';
+                                // Only show hourly labels for cleaner look
+                                if (time.endsWith(':00')) {
+                                    return formatChartTimeLabel(time);
+                                }
+                                return '';
                             }
                         },
                         grid: { color: '#f3f4f6' }
@@ -1183,7 +1220,11 @@ function renderChartsAndTables() {
                             maxTicksLimit: 24,
                             callback: function(value, index) {
                                 const time = this.getLabelForValue(value);
-                                return time.endsWith(':00') ? time : '';
+                                // Only show hourly labels for cleaner look
+                                if (time.endsWith(':00')) {
+                                    return formatChartTimeLabel(time);
+                                }
+                                return '';
                             }
                         },
                         grid: { color: '#f3f4f6' }
@@ -1523,10 +1564,50 @@ function setupNavigationButtons(dateInput, todayStr) {
 </script>
 
 <script>
+    // Enhanced chart download functionality with better UX
     function sendChartToBackend(chartId, chartName, plantId, type) {
-        let canvas = document.getElementById(chartId);
-        let dataUrl = canvas.toDataURL('image/png');
+        console.log(`=== DOWNLOAD ${type.toUpperCase()} DEBUG START ===`);
+        console.log('Chart ID:', chartId);
+        console.log('Chart Name:', chartName);
+        console.log('Plant ID:', plantId);
+        console.log('Type:', type);
+        
+        // Show loading indicator
+        const downloadButton = document.querySelector(`#download${type.toUpperCase()}-${chartName}`);
+        console.log('Download button found:', !!downloadButton);
+        
+        if (!downloadButton) {
+            console.error('Download button not found!');
+            showNotification(`Download button not found for ${type.toUpperCase()}`, 'error');
+            return;
+        }
+        
+        const originalText = downloadButton.textContent;
+        downloadButton.innerHTML = '<span>Downloading...</span>';
+        downloadButton.disabled = true;
 
+        let canvas = document.getElementById(chartId);
+        console.log('Canvas found:', !!canvas);
+        
+        if (!canvas) {
+            console.error('Canvas not found!');
+            showNotification(`Chart canvas not found for ${type.toUpperCase()} download`, 'error');
+            downloadButton.innerHTML = originalText;
+            downloadButton.disabled = false;
+            return;
+        }
+        
+        let dataUrl = canvas.toDataURL('image/png');
+        console.log('Data URL length:', dataUrl.length);
+        console.log('Data URL preview:', dataUrl.substring(0, 100) + '...');
+        
+        // Get selected date from the date input
+        const dateInput = document.getElementById('energy-date');
+        const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+        console.log('Selected date:', selectedDate);
+
+        console.log('About to send POST request to save chart image...');
+        
         return fetch(`/plants/${plantId}/save-chart-image`, {
             method: 'POST',
             headers: {
@@ -1537,14 +1618,222 @@ function setupNavigationButtons(dateInput, todayStr) {
                 chart: chartName,
                 image: dataUrl
             })
-        }).then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  window.location.href = `/plants/${plantId}/download/${chartName}/${type}`;
-              } else {
-                  alert('Error saving chart image!');
-              }
-          });
+        })
+        .then(response => {
+            console.log('Save chart response status:', response.status);
+            console.log('Save chart response ok:', response.ok);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Save chart response data:', data);
+            
+            if (data.success) {
+                console.log(`Chart saved successfully for ${type} download`);
+                
+                // For PNG downloads, we can download directly with the image data
+                if (type === 'png') {
+                    console.log('Initiating direct PNG download...');
+                    downloadImageDirectly(dataUrl, `${plantId}_${chartName}_${selectedDate}.png`);
+                } else {
+                    // For CSV and PDF, use a better download approach to avoid page reloads
+                    const downloadUrl = `/plants/${plantId}/download/${chartName}/${type}?date=${selectedDate}`;
+                    console.log(`Initiating ${type.toUpperCase()} download: ${downloadUrl}`);
+                    
+                    // Use a more robust download method that doesn't cause page navigation
+                    downloadFileWithFetch(downloadUrl, `${plantId}_${chartName}_${selectedDate}.${type}`);
+                }
+                
+                showNotification(`${type.toUpperCase()} download completed successfully!`, 'success');
+            } else {
+                console.error('Chart save failed:', data);
+                showNotification(`Error preparing ${type.toUpperCase()} download: ${data.message || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Download error:', error);
+            console.error('Error stack:', error.stack);
+            showNotification(`${type.toUpperCase()} download failed. Please try again.`, 'error');
+        })
+        .finally(() => {
+            console.log('Download process completed, resetting button state');
+            // Reset button state
+            downloadButton.innerHTML = originalText;
+            downloadButton.disabled = false;
+            console.log(`=== DOWNLOAD ${type.toUpperCase()} DEBUG END ===`);
+        });
+    }
+
+    // Direct image download for PNG files
+    function downloadImageDirectly(dataUrl, filename) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Enhanced download function that doesn't cause page reloads
+    async function downloadFileWithFetch(url, filename) {
+        try {
+            console.log(`Downloading file from: ${url}`);
+            
+            // For authenticated downloads, use a form submission instead of fetch
+            // This ensures proper session handling and avoids CORS/authentication issues
+            downloadWithForm(url, filename);
+            
+        } catch (error) {
+            console.error('Download error:', error);
+            showNotification(`Download failed: ${error.message}`, 'error');
+        }
+    }
+
+    // Alternative download method using form submission for better authentication handling
+    function downloadWithForm(url, filename) {
+        try {
+            console.log(`Downloading via form submission: ${url}`);
+            
+            // Create a temporary form for download
+            const form = document.createElement('form');
+            form.method = 'GET';
+            form.action = url;
+            form.style.display = 'none';
+            
+            // Add CSRF token as hidden input
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+            }
+            
+            // Add the form to the page and submit it
+            document.body.appendChild(form);
+            form.submit();
+            
+            // Clean up - remove the form after a delay
+            setTimeout(() => {
+                if (form.parentNode) {
+                    form.parentNode.removeChild(form);
+                }
+            }, 1000);
+            
+            console.log('Form download submitted successfully');
+            showNotification('Download initiated successfully!', 'success');
+            
+        } catch (error) {
+            console.error('Form download error:', error);
+            showNotification(`Download failed: ${error.message}`, 'error');
+        }
+    }
+
+    // Backup fetch-based download function for debugging
+    async function downloadFileWithFetchDebug(url, filename) {
+        try {
+            console.log(`Downloading file from: ${url}`);
+            
+            // Add CSRF token to the request
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            console.log('CSRF Token:', csrfToken ? 'Present' : 'Missing');
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/pdf,application/octet-stream,*/*'
+                },
+                credentials: 'same-origin'
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    showNotification('Authentication required. Please refresh and try again.', 'error');
+                    return;
+                } else if (response.status === 404) {
+                    showNotification('Download file not found. Please try again.', 'error');
+                    return;
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+
+            // Check if the response is actually a file (PDF/CSV)
+            const contentType = response.headers.get('content-type');
+            console.log('Response content type:', contentType);
+
+            // Log the first part of the response to see what we're getting
+            const text = await response.text();
+            console.log('Response preview (first 200 chars):', text.substring(0, 200));
+
+            if (contentType && (contentType.includes('application/pdf') || contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {
+                // Convert text back to blob for download
+                const blob = new Blob([text], { type: contentType });
+                console.log('Downloaded blob size:', blob.size);
+
+                // Create a temporary URL for the blob
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                // Create a temporary link and click it to download
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                
+                // Clean up
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+                
+                console.log('File download completed successfully');
+                showNotification('Download completed successfully!', 'success');
+            } else {
+                console.error('Unexpected response type. Response preview:', text.substring(0, 500));
+                showNotification('Download failed: Unexpected response from server', 'error');
+            }
+
+        } catch (error) {
+            console.error('Download error:', error);
+            showNotification(`Download failed: ${error.message}`, 'error');
+        }
+    }
+
+    // Enhanced CSV download that uses current chart data
+    function downloadCSVDirect(chartName, plantId) {
+        const downloadButton = document.querySelector(`#downloadCSV-${chartName}`);
+        const originalText = downloadButton.textContent;
+        downloadButton.innerHTML = 'Preparing CSV...';
+        downloadButton.style.pointerEvents = 'none';
+
+        // Get selected date from the date input
+        const dateInput = document.getElementById('energy-date');
+        const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+        // Use current chart data instead of static files
+        const currentData = window[`${chartName === 'battery' ? 'batteryPrice' : chartName === 'savings' ? 'batterySavings' : 'energy'}Data`];
+        
+        if (!currentData || Object.keys(currentData).length === 0) {
+            showNotification('No data available for CSV download', 'error');
+            downloadButton.innerHTML = originalText;
+            downloadButton.style.pointerEvents = 'auto';
+            return;
+        }
+
+        // Download CSV using the new robust download method
+        const downloadUrl = `/plants/${plantId}/download/${chartName}/csv?date=${selectedDate}`;
+        downloadFileWithFetch(downloadUrl, `${plantId}_${chartName}_${selectedDate}.csv`);
+        
+        // Reset button after a delay
+        setTimeout(() => {
+            downloadButton.innerHTML = originalText;
+            downloadButton.style.pointerEvents = 'auto';
+            showNotification('CSV download initiated!', 'success');
+        }, 1000);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1563,56 +1852,118 @@ function setupNavigationButtons(dateInput, todayStr) {
             }
         }
         
-        // ENERGY
-        document.getElementById('downloadPNG-energy').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('energyChart', 'energy', window.plantId, 'png');
-        });
-        document.getElementById('downloadPDF-energy').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
-        });
-        // BATTERY
-        document.getElementById('downloadPNG-battery').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('batteryChart', 'battery', window.plantId, 'png');
-        });
-        document.getElementById('downloadPDF-battery').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
-        });
-        // SAVINGS
-        document.getElementById('downloadPNG-savings').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('savingsChart', 'savings', window.plantId, 'png');
-        });
-        document.getElementById('downloadPDF-savings').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!window.plantId) {
-                showNotification('Cannot download chart: Plant ID is missing', 'error');
-                return;
-            }
-            sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
-        });
+        // ENERGY CHART DOWNLOADS
+        const energyPNGButton = document.getElementById('downloadPNG-energy');
+        if (energyPNGButton) {
+            energyPNGButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('energyChart', 'energy', window.plantId, 'png');
+            });
+        }
+
+        const energyPDFButton = document.getElementById('downloadPDF-energy');
+        if (energyPDFButton) {
+            energyPDFButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
+            });
+        }
+
+        // Override CSV link behavior for energy (only if element exists)
+        const energyCSVButton = document.getElementById('downloadCSV-energy');
+        if (energyCSVButton) {
+            energyCSVButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download CSV: Plant ID is missing', 'error');
+                    return;
+                }
+                downloadCSVDirect('energy', window.plantId);
+            });
+        }
+
+        // BATTERY CHART DOWNLOADS
+        const batteryPNGButton = document.getElementById('downloadPNG-battery');
+        if (batteryPNGButton) {
+            batteryPNGButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('batteryChart', 'battery', window.plantId, 'png');
+            });
+        }
+
+        const batteryPDFButton = document.getElementById('downloadPDF-battery');
+        if (batteryPDFButton) {
+            batteryPDFButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
+            });
+        }
+
+        // Override CSV link behavior for battery (only if element exists)
+        const batteryCSVButton = document.getElementById('downloadCSV-battery');
+        if (batteryCSVButton) {
+            batteryCSVButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download CSV: Plant ID is missing', 'error');
+                    return;
+                }
+                downloadCSVDirect('battery', window.plantId);
+            });
+        }
+
+        // SAVINGS CHART DOWNLOADS
+        const savingsPNGButton = document.getElementById('downloadPNG-savings');
+        if (savingsPNGButton) {
+            savingsPNGButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('savingsChart', 'savings', window.plantId, 'png');
+            });
+        }
+
+        const savingsPDFButton = document.getElementById('downloadPDF-savings');
+        if (savingsPDFButton) {
+            savingsPDFButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download chart: Plant ID is missing', 'error');
+                    return;
+                }
+                sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
+            });
+        }
+
+        // Override CSV link behavior for savings (only if element exists)
+        const savingsCSVButton = document.getElementById('downloadCSV-savings');
+        if (savingsCSVButton) {
+            savingsCSVButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!window.plantId) {
+                    showNotification('Cannot download CSV: Plant ID is missing', 'error');
+                    return;
+                }
+                downloadCSVDirect('savings', window.plantId);
+            });
+        }
     });
-    </script>
+</script>

@@ -28,6 +28,24 @@ class Plant extends Model
         });
     }
 
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        // Handle both uuid and uid lookups for backward compatibility
+        return $this->where('uuid', $value)
+                   ->orWhere('uid', $value)
+                   ->first();
+    }
 
     public function devices()
     {
@@ -43,6 +61,4 @@ class Plant extends Model
     {
         return $this->hasMany(AggregatedDataSnapshot::class);
     }
-
-
 }

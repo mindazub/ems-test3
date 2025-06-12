@@ -92,7 +92,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::PZyaEhFbsRMzvedo',
+            '_route' => 'generated::hJdPrCqKyf6Np8sZ',
           ),
           1 => NULL,
           2 => 
@@ -112,7 +112,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::f2UZk0lsuVd4XB4X',
+            '_route' => 'generated::nFgQvnKfdtvl5AJu',
           ),
           1 => NULL,
           2 => 
@@ -451,7 +451,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::SoOIDdV5c44QnpWA',
+            '_route' => 'generated::pXCpmdpQLOCkPgVK',
           ),
           1 => NULL,
           2 => 
@@ -487,7 +487,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::mKnAwxYtpPapkJE2',
+            '_route' => 'generated::iMZFiwE9ptLoNSqK',
           ),
           1 => NULL,
           2 => 
@@ -617,7 +617,7 @@ app('router')->setCompiledRoutes(
         array (
           0 => 
           array (
-            '_route' => 'generated::OAApVTvHBNX2vu1q',
+            '_route' => 'generated::uus9lP0NNgC9Fb2z',
           ),
           1 => NULL,
           2 => 
@@ -671,7 +671,7 @@ app('router')->setCompiledRoutes(
     ),
     2 => 
     array (
-      0 => '{^(?|/_debugbar/c(?|lockwork/([^/]++)(*:39)|ache/([^/]++)(?:/([^/]++))?(*:73))|/plants/([^/]++)(?|(*:100)|/(?|edit(*:116)|d(?|ata(*:131)|ownload/([^/]++)/([^/]++)(*:164))|available\\-dates(*:189)|save\\-chart\\-image(*:215))|(*:224))|/devices/([^/]++)(?|/edit(*:258)|(*:266)|(*:274))|/r(?|oles/([^/]++)(?|/edit(*:309)|(*:317))|eset\\-password/([^/]++)(*:349))|/customers/([^/]++)(?|(*:380)|/edit(*:393)|(*:401))|/verify\\-email/([^/]++)/([^/]++)(*:442)|/storage/(.*)(*:463))/?$}sDu',
+      0 => '{^(?|/_debugbar/c(?|lockwork/([^/]++)(*:39)|ache/([^/]++)(?:/([^/]++))?(*:73))|/plants/([^/]++)(?|(*:100)|/(?|edit(*:116)|d(?|ata(*:131)|ownload(?|/([^/]++)/([^/]++)(*:167)|\\-(?|report\\-pdf(*:191)|all\\-c(?|harts(*:213)|sv(*:223)))))|available\\-dates(*:251)|save\\-chart\\-(?|image(?|(*:283)|s(*:292))|data(*:305)))|(*:315))|/devices/([^/]++)(?|/edit(*:349)|(*:357)|(*:365))|/r(?|oles/([^/]++)(?|/edit(*:400)|(*:408))|eset\\-password/([^/]++)(*:440))|/customers/([^/]++)(?|(*:471)|/edit(*:484)|(*:492))|/verify\\-email/([^/]++)/([^/]++)(*:533)|/storage/(.*)(*:554))/?$}sDu',
     ),
     3 => 
     array (
@@ -791,7 +791,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      164 => 
+      167 => 
       array (
         0 => 
         array (
@@ -816,7 +816,76 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      189 => 
+      191 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'plants.download.report',
+          ),
+          1 => 
+          array (
+            0 => 'plant',
+          ),
+          2 => 
+          array (
+            'GET' => 0,
+            'HEAD' => 1,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => false,
+          6 => NULL,
+        ),
+      ),
+      213 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'plants.download.charts',
+          ),
+          1 => 
+          array (
+            0 => 'plant',
+          ),
+          2 => 
+          array (
+            'GET' => 0,
+            'HEAD' => 1,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => false,
+          6 => NULL,
+        ),
+      ),
+      223 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'plants.download.csv',
+          ),
+          1 => 
+          array (
+            0 => 'plant',
+          ),
+          2 => 
+          array (
+            'GET' => 0,
+            'HEAD' => 1,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => false,
+          6 => NULL,
+        ),
+      ),
+      251 => 
       array (
         0 => 
         array (
@@ -839,7 +908,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      215 => 
+      283 => 
       array (
         0 => 
         array (
@@ -861,7 +930,51 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      224 => 
+      292 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'plants.save_chart_images',
+          ),
+          1 => 
+          array (
+            0 => 'plant',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => false,
+          6 => NULL,
+        ),
+      ),
+      305 => 
+      array (
+        0 => 
+        array (
+          0 => 
+          array (
+            '_route' => 'plants.save_chart_data',
+          ),
+          1 => 
+          array (
+            0 => 'plant',
+          ),
+          2 => 
+          array (
+            'POST' => 0,
+          ),
+          3 => NULL,
+          4 => false,
+          5 => false,
+          6 => NULL,
+        ),
+      ),
+      315 => 
       array (
         0 => 
         array (
@@ -903,7 +1016,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      258 => 
+      349 => 
       array (
         0 => 
         array (
@@ -926,7 +1039,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      266 => 
+      357 => 
       array (
         0 => 
         array (
@@ -968,7 +1081,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      274 => 
+      365 => 
       array (
         0 => 
         array (
@@ -991,7 +1104,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      309 => 
+      400 => 
       array (
         0 => 
         array (
@@ -1014,7 +1127,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      317 => 
+      408 => 
       array (
         0 => 
         array (
@@ -1037,7 +1150,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      349 => 
+      440 => 
       array (
         0 => 
         array (
@@ -1060,7 +1173,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      380 => 
+      471 => 
       array (
         0 => 
         array (
@@ -1083,7 +1196,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      393 => 
+      484 => 
       array (
         0 => 
         array (
@@ -1106,7 +1219,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      401 => 
+      492 => 
       array (
         0 => 
         array (
@@ -1129,7 +1242,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      442 => 
+      533 => 
       array (
         0 => 
         array (
@@ -1153,7 +1266,7 @@ app('router')->setCompiledRoutes(
           6 => NULL,
         ),
       ),
-      463 => 
+      554 => 
       array (
         0 => 
         array (
@@ -1417,7 +1530,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::PZyaEhFbsRMzvedo' => 
+    'generated::hJdPrCqKyf6Np8sZ' => 
     array (
       'methods' => 
       array (
@@ -1445,8 +1558,8 @@ app('router')->setCompiledRoutes(
                     return response(\\Illuminate\\Support\\Facades\\View::file(\'/var/www/ems/vendor/laravel/framework/src/Illuminate/Foundation/Configuration\'.\'/../resources/health-up.blade.php\', [
                         \'exception\' => $exception,
                     ]), status: $exception ? 500 : 200);
-                }";s:5:"scope";s:54:"Illuminate\\Foundation\\Configuration\\ApplicationBuilder";s:4:"this";N;s:4:"self";s:32:"00000000000007450000000000000000";}}',
-        'as' => 'generated::PZyaEhFbsRMzvedo',
+                }";s:5:"scope";s:54:"Illuminate\\Foundation\\Configuration\\ApplicationBuilder";s:4:"this";N;s:4:"self";s:32:"000000000000074b0000000000000000";}}',
+        'as' => 'generated::hJdPrCqKyf6Np8sZ',
       ),
       'fallback' => false,
       'defaults' => 
@@ -1462,7 +1575,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::f2UZk0lsuVd4XB4X' => 
+    'generated::nFgQvnKfdtvl5AJu' => 
     array (
       'methods' => 
       array (
@@ -1478,13 +1591,13 @@ app('router')->setCompiledRoutes(
         ),
         'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:44:"function () {
     return \\view(\'welcome\');
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"00000000000007470000000000000000";}}',
+}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"000000000000074d0000000000000000";}}',
         'namespace' => NULL,
         'prefix' => '',
         'where' => 
         array (
         ),
-        'as' => 'generated::f2UZk0lsuVd4XB4X',
+        'as' => 'generated::nFgQvnKfdtvl5AJu',
       ),
       'fallback' => false,
       'defaults' => 
@@ -2442,6 +2555,194 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
+    'plants.save_chart_images' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'plants/{plant}/save-chart-images',
+      'action' => 
+      array (
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'auth',
+        ),
+        'uses' => 'App\\Http\\Controllers\\DownloadController@saveChartImages',
+        'controller' => 'App\\Http\\Controllers\\DownloadController@saveChartImages',
+        'namespace' => NULL,
+        'prefix' => '',
+        'where' => 
+        array (
+        ),
+        'as' => 'plants.save_chart_images',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'plants.save_chart_data' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'POST',
+      ),
+      'uri' => 'plants/{plant}/save-chart-data',
+      'action' => 
+      array (
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'auth',
+        ),
+        'uses' => 'App\\Http\\Controllers\\DownloadController@saveChartData',
+        'controller' => 'App\\Http\\Controllers\\DownloadController@saveChartData',
+        'namespace' => NULL,
+        'prefix' => '',
+        'where' => 
+        array (
+        ),
+        'as' => 'plants.save_chart_data',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'plants.download.report' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'GET',
+        1 => 'HEAD',
+      ),
+      'uri' => 'plants/{plant}/download-report-pdf',
+      'action' => 
+      array (
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'auth',
+        ),
+        'uses' => 'App\\Http\\Controllers\\DownloadController@downloadPlantReport',
+        'controller' => 'App\\Http\\Controllers\\DownloadController@downloadPlantReport',
+        'namespace' => NULL,
+        'prefix' => '',
+        'where' => 
+        array (
+        ),
+        'as' => 'plants.download.report',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'plants.download.charts' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'GET',
+        1 => 'HEAD',
+      ),
+      'uri' => 'plants/{plant}/download-all-charts',
+      'action' => 
+      array (
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'auth',
+        ),
+        'uses' => 'App\\Http\\Controllers\\DownloadController@downloadAllCharts',
+        'controller' => 'App\\Http\\Controllers\\DownloadController@downloadAllCharts',
+        'namespace' => NULL,
+        'prefix' => '',
+        'where' => 
+        array (
+        ),
+        'as' => 'plants.download.charts',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
+    'plants.download.csv' => 
+    array (
+      'methods' => 
+      array (
+        0 => 'GET',
+        1 => 'HEAD',
+      ),
+      'uri' => 'plants/{plant}/download-all-csv',
+      'action' => 
+      array (
+        'middleware' => 
+        array (
+          0 => 'web',
+          1 => 'auth',
+        ),
+        'uses' => 'App\\Http\\Controllers\\DownloadController@downloadAllCSV',
+        'controller' => 'App\\Http\\Controllers\\DownloadController@downloadAllCSV',
+        'namespace' => NULL,
+        'prefix' => '',
+        'where' => 
+        array (
+        ),
+        'as' => 'plants.download.csv',
+      ),
+      'fallback' => false,
+      'defaults' => 
+      array (
+      ),
+      'wheres' => 
+      array (
+      ),
+      'bindingFields' => 
+      array (
+      ),
+      'lockSeconds' => NULL,
+      'waitSeconds' => NULL,
+      'withTrashed' => false,
+    ),
     'roles.index' => 
     array (
       'methods' => 
@@ -2733,7 +3034,7 @@ app('router')->setCompiledRoutes(
         ),
         'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:60:"function () {
         return \\view(\'admin.dashboard\');
-    }";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"00000000000007650000000000000000";}}',
+    }";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"00000000000007700000000000000000";}}',
         'namespace' => NULL,
         'prefix' => '',
         'where' => 
@@ -2793,7 +3094,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::SoOIDdV5c44QnpWA' => 
+    'generated::pXCpmdpQLOCkPgVK' => 
     array (
       'methods' => 
       array (
@@ -2814,7 +3115,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::SoOIDdV5c44QnpWA',
+        'as' => 'generated::pXCpmdpQLOCkPgVK',
       ),
       'fallback' => false,
       'defaults' => 
@@ -2868,7 +3169,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::mKnAwxYtpPapkJE2' => 
+    'generated::iMZFiwE9ptLoNSqK' => 
     array (
       'methods' => 
       array (
@@ -2889,7 +3190,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::mKnAwxYtpPapkJE2',
+        'as' => 'generated::iMZFiwE9ptLoNSqK',
       ),
       'fallback' => false,
       'defaults' => 
@@ -3209,7 +3510,7 @@ app('router')->setCompiledRoutes(
       'waitSeconds' => NULL,
       'withTrashed' => false,
     ),
-    'generated::OAApVTvHBNX2vu1q' => 
+    'generated::uus9lP0NNgC9Fb2z' => 
     array (
       'methods' => 
       array (
@@ -3230,7 +3531,7 @@ app('router')->setCompiledRoutes(
         'where' => 
         array (
         ),
-        'as' => 'generated::OAApVTvHBNX2vu1q',
+        'as' => 'generated::uus9lP0NNgC9Fb2z',
       ),
       'fallback' => false,
       'defaults' => 
@@ -3336,7 +3637,7 @@ app('router')->setCompiledRoutes(
                         $config,
                         $isProduction
                     ))($request, $path);
-                }";s:5:"scope";s:47:"Illuminate\\Filesystem\\FilesystemServiceProvider";s:4:"this";N;s:4:"self";s:32:"000000000000074a0000000000000000";}}',
+                }";s:5:"scope";s:47:"Illuminate\\Filesystem\\FilesystemServiceProvider";s:4:"this";N;s:4:"self";s:32:"00000000000007500000000000000000";}}',
         'as' => 'storage.local',
       ),
       'fallback' => false,
