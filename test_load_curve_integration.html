@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Curve Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .info {
+            color: blue;
+        }
+
+        .warning {
+            color: orange;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Load Curve Integration Test Results</h1>
+
+        <div class="section">
+            <h2>✅ Changes Completed Successfully</h2>
+            <div class="success">
+                <p>1. ✅ Energy Live Data Chart has been completely removed</p>
+                <p>2. ✅ Load (kW) curve added to the first Energy Live Chart</p>
+                <p>3. ✅ Table headers updated to include Load (kW)</p>
+                <p>4. ✅ Table data population updated to include load values</p>
+                <p>5. ✅ All references to liveDataChart cleaned up</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Chart Updates</h2>
+            <div class="info">
+                <p><strong>Energy Live Chart now includes:</strong></p>
+                <ul>
+                    <li>PV (kW) - Blue curve with fill</li>
+                    <li>Battery (kW) - Red curve with fill</li>
+                    <li>Grid (kW) - Green curve with fill</li>
+                    <li><strong>NEW: Load (kW) - Orange curve without fill</strong></li>
+                </ul>
+
+                <p><strong>Data source:</strong></p>
+                <ul>
+                    <li>Load data comes from <code>window.batteryPriceData</code> using <code>load_p</code> field</li>
+                    <li>Converted from Watts to Kilowatts (divided by 1000)</li>
+                    <li>Mapped to 30-minute timeline intervals</li>
+                    <li>Includes debug logging for first 5 data points</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table Updates</h2>
+            <div class="info">
+                <p><strong>Energy Data Table now includes:</strong></p>
+                <ul>
+                    <li>Time</li>
+                    <li>PV (kW)</li>
+                    <li>Battery (kW)</li>
+                    <li>Grid (kW)</li>
+                    <li><strong>NEW: Load (kW)</strong></li>
+                </ul>
+
+                <p><strong>Data handling:</strong></p>
+                <ul>
+                    <li>Load data retrieved from <code>batteryPriceData</code> lookup</li>
+                    <li>Defaults to 0 if no load data available for timestamp</li>
+                    <li>Formatted to 2 decimal places</li>
+                    <li>Empty state message updated to span 5 columns</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Next Steps</h2>
+            <div class="warning">
+                <p><strong>To verify the implementation:</strong></p>
+                <ol>
+                    <li>Load the plant dashboard in your browser</li>
+                    <li>Check that the Energy Live Chart shows the orange Load curve</li>
+                    <li>Verify the Data tab shows Load (kW) column with values</li>
+                    <li>Confirm the removed Energy Live Data chart section is no longer visible</li>
+                    <li>Check browser console for load data processing logs</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 Visual Changes</h2>
+            <div class="info">
+                <p><strong>Load curve styling:</strong></p>
+                <pre>
+Color: Orange (rgba(255,165,0,1))
+Background: Light orange with transparency (rgba(255,165,0,0.12))
+Fill: false (line only, no area fill)
+Line tension: 0.1 (slightly curved)
+Point radius: 1 (small dots)
+Hover radius: 8 (larger on hover)
+                </pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

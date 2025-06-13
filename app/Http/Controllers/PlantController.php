@@ -690,7 +690,10 @@ class PlantController extends Controller
             'time_interval_minutes' => $timeIntervalHours * 60
         ]);
         
+        $debugCounter = 0; // Add counter for debug
         foreach ($aggregatedSnapshots as $snapshot) {
+            $debugCounter++; // Increment counter
+            
             // Convert snapshot to object if it's an array
             if (is_array($snapshot)) {
                 $snapshot = (object) $snapshot;
@@ -703,29 +706,61 @@ class PlantController extends Controller
             } elseif (!empty($snapshot->dt)) {
                 // Convert Unix timestamp to ISO string
                 $timestamp = date('c', $snapshot->dt);
+            } elseif (!empty($snapshot->stdClass->dt)) {
+                // Check if dt is in stdClass
+                $timestamp = date('c', $snapshot->stdClass->dt);
             }
 
             if ($timestamp) {
-                // Energy chart data
+                // Check if data is in stdClass wrapper (this is the actual case based on logs)
+                $dataSource = $snapshot;
+                if (isset($snapshot->stdClass)) {
+                    $dataSource = $snapshot->stdClass;
+                    if ($debugCounter <= 2) {
+                        \Log::info("PLANT CONTROLLER: Using stdClass data source", [
+                            'counter' => $debugCounter,
+                            'timestamp' => $timestamp,
+                            'load_p_value' => $dataSource->load_p ?? 'MISSING',
+                            'pv_p_value' => $dataSource->pv_p ?? 'MISSING',
+                            'battery_p_value' => $dataSource->battery_p ?? 'MISSING',
+                            'grid_p_value' => $dataSource->grid_p ?? 'MISSING'
+                        ]);
+                    }
+                }
+                
+                // Energy chart data - now includes load_p with correct data access
                 $result['energy_chart'][$timestamp] = [
-                    'pv_p' => $snapshot->pv_p ?? 0,
-                    'battery_p' => $snapshot->battery_p ?? 0,
-                    'grid_p' => $snapshot->grid_p ?? 0
+                    'pv_p' => $dataSource->pv_p ?? 0,
+                    'battery_p' => $dataSource->battery_p ?? 0,
+                    'grid_p' => $dataSource->grid_p ?? 0,
+                    'load_p' => $dataSource->load_p ?? 0  // Add load power from API with correct access
                 ];
                 
-                // Battery price data
+                // Debug: Log first few energy chart entries to verify load_p is included
+                if ($debugCounter <= 3) {
+                    \Log::info("PLANT CONTROLLER: Energy chart entry debug", [
+                        'counter' => $debugCounter,
+                        'timestamp' => $timestamp,
+                        'load_p_from_data_source' => $dataSource->load_p ?? 'MISSING',
+                        'energy_chart_entry' => $result['energy_chart'][$timestamp]
+                    ]);
+                }
+                
+                // Battery price data - also update to use correct data access
                 $result['battery_price'][$timestamp] = [
-                    'battery_p' => $snapshot->battery_p ?? 0,
-                    'tariff' => $snapshot->tariff ?? 0.15 // Default tariff if missing
+                    'battery_p' => $dataSource->battery_p ?? 0,
+                    'tariff' => $dataSource->tariff ?? 0.15, // Default tariff if missing
+                    'load_p' => $dataSource->load_p ?? 0, // Add load power for consistency
+                    'battery_soc' => $dataSource->battery_soc ?? 0 // Add battery state of charge
                 ];
                 
                 // Battery savings data
-                $batterySavings = $snapshot->battery_savings ?? null;
+                $batterySavings = $dataSource->battery_savings ?? null;
                 
                 // Calculate savings if missing but battery power and tariff are available
-                if ($batterySavings === null && isset($snapshot->battery_p)) {
-                    $batteryPower = floatval($snapshot->battery_p);
-                    $tariff = floatval($snapshot->tariff ?? 0.15);
+                if ($batterySavings === null && isset($dataSource->battery_p)) {
+                    $batteryPower = floatval($dataSource->battery_p);
+                    $tariff = floatval($dataSource->tariff ?? 0.15);
                     
                     // Battery discharging (positive) means saving money
                     if ($batteryPower > 0) {

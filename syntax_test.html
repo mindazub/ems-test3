@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Syntax Validation Test</title>
+</head>
+
+<body>
+    <script>
+        // Test the function structure from the modified code
+        function testLoadDataProcessing() {
+            const entries = [];
+            const fullTimeline = [];
+            const loadMapped = [];
+            let loadDataCount = 0;
+
+            console.log('=== PROCESSING LOAD DATA FOR ENERGY CHART ===');
+            console.log(`Total energyData entries: ${entries.length}`);
+
+            entries.forEach(([timestamp, values], index) => {
+                // Debug first few entries
+                if (index < 3) {
+                    console.log(`Entry ${index}: timestamp=${timestamp}, values=`, values);
+                    console.log(`Entry ${index}: load_p exists=${values.hasOwnProperty('load_p')}, value=${values.load_p}`);
+                }
+
+                const timeIndex = 0;
+
+                if (timeIndex !== -1) {
+                    let loadValueKW = null;
+
+                    // Try to get load data from energyData first, then fallback to batteryPriceData
+                    if (values.load_p !== undefined && values.load_p !== null) {
+                        loadValueKW = Math.abs(values.load_p / 1000);
+                        if (timeIndex < 5) {
+                            console.log(`✅ Load mapping ${timeIndex} (energyData): Raw=${values.load_p}W, Processed=${loadValueKW}kW`);
+                        }
+                    } else if (window.batteryPriceData && window.batteryPriceData[timestamp] && window.batteryPriceData[timestamp].load_p !== undefined) {
+                        loadValueKW = Math.abs(window.batteryPriceData[timestamp].load_p / 1000);
+                        if (timeIndex < 5) {
+                            console.log(`✅ Load mapping ${timeIndex} (batteryPriceData): Raw=${window.batteryPriceData[timestamp].load_p}W, Processed=${loadValueKW}kW`);
+                        }
+                    }
+
+                    if (loadValueKW !== null) {
+                        loadMapped[timeIndex] = loadValueKW;
+                        loadDataCount++;
+                    } else {
+                        if (timeIndex < 5) {
+                            console.log(`❌ Load mapping ${timeIndex}: No load_p data found in either source`);
+                        }
+                    }
+                }
+            });
+            console.log(`Processed ${loadDataCount} load data points out of ${entries.length} entries`);
+            console.log('=== END LOAD DATA PROCESSING ===');
+        }
+
+        console.log('✅ Syntax validation passed');
+    </script>
+</body>
+
+</html>

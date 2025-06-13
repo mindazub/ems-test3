@@ -394,6 +394,14 @@ class DownloadController extends Controller
         
         Log::info("Processing aggregated snapshots", ['count' => count($aggregatedSnapshots)]);
         
+        // Debug: Log first few snapshots to verify structure
+        if (count($aggregatedSnapshots) > 0) {
+            Log::info("First snapshot example", [
+                'snapshot' => $aggregatedSnapshots[0],
+                'has_load_p' => isset($aggregatedSnapshots[0]['load_p']) || isset($aggregatedSnapshots[0]->load_p)
+            ]);
+        }
+        
         // Calculate the actual time interval between data points
         $timeIntervalHours = $this->calculateTimeInterval($aggregatedSnapshots);
         
@@ -402,10 +410,26 @@ class DownloadController extends Controller
             'time_interval_minutes' => $timeIntervalHours * 60
         ]);
         
+        $debugCounter = 0; // Add counter for debug
         foreach ($aggregatedSnapshots as $snapshot) {
+            $debugCounter++; // Increment counter
+            
             // Convert snapshot to object if it's an array
             if (is_array($snapshot)) {
                 $snapshot = (object) $snapshot;
+            }
+            
+            // Enhanced debug to understand data structure - run for first 2 snapshots
+            if ($debugCounter <= 2) {
+                Log::info("=== ENHANCED SNAPSHOT DEBUG #{$debugCounter} ===", [
+                    'snapshot_type' => gettype($snapshot),
+                    'snapshot_keys' => is_object($snapshot) ? array_keys(get_object_vars($snapshot)) : (is_array($snapshot) ? array_keys($snapshot) : 'not_object_or_array'),
+                    'has_direct_load_p' => isset($snapshot->load_p),
+                    'direct_load_p_value' => $snapshot->load_p ?? 'NOT_SET',
+                    'has_stdClass' => isset($snapshot->stdClass),
+                    'stdClass_load_p' => isset($snapshot->stdClass) ? ($snapshot->stdClass->load_p ?? 'NO_LOAD_P_IN_STDCLASS') : 'NO_STDCLASS',
+                    'full_snapshot_dump' => $snapshot
+                ]);
             }
             
             // Use timestamp or dt (convert to ISO string)
@@ -415,31 +439,71 @@ class DownloadController extends Controller
             } elseif (!empty($snapshot->dt)) {
                 // Convert Unix timestamp to ISO string
                 $timestamp = date('c', $snapshot->dt);
+            } elseif (!empty($snapshot->stdClass->dt)) {
+                // Check if dt is in stdClass
+                $timestamp = date('c', $snapshot->stdClass->dt);
             }
 
             if ($timestamp) {
-                // Energy chart data - now includes load_p
+                // Check if data is in stdClass wrapper (this is the actual case based on logs)
+                $dataSource = $snapshot;
+                if (isset($snapshot->stdClass)) {
+                    $dataSource = $snapshot->stdClass;
+                    if ($debugCounter <= 2) {
+                        Log::info("LOAD DATA FIX: Using stdClass data source", [
+                            'counter' => $debugCounter,
+                            'timestamp' => $timestamp,
+                            'load_p_value' => $dataSource->load_p ?? 'MISSING',
+                            'pv_p_value' => $dataSource->pv_p ?? 'MISSING',
+                            'battery_p_value' => $dataSource->battery_p ?? 'MISSING',
+                            'grid_p_value' => $dataSource->grid_p ?? 'MISSING'
+                        ]);
+                    }
+                } else {
+                    if ($debugCounter <= 2) {
+                        Log::info("LOAD DATA FIX: Using direct data source", [
+                            'counter' => $debugCounter,
+                            'timestamp' => $timestamp,
+                            'load_p_value' => $dataSource->load_p ?? 'MISSING'
+                        ]);
+                    }
+                }
+                
+                // Energy chart data - now includes load_p with correct data access
                 $result['energy_chart'][$timestamp] = [
-                    'pv_p' => $snapshot->pv_p ?? 0,
-                    'battery_p' => $snapshot->battery_p ?? 0,
-                    'grid_p' => $snapshot->grid_p ?? 0,
-                    'load_p' => $snapshot->load_p ?? 0  // Add load power from API
+                    'pv_p' => $dataSource->pv_p ?? 0,
+                    'battery_p' => $dataSource->battery_p ?? 0,
+                    'grid_p' => $dataSource->grid_p ?? 0,
+                    'load_p' => $dataSource->load_p ?? 0  // Add load power from API with correct access
                 ];
                 
-                // Battery price data - now includes both tariff and price
+                // Debug: Log first few energy chart entries to verify load_p is included
+                if ($debugCounter <= 3) {
+                    Log::info("LOAD DATA FIX: Energy chart entry debug", [
+                        'counter' => $debugCounter,
+                        'timestamp' => $timestamp,
+                        'data_source_type' => gettype($dataSource),
+                        'load_p_from_data_source' => $dataSource->load_p ?? 'MISSING',
+                        'energy_chart_entry' => $result['energy_chart'][$timestamp]
+                    ]);
+                }
+                
+                // Battery price data - now includes both tariff and price, plus live data with correct data access
                 $result['battery_price'][$timestamp] = [
-                    'battery_p' => $snapshot->battery_p ?? 0,
-                    'tariff' => $snapshot->tariff ?? 0.15, // Default tariff if missing
-                    'price' => $snapshot->price ?? ($snapshot->tariff ?? 0.15) // Use price if available, fallback to tariff
+                    'battery_p' => $dataSource->battery_p ?? 0,
+                    'tariff' => $dataSource->tariff ?? 0.15, // Default tariff if missing
+                    'price' => $dataSource->price ?? ($dataSource->tariff ?? 0.15), // Use price if available, fallback to tariff
+                    'load_p' => $dataSource->load_p ?? 0, // Add load power for live data chart with correct access
+                    'battery_soc' => $dataSource->battery_soc ?? 0 // Add battery state of charge for live data chart
                 ];
                 
                 // Battery savings data
-                $batterySavings = $snapshot->battery_savings ?? null;
+                $batterySavings = $dataSource->battery_savings ?? null;
                 
                 // Calculate savings if missing but battery power and tariff are available
-                if ($batterySavings === null && isset($snapshot->battery_p)) {
-                    $batteryPower = floatval($snapshot->battery_p);
-                    $tariff = floatval($snapshot->tariff ?? 0.15);
+                if ($batterySavings === null && isset($dataSource->battery_p)) {
+                    $batteryPower = floatval($dataSource->battery_p);
+                    $tariff = floatval($dataSource->tariff ?? 0.15);
                     
                     // Battery discharging (positive) means saving money
                     if ($batteryPower > 0) {
@@ -471,7 +535,8 @@ class DownloadController extends Controller
         Log::info("Chart data formatting complete", [
             'energy_chart_count' => count($result['energy_chart']),
             'battery_price_count' => count($result['battery_price']),
-            'battery_savings_count' => count($result['battery_savings'])
+            'battery_savings_count' => count($result['battery_savings']),
+            'first_energy_chart_entry' => count($result['energy_chart']) > 0 ? array_values($result['energy_chart'])[0] : null
         ]);
         
         return $result;

@@ -84,6 +84,7 @@
                             <th class="px-4 py-2 text-center">PV (kW)</th>
                             <th class="px-4 py-2 text-center">Battery (kW)</th>
                             <th class="px-4 py-2 text-center">Grid (kW)</th>
+                            <th class="px-4 py-2 text-center">Load (kW)</th>
                         </tr>
                         </thead>
                         <tbody id="energyDataTableBody"></tbody>
@@ -147,8 +148,7 @@
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
                             <th class="px-4 py-2 text-center">Battery Power (kW)</th>
-                            <th class="px-4 py-2 text-center">Energy Price (€ / kWh)</th>
-                            <th class="px-4 py-2 text-center">API Price (€ / kWh)</th>
+                            <th class="px-4 py-2 text-center">Energy Price (€ / MWh)</th>
                         </tr>
                         </thead>
                         <tbody id="batteryDataTableBody"></tbody>
@@ -212,7 +212,7 @@
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
                             <th class="px-4 py-2 text-center">Battery Savings (€)</th>
-                            <th class="px-4 py-2 text-center">API Price (€ / kWh)</th>
+                            <th class="px-4 py-2 text-center">Energy Price (€ / MWh)</th>
                         </tr>
                         </thead>
                         <tbody id="batterySavingsDataTableBody"></tbody>
@@ -222,6 +222,8 @@
         </div>
     </div>
 </div>
+
+
 
 <!-- Chart.js loader -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -800,11 +802,38 @@ function fetchAndUpdateCharts(dateStr) {
         })
         .then(data => {
             console.log('✅ Received fresh data:', data);
+            console.log('🔍 Raw API response energy_chart:', data.energy_chart);
+            console.log('🔍 Raw API response battery_price:', data.battery_price);
+            
+            // Check if energy_chart contains load_p
+            if (data.energy_chart && Object.keys(data.energy_chart).length > 0) {
+                const firstEnergyEntry = Object.entries(data.energy_chart)[0];
+                console.log('🔍 First energy_chart entry from API:', firstEnergyEntry[0], firstEnergyEntry[1]);
+                console.log('🔍 energy_chart fields from API:', Object.keys(firstEnergyEntry[1]));
+            }
             
             // Always use fresh data - no cache
             window.energyData = data.energy_chart || {};
             window.batteryPriceData = data.battery_price || {};
             window.batterySavingsData = data.battery_savings || {};
+            
+            // Debug: Check what fields are available in energy_chart
+            if (Object.keys(window.energyData).length > 0) {
+                const firstEntry = Object.entries(window.energyData)[0];
+                console.log('🔍 First energyData entry:', firstEntry[0], firstEntry[1]);
+                console.log('🔍 Available fields in energyData:', Object.keys(firstEntry[1]));
+                console.log('🔍 load_p value in energyData:', firstEntry[1].load_p);
+                console.log('🔍 Raw energyData object:', window.energyData);
+            } else {
+                console.log('❌ energyData is empty!');
+            }
+            
+            // Debug: Check what fields are available in battery_price
+            if (Object.keys(window.batteryPriceData).length > 0) {
+                const firstBatteryEntry = Object.entries(window.batteryPriceData)[0];
+                console.log('🔍 First batteryPriceData entry:', firstBatteryEntry[0], firstBatteryEntry[1]);
+                console.log('🔍 Available fields in batteryPriceData:', Object.keys(firstBatteryEntry[1]));
+            }
             
             // Check if we have any data
             const hasEnergyData = Object.keys(window.energyData).length > 0;
@@ -867,7 +896,8 @@ function mapDataToTimeline(energyData, timeline) {
     const mappedData = {
         pv: new Array(timeline.length).fill(null),
         battery: new Array(timeline.length).fill(null),
-        grid: new Array(timeline.length).fill(null)
+        grid: new Array(timeline.length).fill(null),
+        load: new Array(timeline.length).fill(null)  // Add load data mapping
     };
     
     if (!energyData || Object.keys(energyData).length === 0) {
@@ -876,6 +906,8 @@ function mapDataToTimeline(energyData, timeline) {
     
     const entries = Object.entries(energyData).sort(([a], [b]) => new Date(a) - new Date(b));
     const processedTimestamps = new Set(); // Prevent duplicate processing due to offset
+    
+    console.log('📊 mapDataToTimeline: Processing', entries.length, 'entries');
     
     entries.forEach(([timestamp, values]) => {
         // Skip if we've already processed this timestamp (prevents offset duplicates)
@@ -906,8 +938,20 @@ function mapDataToTimeline(energyData, timeline) {
             mappedData.pv[timeIndex] = values.pv_p / 1000;
             mappedData.battery[timeIndex] = values.battery_p / 1000;
             mappedData.grid[timeIndex] = values.grid_p / 1000;
+            
+            // Add load data processing with debug
+            if (values.load_p !== undefined && values.load_p !== null) {
+                mappedData.load[timeIndex] = Math.abs(values.load_p / 1000);  // Convert to positive kW
+                if (timeIndex < 5) {
+                    console.log(`📊 mapDataToTimeline load[${timeIndex}]: ${values.load_p}W -> ${mappedData.load[timeIndex]}kW`);
+                }
+            }
         }
     });
+    
+    // Debug: Check load data in mappedData
+    const loadDataCount = mappedData.load.filter(v => v !== null).length;
+    console.log(`📊 mapDataToTimeline: Mapped ${loadDataCount} load data points`);
     
     return mappedData;
 }
@@ -920,6 +964,14 @@ function renderChartsAndTables() {
     const energyChartElem = document.getElementById('energyChart');
     if (energyChartElem) {
         const mappedData = mapDataToTimeline(window.energyData, fullTimeline);
+        
+        // Debug: Check mappedData for comparison
+        console.log('📊 CHART DEBUG: mappedData:', mappedData);
+        console.log('📊 CHART DEBUG: PV data sample:', mappedData.pv ? mappedData.pv.slice(0, 10) : 'undefined');
+        console.log('📊 CHART DEBUG: Battery data sample:', mappedData.battery ? mappedData.battery.slice(0, 10) : 'undefined');
+        console.log('📊 CHART DEBUG: Grid data sample:', mappedData.grid ? mappedData.grid.slice(0, 10) : 'undefined');
+        console.log('📊 CHART DEBUG: Load data sample:', mappedData.load ? mappedData.load.slice(0, 10) : 'undefined');
+        console.log('📊 CHART DEBUG: Load non-null count:', mappedData.load ? mappedData.load.filter(v => v !== null).length : 0);
         
         if (window.chartInstances.energy) window.chartInstances.energy.destroy();
         
@@ -956,6 +1008,17 @@ function renderChartsAndTables() {
                         borderColor: 'rgba(40,167,69,1)', 
                         backgroundColor: 'rgba(40,167,69,0.12)', 
                         fill: true, 
+                        pointRadius: 1, 
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Load (kW)', 
+                        data: mappedData.load,
+                        borderColor: 'rgba(255,165,0,1)', 
+                        backgroundColor: 'rgba(255,165,0,0.12)', 
+                        fill: false, 
                         pointRadius: 1, 
                         pointHoverRadius: 8,
                         spanGaps: false,
@@ -1006,12 +1069,47 @@ function renderChartsAndTables() {
         const energyTable = document.getElementById('energyDataTableBody');
         if (energyTable && window.energyData && Object.keys(window.energyData).length > 0) {
             energyTable.innerHTML = '';
-            const entries = Object.entries(window.energyData).sort(([a], [b]) => new Date(a) - new Date(b));
-            entries.forEach(([ts, val]) => {
-                energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td></tr>`;
+            const energyEntries = Object.entries(window.energyData).sort(([a], [b]) => new Date(a) - new Date(b));
+            
+            console.log('=== PROCESSING TABLE DATA ===');
+            console.log(`Processing ${energyEntries.length} entries for table`);
+            
+            let tableLoadDataCount = 0;
+            energyEntries.forEach(([ts, val], index) => {
+                // Debug first few entries for table
+                if (index < 3) {
+                    console.log(`Table entry ${index}: timestamp=${ts}, data=`, val);
+                    console.log(`Table entry ${index}: load_p=${val.load_p}, exists=${val.hasOwnProperty('load_p')}`);
+                }
+                
+                // Try to get load data from energyData first, then fallback to batteryPriceData
+                let loadValue = 0;
+                if (val.load_p !== undefined && val.load_p !== null) {
+                    loadValue = Math.abs(val.load_p / 1000);
+                } else if (window.batteryPriceData && window.batteryPriceData[ts] && window.batteryPriceData[ts].load_p !== undefined) {
+                    loadValue = Math.abs(window.batteryPriceData[ts].load_p / 1000);
+                    if (index < 3) {
+                        console.log(`Using batteryPriceData for load: ${window.batteryPriceData[ts].load_p}W -> ${loadValue}kW`);
+                    }
+                }
+                
+                if (loadValue > 0) {
+                    tableLoadDataCount++;
+                    if (index < 3) {
+                        console.log(`✅ Table load ${index}: Processed=${loadValue}kW`);
+                    }
+                } else {
+                    if (index < 3) {
+                        console.log(`❌ Table load ${index}: No valid load_p data from either source`);
+                    }
+                }
+                
+                energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${loadValue.toFixed(2)}</td></tr>`;
             });
+            console.log(`Table processed ${tableLoadDataCount} non-zero load data points out of ${energyEntries.length} entries`);
+            console.log('=== END TABLE DATA PROCESSING ===');
         } else if (energyTable) {
-            energyTable.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No energy data available for the selected date</td></tr>';
+            energyTable.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">No energy data available for the selected date</td></tr>';
         }
     }
     
@@ -1020,8 +1118,7 @@ function renderChartsAndTables() {
     if (batteryChartElem) {
         const batteryMappedData = {
             battery: new Array(fullTimeline.length).fill(null),
-            tariff: new Array(fullTimeline.length).fill(null),
-            price: new Array(fullTimeline.length).fill(null)
+            price: new Array(fullTimeline.length).fill(null) // Only keep API price, remove tariff
         };
         
         if (window.batteryPriceData && Object.keys(window.batteryPriceData).length > 0) {
@@ -1055,13 +1152,9 @@ function renderChartsAndTables() {
                 
                 if (timeIndex !== -1) {
                     batteryMappedData.battery[timeIndex] = values.battery_p / 1000;
-                    batteryMappedData.tariff[timeIndex] = values.tariff;
                     
-                    // Convert price from what appears to be €/MWh to €/kWh
-                    // Your API prices like 39.62, 55.24 seem to be in €/MWh
-                    // Convert to €/kWh by dividing by 1000
-                    const priceInKWh = (values.price || 0) / 1000;
-                    batteryMappedData.price[timeIndex] = priceInKWh;
+                    // Show price as EUR/MWh (no conversion needed)
+                    batteryMappedData.price[timeIndex] = values.price || 0;
                     
                     // Debug logging for the first few entries
                     if (timeIndex < 5) {
@@ -1069,10 +1162,7 @@ function renderChartsAndTables() {
                         console.log('Timestamp:', timestamp);
                         console.log('Time:', timeStr);
                         console.log('Battery power:', values.battery_p, 'W');
-                        console.log('Tariff:', values.tariff, '€/kWh');
-                        console.log('Price (raw):', values.price, '€/MWh');
-                        console.log('Price (converted):', priceInKWh, '€/kWh');
-                        console.log('Price type:', typeof values.price);
+                        console.log('Price (EUR/MWh):', values.price);
                         console.log('=== END MAPPING ===');
                     }
                 }
@@ -1099,19 +1189,7 @@ function renderChartsAndTables() {
                         tension: 0.1
                     },
                     {
-                        label: 'Energy Price (€/kWh)',
-                        data: batteryMappedData.tariff,
-                        borderColor: 'rgba(75,192,192,1)',
-                        backgroundColor: 'rgba(75,192,192,0.1)',
-                        fill: false,
-                        yAxisID: 'y1',
-                        pointRadius: 1,
-                        pointHoverRadius: 8,
-                        spanGaps: false,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'API Price (€/kWh)',
+                        label: 'Energy Price (€/MWh)',
                         data: batteryMappedData.price,
                         borderColor: 'rgba(255,159,64,1)',
                         backgroundColor: 'rgba(255,159,64,0.1)',
@@ -1149,7 +1227,7 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { text: 'Energy Price (€/kWh)' },
+                        title: { text: 'Energy Price (€/MWh)' },
                         grid: { display: false },
                         ticks: { font: { size: 12 } }
                     },
@@ -1178,11 +1256,11 @@ function renderChartsAndTables() {
             batteryTable.innerHTML = '';
             const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
-                const priceConverted = (val.price || 0) / 1000; // Convert from €/MWh to €/kWh
-                batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td><td class="px-4 py-2 text-center">${priceConverted.toFixed(4)}</td></tr>`;
+                const priceInMWh = val.price || 0; // Keep as EUR/MWh
+                batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${priceInMWh.toFixed(2)}</td></tr>`;
             });
         } else if (batteryTable) {
-            batteryTable.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No battery data available for the selected date</td></tr>';
+            batteryTable.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No battery data available for the selected date</td></tr>';
         }
     }
     
@@ -1256,85 +1334,85 @@ function renderChartsAndTables() {
                 // Get corresponding price data
                 const priceData = window.batteryPriceData && window.batteryPriceData[timestamp];
                 if (priceData && priceData.price !== undefined) {
-                    const priceConverted = priceData.price / 1000; // Convert from €/MWh to €/kWh
-                    hourlyGroups[hour].prices.push(priceConverted);
+                    // Keep price as EUR/MWh
+                    hourlyGroups[hour].prices.push(priceData.price);
                 }
                 
                 // Count total data points for debugging
                 dataPointCount++;
             });
             
-            // Calculate hourly averages and populate chart data
-            console.log('=== HOURLY AVERAGES CALCULATION ===');
+            // Calculate hourly sums and populate chart data
+            console.log('=== HOURLY SUMS CALCULATION (NOT AVERAGES) ===');
             for (let hour = 0; hour < 24; hour++) {
                 const savingsArray = hourlyGroups[hour].savings;
                 const pricesArray = hourlyGroups[hour].prices;
                 
                 if (savingsArray.length > 0) {
-                    // Calculate average savings for this hour
-                    const avgSavings = savingsArray.reduce((sum, val) => sum + val, 0) / savingsArray.length;
-                    hourlySavingsData[hour] = avgSavings;
+                    // Calculate SUM of all savings for this hour (not average)
+                    const hourlySum = savingsArray.reduce((sum, val) => sum + val, 0);
+                    hourlySavingsData[hour] = hourlySum;
                     
-                    console.log(`Hour ${hour}:00 - ${savingsArray.length} data points: [${savingsArray.map(v => v.toFixed(4)).join(', ')}] → Average: ${avgSavings.toFixed(6)}€`);
+                    console.log(`Hour ${hour}:00 - ${savingsArray.length} data points: [${savingsArray.map(v => v.toFixed(4)).join(', ')}] → Sum: ${hourlySum.toFixed(6)}€`);
                 }
                 
                 if (pricesArray.length > 0) {
-                    // Calculate average price for this hour
+                    // Calculate average price for this hour (keep as average since price doesn't sum)
                     const avgPrice = pricesArray.reduce((sum, val) => sum + val, 0) / pricesArray.length;
                     hourlyPriceData[hour] = avgPrice;
                     
-                    console.log(`Hour ${hour}:00 - Average price: ${avgPrice.toFixed(6)}€/kWh`);
+                    console.log(`Hour ${hour}:00 - Average price: ${avgPrice.toFixed(2)}€/MWh`);
                 }
             }
-            console.log('=== END HOURLY AVERAGES ===');
+            console.log('=== END HOURLY SUMS ===');
         }
         
-        // Calculate total savings from the hourly averages we already calculated
+        // Calculate total daily savings from hourly sums
         let totalSavings = 0;
-        let totalSavingsOldMethod = 0; // For comparison
-        console.log('=== DETAILED HOURLY AVERAGES CALCULATION ===');
+        let totalSavingsIncludingNegative = 0;
+        console.log('=== DAILY TOTAL CALCULATION FROM HOURLY SUMS ===');
         console.log('hourlySavingsData array:', hourlySavingsData);
         
-        hourlySavingsData.forEach((avgSavings, hour) => {
-            if (avgSavings !== null) {
+        hourlySavingsData.forEach((hourlySum, hour) => {
+            if (hourlySum !== null) {
                 console.log(`\n--- Hour ${hour}:00 ---`);
-                console.log(`Average savings: ${avgSavings}€`);
-                console.log(`Is positive? ${avgSavings > 0}`);
+                console.log(`Hourly sum: ${hourlySum}€`);
+                console.log(`Is positive? ${hourlySum > 0}`);
                 
-                // Only add positive averages to total (as per user requirement)
-                if (avgSavings > 0) {
-                    console.log(`Adding ${avgSavings.toFixed(6)}€ to total savings`);
+                // Add positive hourly sums to total
+                if (hourlySum > 0) {
+                    console.log(`Adding ${hourlySum.toFixed(6)}€ to total savings`);
                     console.log(`Total before: ${totalSavings.toFixed(6)}€`);
-                    totalSavings += avgSavings;
+                    totalSavings += hourlySum;
                     console.log(`Total after: ${totalSavings.toFixed(6)}€`);
                 } else {
-                    console.log(`Skipping negative value: ${avgSavings.toFixed(6)}€`);
+                    console.log(`Skipping negative hourly sum: ${hourlySum.toFixed(6)}€`);
                 }
-                // For comparison, add all averages (positive and negative)
-                totalSavingsOldMethod += avgSavings;
+                // For comparison, add all hourly sums (positive and negative)
+                totalSavingsIncludingNegative += hourlySum;
             } else {
                 console.log(`Hour ${hour}:00 - No data (null)`);
             }
         });
         
-        console.log('\n=== FINAL CALCULATION SUMMARY ===');
-        console.log('Total positive hourly averages sum:', totalSavings.toFixed(6), '€');
-        console.log('Total if including negative values:', totalSavingsOldMethod.toFixed(6), '€');
+        console.log('\n=== DAILY TOTAL SUMMARY ===');
+        console.log('Total positive hourly sums:', totalSavings.toFixed(6), '€');
+        console.log('Total if including negative sums:', totalSavingsIncludingNegative.toFixed(6), '€');
         console.log('Manual verification:');
         
         // Manual verification - let's calculate step by step
         let manualTotal = 0;
         const positiveHours = [];
-        hourlySavingsData.forEach((avg, hour) => {
-            if (avg !== null && avg > 0) {
-                positiveHours.push({hour, value: avg});
-                manualTotal += avg;
+        hourlySavingsData.forEach((sum, hour) => {
+            if (sum !== null && sum > 0) {
+                positiveHours.push({hour, value: sum});
+                manualTotal += sum;
             }
         });
         
         console.log('Positive hours found:', positiveHours);
         console.log('Manual total calculation:', manualTotal.toFixed(6), '€');
-        console.log('=== END TOTAL CALCULATION ===');
+        console.log('=== END DAILY TOTAL CALCULATION ===');
         
         const batterySavingsTotal = document.getElementById('batterySavingsTotal');
         
@@ -1385,7 +1463,7 @@ function renderChartsAndTables() {
             data: {
                 labels: hourlyTimeline,
                 datasets: [{
-                    label: 'Battery Savings (€) - Hourly Average',
+                    label: 'Battery Savings (€) - Hourly Sum',
                     data: hourlySavingsData,
                     backgroundColor: hourlySavingsData.map(val => 
                         val === null ? 'transparent' : 
@@ -1398,7 +1476,7 @@ function renderChartsAndTables() {
                     borderSkipped: false,
                     yAxisID: 'y'
                 }, {
-                    label: 'API Price (€/kWh) - Hourly Average',
+                    label: 'Energy Price (€/MWh) - Hourly Average',
                     type: 'line',
                     data: hourlyPriceData,
                     borderColor: 'rgba(255,159,64,1)',
@@ -1438,7 +1516,7 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'API Price (€/kWh)' },
+                        title: { display: true, text: 'Energy Price (€/MWh)' },
                         grid: { display: false },
                         ticks: { font: { size: 12 } }
                     },
@@ -1465,8 +1543,8 @@ function renderChartsAndTables() {
             const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
                 const priceData = window.batteryPriceData && window.batteryPriceData[ts];
-                const priceConverted = priceData && priceData.price !== undefined ? (priceData.price / 1000).toFixed(4) : 'N/A';
-                savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td><td class="px-4 py-2 text-center">${priceConverted}</td></tr>`;
+                const priceInMWh = priceData && priceData.price !== undefined ? priceData.price.toFixed(2) : 'N/A';
+                savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td><td class="px-4 py-2 text-center">${priceInMWh}</td></tr>`;
             });
         } else if (savingsTable) {
             savingsTable.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No savings data available for the selected date</td></tr>';
