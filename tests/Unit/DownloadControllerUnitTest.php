@@ -35,17 +35,20 @@ class DownloadControllerUnitTest extends TestCase
             '2024-01-15T08:00:00+00:00' => [
                 'pv_p' => 5000,
                 'battery_p' => 2000,
-                'grid_p' => 3000
+                'grid_p' => 3000,
+                'load_p' => 4500
             ],
             '2024-01-15T09:00:00+00:00' => [
                 'pv_p' => 7000,
                 'battery_p' => 3000,
-                'grid_p' => 4000
+                'grid_p' => 4000,
+                'load_p' => 5800
             ],
             '2024-01-15T10:00:00+00:00' => [
                 'pv_p' => 9000,
                 'battery_p' => 4000,
-                'grid_p' => 5000
+                'grid_p' => 5000,
+                'load_p' => 7200
             ]
         ];
 
@@ -54,7 +57,9 @@ class DownloadControllerUnitTest extends TestCase
         $this->assertEquals(7.0, $result['avg_pv']); // (5+7+9)/3
         $this->assertEquals(3.0, $result['avg_battery']); // (2+3+4)/3  
         $this->assertEquals(4.0, $result['avg_grid']); // (3+4+5)/3
+        $this->assertEquals(5.83, $result['avg_load']); // (4.5+5.8+7.2)/3 = 5.833...
         $this->assertEquals(21.0, $result['total_pv']); // 5+7+9
+        $this->assertEquals(17.5, $result['total_load']); // 4.5+5.8+7.2
         $this->assertEquals(3, $result['data_points']);
     }
 
@@ -63,20 +68,25 @@ class DownloadControllerUnitTest extends TestCase
         $batteryData = [
             '2024-01-15T08:00:00+00:00' => [
                 'battery_p' => 2000,
-                'tariff' => 0.15
+                'tariff' => 0.15,
+                'price' => 0.16
             ],
             '2024-01-15T09:00:00+00:00' => [
                 'battery_p' => 3000,
-                'tariff' => 0.18
+                'tariff' => 0.18,
+                'price' => 0.19
             ]
         ];
 
         $result = $this->invokePrivateMethod('calculateChartSummary', [$batteryData, 'battery']);
 
         $this->assertEquals(2.5, $result['avg_power']); // (2+3)/2
-        $this->assertEquals(0.165, $result['avg_price']); // (0.15+0.18)/2 = 0.165
-        $this->assertEquals(0.18, $result['max_price']); // max of 0.15, 0.18
-        $this->assertEquals(0.15, $result['min_price']); // min of 0.15, 0.18
+        $this->assertEquals(0.165, $result['avg_tariff']); // (0.15+0.18)/2 = 0.165
+        $this->assertEquals(0.175, $result['avg_price']); // (0.16+0.19)/2 = 0.175
+        $this->assertEquals(0.18, $result['max_tariff']); // max of 0.15, 0.18
+        $this->assertEquals(0.19, $result['max_price']); // max of 0.16, 0.19
+        $this->assertEquals(0.15, $result['min_tariff']); // min of 0.15, 0.18
+        $this->assertEquals(0.16, $result['min_price']); // min of 0.16, 0.19
         $this->assertEquals(2, $result['data_points']);
     }
 
@@ -194,7 +204,7 @@ class DownloadControllerUnitTest extends TestCase
         $this->assertCount(1, $result['battery_savings']);
         
         $savingsPoint = $result['battery_savings']['2024-01-15T08:00:00+00:00'];
-        $expectedSavings = (2000 / 1000) * 0.15; // 2kW * €0.15/kWh = €0.30
+        $expectedSavings = (2000 / 1000) * 0.15 * 0.5; // 2kW * €0.15/kWh * 0.5h = €0.15
         $this->assertEquals($expectedSavings, $savingsPoint['battery_savings']);
     }
 
@@ -210,6 +220,14 @@ class DownloadControllerUnitTest extends TestCase
                 [
                     'label' => 'Battery Power',
                     'data' => [2.111, 3.222, 4.333]
+                ],
+                [
+                    'label' => 'Grid Power',
+                    'data' => [1.555, 2.666, 3.777]
+                ],
+                [
+                    'label' => 'Load Power',
+                    'data' => [4.888, 5.999, 6.111]
                 ]
             ]
         ];
@@ -218,17 +236,17 @@ class DownloadControllerUnitTest extends TestCase
 
         $lines = explode("\n", $result);
         
-        // Check header
-        $this->assertEquals('Time,PV Power,Battery Power', $lines[0]);
+        // Check header - now includes Load Power
+        $this->assertEquals('Time,PV Power,Battery Power,Grid Power,Load Power', $lines[0]);
         
-        // Check first data row
-        $this->assertEquals('08:00,5.123,2.111', $lines[1]);
+        // Check first data row - now includes all 4 power types
+        $this->assertEquals('08:00,5.123,2.111,1.555,4.888', $lines[1]);
         
         // Check second data row  
-        $this->assertEquals('09:00,7.456,3.222', $lines[2]);
+        $this->assertEquals('09:00,7.456,3.222,2.666,5.999', $lines[2]);
         
         // Check third data row
-        $this->assertEquals('10:00,9.789,4.333', $lines[3]);
+        $this->assertEquals('10:00,9.789,4.333,3.777,6.111', $lines[3]);
     }
 
     public function test_generate_csv_from_chart_data_with_empty_data()

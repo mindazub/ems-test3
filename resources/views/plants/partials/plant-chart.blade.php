@@ -148,6 +148,7 @@
                             <th class="px-4 py-2 text-center">Time</th>
                             <th class="px-4 py-2 text-center">Battery Power (kW)</th>
                             <th class="px-4 py-2 text-center">Energy Price (€ / kWh)</th>
+                            <th class="px-4 py-2 text-center">API Price (€ / kWh)</th>
                         </tr>
                         </thead>
                         <tbody id="batteryDataTableBody"></tbody>
@@ -211,6 +212,7 @@
                         <tr>
                             <th class="px-4 py-2 text-center">Time</th>
                             <th class="px-4 py-2 text-center">Battery Savings (€)</th>
+                            <th class="px-4 py-2 text-center">API Price (€ / kWh)</th>
                         </tr>
                         </thead>
                         <tbody id="batterySavingsDataTableBody"></tbody>
@@ -873,8 +875,15 @@ function mapDataToTimeline(energyData, timeline) {
     }
     
     const entries = Object.entries(energyData).sort(([a], [b]) => new Date(a) - new Date(b));
+    const processedTimestamps = new Set(); // Prevent duplicate processing due to offset
     
     entries.forEach(([timestamp, values]) => {
+        // Skip if we've already processed this timestamp (prevents offset duplicates)
+        if (processedTimestamps.has(timestamp)) {
+            return;
+        }
+        processedTimestamps.add(timestamp);
+        
         const date = new Date(timestamp);
         // Apply user's time offset for display
         const offsetHours = window.userTimeOffset || 0;
@@ -1011,13 +1020,21 @@ function renderChartsAndTables() {
     if (batteryChartElem) {
         const batteryMappedData = {
             battery: new Array(fullTimeline.length).fill(null),
-            tariff: new Array(fullTimeline.length).fill(null)
+            tariff: new Array(fullTimeline.length).fill(null),
+            price: new Array(fullTimeline.length).fill(null)
         };
         
         if (window.batteryPriceData && Object.keys(window.batteryPriceData).length > 0) {
             const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
+            const processedTimestamps = new Set(); // Prevent duplicate processing due to offset
             
             entries.forEach(([timestamp, values]) => {
+                // Skip if we've already processed this timestamp (prevents offset duplicates)
+                if (processedTimestamps.has(timestamp)) {
+                    return;
+                }
+                processedTimestamps.add(timestamp);
+                
                 const date = new Date(timestamp);
                 // Apply user's time offset for display
                 const offsetHours = window.userTimeOffset || 0;
@@ -1039,6 +1056,25 @@ function renderChartsAndTables() {
                 if (timeIndex !== -1) {
                     batteryMappedData.battery[timeIndex] = values.battery_p / 1000;
                     batteryMappedData.tariff[timeIndex] = values.tariff;
+                    
+                    // Convert price from what appears to be €/MWh to €/kWh
+                    // Your API prices like 39.62, 55.24 seem to be in €/MWh
+                    // Convert to €/kWh by dividing by 1000
+                    const priceInKWh = (values.price || 0) / 1000;
+                    batteryMappedData.price[timeIndex] = priceInKWh;
+                    
+                    // Debug logging for the first few entries
+                    if (timeIndex < 5) {
+                        console.log(`=== BATTERY CHART MAPPING ${timeIndex} ===`);
+                        console.log('Timestamp:', timestamp);
+                        console.log('Time:', timeStr);
+                        console.log('Battery power:', values.battery_p, 'W');
+                        console.log('Tariff:', values.tariff, '€/kWh');
+                        console.log('Price (raw):', values.price, '€/MWh');
+                        console.log('Price (converted):', priceInKWh, '€/kWh');
+                        console.log('Price type:', typeof values.price);
+                        console.log('=== END MAPPING ===');
+                    }
                 }
             });
         }
@@ -1067,6 +1103,18 @@ function renderChartsAndTables() {
                         data: batteryMappedData.tariff,
                         borderColor: 'rgba(75,192,192,1)',
                         backgroundColor: 'rgba(75,192,192,0.1)',
+                        fill: false,
+                        yAxisID: 'y1',
+                        pointRadius: 1,
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'API Price (€/kWh)',
+                        data: batteryMappedData.price,
+                        borderColor: 'rgba(255,159,64,1)',
+                        backgroundColor: 'rgba(255,159,64,0.1)',
                         fill: false,
                         yAxisID: 'y1',
                         pointRadius: 1,
@@ -1130,23 +1178,66 @@ function renderChartsAndTables() {
             batteryTable.innerHTML = '';
             const entries = Object.entries(window.batteryPriceData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
-                batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td></tr>`;
+                const priceConverted = (val.price || 0) / 1000; // Convert from €/MWh to €/kWh
+                batteryTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${val.tariff.toFixed(4)}</td><td class="px-4 py-2 text-center">${priceConverted.toFixed(4)}</td></tr>`;
             });
         } else if (batteryTable) {
-            batteryTable.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No battery data available for the selected date</td></tr>';
+            batteryTable.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No battery data available for the selected date</td></tr>';
         }
     }
     
-    // --- BATTERY SAVINGS CHART ---
+    // --- BATTERY SAVINGS CHART (HOURLY AVERAGES) ---
     const savingsChartElem = document.getElementById('savingsChart');
     if (savingsChartElem) {
-        const savingsMappedData = new Array(fullTimeline.length).fill(null);
-        let totalSavings = 0;
+        // Create hourly timeline (24 hours: 00:00, 01:00, ..., 23:00)
+        const hourlyTimeline = Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+        const hourlySavingsData = new Array(24).fill(null);
+        const hourlyPriceData = new Array(24).fill(null);
+        
+        // Group data by hour and calculate averages
+        const hourlyGroups = {}; // hour -> {savings: [], prices: []}
+        let totalCost = 0; // €
+        let dataPointCount = 0;
+        const processedTimestamps = new Set(); // Prevent duplicate processing due to offset
+        let entries = []; // Initialize for debug logging
+        let timeIntervalHours = 0.5; // Default 30 minutes - declare outside if block
         
         if (window.batterySavingsData && Object.keys(window.batterySavingsData).length > 0) {
-            const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+            entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
+            
+            console.log('=== RAW BATTERY SAVINGS DATA ===');
+            console.log('Total entries found:', entries.length);
+            entries.forEach(([timestamp, values], index) => {
+                console.log(`Entry ${index + 1}: ${timestamp} -> ${values.battery_savings}€`);
+            });
+            console.log('=== END RAW DATA ===');
+            
+            // Calculate the time interval between data points
+            if (entries.length >= 2) {
+                const firstTime = new Date(entries[0][0]);
+                const secondTime = new Date(entries[1][0]);
+                const intervalMs = secondTime - firstTime;
+                timeIntervalHours = intervalMs / (1000 * 60 * 60); // Convert to hours
+                
+                // Clamp to reasonable values (15 min to 2 hours)
+                timeIntervalHours = Math.max(0.25, Math.min(2, timeIntervalHours));
+            }
+            
+            console.log('Calculated time interval:', timeIntervalHours, 'hours');
+            
+            // Initialize hourly groups
+            for (let h = 0; h < 24; h++) {
+                hourlyGroups[h] = {savings: [], prices: []};
+            }
             
             entries.forEach(([timestamp, values]) => {
+                // Skip if we've already processed this timestamp (prevents offset duplicates)
+                if (processedTimestamps.has(timestamp)) {
+                    console.log('Skipping duplicate timestamp:', timestamp);
+                    return;
+                }
+                processedTimestamps.add(timestamp);
+                
                 const date = new Date(timestamp);
                 // Apply user's time offset for display
                 const offsetHours = window.userTimeOffset || 0;
@@ -1155,51 +1246,179 @@ function renderChartsAndTables() {
                 }
                 
                 const hour = date.getHours();
-                const minute = date.getMinutes();
+                const savingsValue = parseFloat(values.battery_savings || 0);
                 
-                // Round to nearest 30-minute interval
-                const roundedMinute = minute < 15 ? 0 : (minute < 45 ? 30 : 60);
-                const finalHour = roundedMinute === 60 ? (hour + 1) % 24 : hour;
-                const finalMinute = roundedMinute === 60 ? 0 : roundedMinute;
+                console.log(`Processing: ${timestamp} -> Hour ${hour}, Savings: ${savingsValue}€`);
                 
-                const timeStr = `${finalHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
-                const timeIndex = fullTimeline.indexOf(timeStr);
+                // Group savings by hour (we'll calculate averages later)
+                hourlyGroups[hour].savings.push(savingsValue);
                 
-                if (timeIndex !== -1) {
-                    savingsMappedData[timeIndex] = values.battery_savings;
-                    totalSavings += parseFloat(values.battery_savings || 0);
+                // Get corresponding price data
+                const priceData = window.batteryPriceData && window.batteryPriceData[timestamp];
+                if (priceData && priceData.price !== undefined) {
+                    const priceConverted = priceData.price / 1000; // Convert from €/MWh to €/kWh
+                    hourlyGroups[hour].prices.push(priceConverted);
                 }
+                
+                // Count total data points for debugging
+                dataPointCount++;
             });
+            
+            // Calculate hourly averages and populate chart data
+            console.log('=== HOURLY AVERAGES CALCULATION ===');
+            for (let hour = 0; hour < 24; hour++) {
+                const savingsArray = hourlyGroups[hour].savings;
+                const pricesArray = hourlyGroups[hour].prices;
+                
+                if (savingsArray.length > 0) {
+                    // Calculate average savings for this hour
+                    const avgSavings = savingsArray.reduce((sum, val) => sum + val, 0) / savingsArray.length;
+                    hourlySavingsData[hour] = avgSavings;
+                    
+                    console.log(`Hour ${hour}:00 - ${savingsArray.length} data points: [${savingsArray.map(v => v.toFixed(4)).join(', ')}] → Average: ${avgSavings.toFixed(6)}€`);
+                }
+                
+                if (pricesArray.length > 0) {
+                    // Calculate average price for this hour
+                    const avgPrice = pricesArray.reduce((sum, val) => sum + val, 0) / pricesArray.length;
+                    hourlyPriceData[hour] = avgPrice;
+                    
+                    console.log(`Hour ${hour}:00 - Average price: ${avgPrice.toFixed(6)}€/kWh`);
+                }
+            }
+            console.log('=== END HOURLY AVERAGES ===');
         }
         
+        // Calculate total savings from the hourly averages we already calculated
+        let totalSavings = 0;
+        let totalSavingsOldMethod = 0; // For comparison
+        console.log('=== DETAILED HOURLY AVERAGES CALCULATION ===');
+        console.log('hourlySavingsData array:', hourlySavingsData);
+        
+        hourlySavingsData.forEach((avgSavings, hour) => {
+            if (avgSavings !== null) {
+                console.log(`\n--- Hour ${hour}:00 ---`);
+                console.log(`Average savings: ${avgSavings}€`);
+                console.log(`Is positive? ${avgSavings > 0}`);
+                
+                // Only add positive averages to total (as per user requirement)
+                if (avgSavings > 0) {
+                    console.log(`Adding ${avgSavings.toFixed(6)}€ to total savings`);
+                    console.log(`Total before: ${totalSavings.toFixed(6)}€`);
+                    totalSavings += avgSavings;
+                    console.log(`Total after: ${totalSavings.toFixed(6)}€`);
+                } else {
+                    console.log(`Skipping negative value: ${avgSavings.toFixed(6)}€`);
+                }
+                // For comparison, add all averages (positive and negative)
+                totalSavingsOldMethod += avgSavings;
+            } else {
+                console.log(`Hour ${hour}:00 - No data (null)`);
+            }
+        });
+        
+        console.log('\n=== FINAL CALCULATION SUMMARY ===');
+        console.log('Total positive hourly averages sum:', totalSavings.toFixed(6), '€');
+        console.log('Total if including negative values:', totalSavingsOldMethod.toFixed(6), '€');
+        console.log('Manual verification:');
+        
+        // Manual verification - let's calculate step by step
+        let manualTotal = 0;
+        const positiveHours = [];
+        hourlySavingsData.forEach((avg, hour) => {
+            if (avg !== null && avg > 0) {
+                positiveHours.push({hour, value: avg});
+                manualTotal += avg;
+            }
+        });
+        
+        console.log('Positive hours found:', positiveHours);
+        console.log('Manual total calculation:', manualTotal.toFixed(6), '€');
+        console.log('=== END TOTAL CALCULATION ===');
+        
         const batterySavingsTotal = document.getElementById('batterySavingsTotal');
+        
+        // Debug logging for savings calculation
+        console.log('=== BATTERY SAVINGS CALCULATION DEBUG ===');
+        console.log('Total data points:', entries.length);
+        console.log('Processed timestamps:', processedTimestamps.size);
+        console.log('Time offset applied:', (window.userTimeOffset || 0), 'hours');
+        console.log('Time interval between points:', timeIntervalHours, 'hours');
+        console.log('=== SUMMARY OF CALCULATIONS ===');
+        console.log('Total raw data points processed:', dataPointCount);
+        console.log('Hours with savings data:', hourlySavingsData.filter(val => val !== null).length);
+        console.log('Hourly averages:', hourlySavingsData.map((val, hour) => val !== null ? `${hour}:00=${val.toFixed(6)}€` : null).filter(v => v));
+        console.log('FINAL TOTAL SAVINGS (sum of positive hourly averages):', totalSavings.toFixed(6), '€');
+        console.log('=== CHECKING DATA SOURCES ===');
+        console.log('Battery savings data available:', !!window.batterySavingsData);
+        if (window.batterySavingsData) {
+            console.log('Battery savings data keys count:', Object.keys(window.batterySavingsData).length);
+            console.log('First few savings entries:', Object.entries(window.batterySavingsData).slice(0, 3));
+        }
+        if (window.batteryPriceData) {
+            console.log('Battery price data keys count:', Object.keys(window.batteryPriceData).length);
+            console.log('First few battery price entries:', Object.entries(window.batteryPriceData).slice(0, 3));
+            console.log('=== PRICE VALUES DEBUG ===');
+            Object.entries(window.batteryPriceData).slice(0, 5).forEach(([ts, data]) => {
+                console.log(`Timestamp: ${ts}`);
+                console.log(`  - battery_p: ${data.battery_p}`);
+                console.log(`  - tariff: ${data.tariff}`);
+                console.log(`  - price: ${data.price}`);
+                console.log(`  - price type: ${typeof data.price}`);
+            });
+        }
+        console.log('=== END DEBUG ===');
+        
+        console.log('🎯 FINAL DISPLAY VALUE CHECK:');
+        console.log('totalSavings variable value:', totalSavings);
+        console.log('totalSavings formatted:', totalSavings.toFixed(2));
+        console.log('Display text will be: "Your savings today: € ' + totalSavings.toFixed(2) + '"');
+        
         if (batterySavingsTotal) batterySavingsTotal.textContent = `Your savings today: € ${totalSavings.toFixed(2)}`;
+        
+        console.log('🎯 After setting, element text content is:', batterySavingsTotal ? batterySavingsTotal.textContent : 'Element not found');
         
         if (window.chartInstances.savings) window.chartInstances.savings.destroy();
         
         window.chartInstances.savings = new Chart(savingsChartElem, {
             type: 'bar',
             data: {
-                labels: fullTimeline,
+                labels: hourlyTimeline,
                 datasets: [{
-                    label: 'Battery Savings (€)',
-                    data: savingsMappedData,
-                    backgroundColor: savingsMappedData.map(val => 
+                    label: 'Battery Savings (€) - Hourly Average',
+                    data: hourlySavingsData,
+                    backgroundColor: hourlySavingsData.map(val => 
                         val === null ? 'transparent' : 
                         val >= 0 ? 'rgba(25,135,84,0.7)' : 'rgba(220,53,69,0.7)'
                     ),
-                    hoverBackgroundColor: savingsMappedData.map(val => 
+                    hoverBackgroundColor: hourlySavingsData.map(val => 
                         val === null ? 'transparent' : 
                         val >= 0 ? 'rgba(25,135,84,1)' : 'rgba(220,53,69,1)'
                     ),
-                    borderSkipped: false
+                    borderSkipped: false,
+                    yAxisID: 'y'
+                }, {
+                    label: 'API Price (€/kWh) - Hourly Average',
+                    type: 'line',
+                    data: hourlyPriceData,
+                    borderColor: 'rgba(255,159,64,1)',
+                    backgroundColor: 'rgba(255,159,64,0.1)',
+                    fill: false,
+                    yAxisID: 'y1',
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    spanGaps: false,
+                    tension: 0.1
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { 
-                    legend: { display: false },
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                    },
                     tooltip: {
                         filter: function(tooltipItem) {
                             return tooltipItem.parsed.y !== null;
@@ -1212,7 +1431,16 @@ function renderChartsAndTables() {
                         beginAtZero: true,
                         title: { display: true, text: 'Savings (€)' },
                         ticks: { font: { size: 12 } },
-                        grid: { color: '#e5e7eb' }
+                        grid: { color: '#e5e7eb' },
+                        position: 'left'
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'API Price (€/kWh)' },
+                        grid: { display: false },
+                        ticks: { font: { size: 12 } }
                     },
                     x: { 
                         ticks: { 
@@ -1220,11 +1448,8 @@ function renderChartsAndTables() {
                             maxTicksLimit: 24,
                             callback: function(value, index) {
                                 const time = this.getLabelForValue(value);
-                                // Only show hourly labels for cleaner look
-                                if (time.endsWith(':00')) {
-                                    return formatChartTimeLabel(time);
-                                }
-                                return '';
+                                // Show all hourly labels since we now have 24 hourly data points
+                                return formatChartTimeLabel(time);
                             }
                         },
                         grid: { color: '#f3f4f6' }
@@ -1239,10 +1464,12 @@ function renderChartsAndTables() {
             savingsTable.innerHTML = '';
             const entries = Object.entries(window.batterySavingsData).sort(([a], [b]) => new Date(a) - new Date(b));
             entries.forEach(([ts, val]) => {
-                savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td></tr>`;
+                const priceData = window.batteryPriceData && window.batteryPriceData[ts];
+                const priceConverted = priceData && priceData.price !== undefined ? (priceData.price / 1000).toFixed(4) : 'N/A';
+                savingsTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${val.battery_savings.toFixed(2)}</td><td class="px-4 py-2 text-center">${priceConverted}</td></tr>`;
             });
         } else if (savingsTable) {
-            savingsTable.innerHTML = '<tr><td colspan="2" class="px-4 py-8 text-center text-gray-400">No savings data available for the selected date</td></tr>';
+            savingsTable.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No savings data available for the selected date</td></tr>';
         }
     }
 }

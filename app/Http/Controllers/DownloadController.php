@@ -129,8 +129,8 @@ class DownloadController extends Controller
 
             // Write headers based on chart type
             match ($chart) {
-                'energy' => fputcsv($out, ['Timestamp', 'Time', 'PV Power (kW)', 'Battery Power (kW)', 'Grid Power (kW)']),
-                'battery' => fputcsv($out, ['Timestamp', 'Time', 'Battery Power (kW)', 'Energy Price (€/kWh)']),
+                'energy' => fputcsv($out, ['Timestamp', 'Time', 'PV Power (kW)', 'Battery Power (kW)', 'Grid Power (kW)', 'Load Power (kW)']),
+                'battery' => fputcsv($out, ['Timestamp', 'Time', 'Battery Power (kW)', 'Energy Price (€/kWh)', 'Price (€/kWh)']),
                 'savings' => fputcsv($out, ['Timestamp', 'Time', 'Battery Savings (€)']),
             };
 
@@ -149,13 +149,15 @@ class DownloadController extends Controller
                         $timeOnly,
                         round(($values['pv_p'] ?? 0) / 1000, 3),
                         round(($values['battery_p'] ?? 0) / 1000, 3),
-                        round(($values['grid_p'] ?? 0) / 1000, 3)
+                        round(($values['grid_p'] ?? 0) / 1000, 3),
+                        round(($values['load_p'] ?? 0) / 1000, 3)
                     ]),
                     'battery' => fputcsv($out, [
                         $timestamp,
                         $timeOnly,
                         round(($values['battery_p'] ?? 0) / 1000, 3),
-                        round($values['tariff'] ?? 0, 4)
+                        round($values['tariff'] ?? 0, 4),
+                        round($values['price'] ?? ($values['tariff'] ?? 0), 4)
                     ]),
                     'savings' => fputcsv($out, [
                         $timestamp,
@@ -392,6 +394,14 @@ class DownloadController extends Controller
         
         Log::info("Processing aggregated snapshots", ['count' => count($aggregatedSnapshots)]);
         
+        // Calculate the actual time interval between data points
+        $timeIntervalHours = $this->calculateTimeInterval($aggregatedSnapshots);
+        
+        Log::info("Using time interval for battery savings", [
+            'time_interval_hours' => $timeIntervalHours,
+            'time_interval_minutes' => $timeIntervalHours * 60
+        ]);
+        
         foreach ($aggregatedSnapshots as $snapshot) {
             // Convert snapshot to object if it's an array
             if (is_array($snapshot)) {
@@ -408,17 +418,19 @@ class DownloadController extends Controller
             }
 
             if ($timestamp) {
-                // Energy chart data
+                // Energy chart data - now includes load_p
                 $result['energy_chart'][$timestamp] = [
                     'pv_p' => $snapshot->pv_p ?? 0,
                     'battery_p' => $snapshot->battery_p ?? 0,
-                    'grid_p' => $snapshot->grid_p ?? 0
+                    'grid_p' => $snapshot->grid_p ?? 0,
+                    'load_p' => $snapshot->load_p ?? 0  // Add load power from API
                 ];
                 
-                // Battery price data
+                // Battery price data - now includes both tariff and price
                 $result['battery_price'][$timestamp] = [
                     'battery_p' => $snapshot->battery_p ?? 0,
-                    'tariff' => $snapshot->tariff ?? 0.15 // Default tariff if missing
+                    'tariff' => $snapshot->tariff ?? 0.15, // Default tariff if missing
+                    'price' => $snapshot->price ?? ($snapshot->tariff ?? 0.15) // Use price if available, fallback to tariff
                 ];
                 
                 // Battery savings data
@@ -431,13 +443,23 @@ class DownloadController extends Controller
                     
                     // Battery discharging (positive) means saving money
                     if ($batteryPower > 0) {
-                        $batterySavings = ($batteryPower / 1000) * $tariff; // Convert W to kW
+                        // Convert W to kW and multiply by the actual time interval
+                        // This prevents over-inflating the total daily savings
+                        $batterySavings = ($batteryPower / 1000) * $tariff * $timeIntervalHours;
                     } else {
                         $batterySavings = 0; // No savings when charging
                     }
                 }
                 
                 if ($batterySavings !== null) {
+                    Log::info("BATTERY SAVINGS - Individual calculation", [
+                        'timestamp' => $timestamp,
+                        'battery_power' => $batteryPower,
+                        'tariff' => $tariff,
+                        'time_interval' => $timeIntervalHours,
+                        'calculated_savings' => $batterySavings
+                    ]);
+                    
                     $result['battery_savings'][$timestamp] = [
                         'battery_savings' => $batterySavings,
                         'tariff' => $snapshot->tariff ?? 0.15
@@ -468,13 +490,14 @@ class DownloadController extends Controller
         
         switch ($chart) {
             case 'energy':
-                $pvSum = $batterySum = $gridSum = 0;
+                $pvSum = $batterySum = $gridSum = $loadSum = 0;
                 $count = 0;
                 
                 foreach ($chartData as $values) {
                     $pvSum += ($values['pv_p'] ?? 0) / 1000;
                     $batterySum += ($values['battery_p'] ?? 0) / 1000;
                     $gridSum += ($values['grid_p'] ?? 0) / 1000;
+                    $loadSum += ($values['load_p'] ?? 0) / 1000;  // Add load power sum
                     $count++;
                 }
                 
@@ -483,28 +506,41 @@ class DownloadController extends Controller
                         'avg_pv' => round($pvSum / $count, 2),
                         'avg_battery' => round($batterySum / $count, 2),
                         'avg_grid' => round($gridSum / $count, 2),
+                        'avg_load' => round($loadSum / $count, 2),  // Add average load
                         'total_pv' => round($pvSum, 2),
+                        'total_load' => round($loadSum, 2),  // Add total load
                         'data_points' => $count
                     ];
                 }
                 break;
                 
             case 'battery':
-                $powerSum = $priceSum = 0;
+                $powerSum = $tariffSum = $priceSum = 0;
                 $count = 0;
+                $tariffValues = [];
+                $priceValues = [];
                 
                 foreach ($chartData as $values) {
                     $powerSum += ($values['battery_p'] ?? 0) / 1000;
-                    $priceSum += $values['tariff'] ?? 0;
+                    $tariff = $values['tariff'] ?? 0;
+                    $price = $values['price'] ?? $tariff;  // Use price if available, fallback to tariff
+                    
+                    $tariffSum += $tariff;
+                    $priceSum += $price;
+                    $tariffValues[] = $tariff;
+                    $priceValues[] = $price;
                     $count++;
                 }
                 
                 if ($count > 0) {
                     $summary = [
                         'avg_power' => round($powerSum / $count, 2),
-                        'avg_price' => round($priceSum / $count, 4),
-                        'max_price' => round(max(array_column($chartData, 'tariff')), 4),
-                        'min_price' => round(min(array_column($chartData, 'tariff')), 4),
+                        'avg_tariff' => round($tariffSum / $count, 4),
+                        'avg_price' => round($priceSum / $count, 4),  // Add average price
+                        'max_tariff' => round(max($tariffValues), 4),
+                        'min_tariff' => round(min($tariffValues), 4),
+                        'max_price' => round(max($priceValues), 4),  // Add max price
+                        'min_price' => round(min($priceValues), 4),  // Add min price
                         'data_points' => $count
                     ];
                 }
@@ -709,7 +745,7 @@ class DownloadController extends Controller
                 }, $realData)
             ]);
             
-            // Transform energy chart data for Energy Live Table: Time | PV (kW) | Battery (kW) | Grid (kW)
+            // Transform energy chart data for Energy Live Table: Time | PV (kW) | Battery (kW) | Grid (kW) | Load (kW)
             if (!empty($realData['energy_chart'])) {
                 Log::info("Transforming energy data", ['count' => count($realData['energy_chart'])]);
                 foreach ($realData['energy_chart'] as $timestamp => $values) {
@@ -718,12 +754,13 @@ class DownloadController extends Controller
                         'pv_power' => ($values['pv_p'] ?? 0), // Keep in watts, will convert to kW in template
                         'battery_power' => ($values['battery_p'] ?? 0), // Keep in watts
                         'grid_power' => ($values['grid_p'] ?? 0), // Keep in watts, use grid_p for Grid column
+                        'load_power' => ($values['load_p'] ?? 0), // Keep in watts, will convert to kW in template
                     ];
                 }
                 Log::info("Energy data transformed", ['result_count' => count($energyData)]);
             }
             
-            // Transform battery data for Battery Power and Energy Price Table: Time | Battery Power (kW) | Energy Price (€/kWh)
+            // Transform battery data for Battery Power and Energy Price Table: Time | Battery Power (kW) | Energy Price (€/kWh) | Price (€/kWh)
             if (!empty($realData['battery_price'])) {
                 Log::info("Transforming battery data", ['count' => count($realData['battery_price'])]);
                 foreach ($realData['battery_price'] as $timestamp => $values) {
@@ -731,6 +768,7 @@ class DownloadController extends Controller
                         'time' => date('H:i', strtotime($timestamp)),
                         'battery_power' => ($values['battery_p'] ?? 0), // Keep in watts, will convert to kW in template
                         'energy_price' => ($values['tariff'] ?? 0.1500), // Energy price in €/kWh
+                        'price' => ($values['price'] ?? ($values['tariff'] ?? 0.1500)), // Price field, fallback to tariff
                     ];
                 }
                 Log::info("Battery data transformed", ['result_count' => count($batteryData)]);
@@ -1215,5 +1253,60 @@ class DownloadController extends Controller
             ]);
             return null;
         }
+    }
+    
+    /**
+     * Calculate the time interval in hours between data points
+     * This helps ensure accurate battery savings calculations
+     */
+    private function calculateTimeInterval($aggregatedSnapshots): float
+    {
+        if (count($aggregatedSnapshots) < 2) {
+            return 0.5; // Default to 30 minutes if we can't calculate
+        }
+        
+        $timestamps = [];
+        foreach ($aggregatedSnapshots as $snapshot) {
+            if (is_array($snapshot)) {
+                $snapshot = (object) $snapshot;
+            }
+            
+            if (!empty($snapshot->timestamp)) {
+                $timestamps[] = strtotime($snapshot->timestamp);
+            } elseif (!empty($snapshot->dt)) {
+                $timestamps[] = $snapshot->dt;
+            }
+        }
+        
+        if (count($timestamps) < 2) {
+            return 0.5; // Default to 30 minutes
+        }
+        
+        sort($timestamps);
+        $totalIntervals = 0;
+        $intervalCount = 0;
+        
+        for ($i = 1; $i < count($timestamps); $i++) {
+            $interval = $timestamps[$i] - $timestamps[$i-1];
+            if ($interval > 0 && $interval < 7200) { // Ignore intervals > 2 hours (likely data gaps)
+                $totalIntervals += $interval;
+                $intervalCount++;
+            }
+        }
+        
+        if ($intervalCount === 0) {
+            return 0.5; // Default to 30 minutes
+        }
+        
+        $averageIntervalSeconds = $totalIntervals / $intervalCount;
+        $averageIntervalHours = $averageIntervalSeconds / 3600;
+        
+        Log::info("Calculated time interval", [
+            'interval_seconds' => $averageIntervalSeconds,
+            'interval_hours' => $averageIntervalHours,
+            'sample_size' => $intervalCount
+        ]);
+        
+        return round($averageIntervalHours, 3);
     }
 }

@@ -37,7 +37,9 @@ class DownloadControllerTest extends TestCase
                 'pv_p' => 5000,
                 'battery_p' => 2000,
                 'grid_p' => 3000,
+                'load_p' => 4500,
                 'tariff' => 0.15,
+                'price' => 0.16,
                 'battery_savings' => 0.30
             ],
             [
@@ -45,7 +47,9 @@ class DownloadControllerTest extends TestCase
                 'pv_p' => 7000,
                 'battery_p' => 3000,
                 'grid_p' => 4000,
+                'load_p' => 5800,
                 'tariff' => 0.18,
+                'price' => 0.19,
                 'battery_savings' => 0.54
             ],
             [
@@ -53,7 +57,9 @@ class DownloadControllerTest extends TestCase
                 'pv_p' => 9000,
                 'battery_p' => 4000,
                 'grid_p' => 5000,
+                'load_p' => 7200,
                 'tariff' => 0.20,
+                'price' => 0.21,
                 'battery_savings' => 0.80
             ]
         ]
@@ -80,6 +86,7 @@ class DownloadControllerTest extends TestCase
 
     public function test_download_plant_report_generates_pdf_successfully()
     {
+        $this->withoutMiddleware();
         $this->actingAs($this->user);
         
         // Mock chart images in session
@@ -92,6 +99,11 @@ class DownloadControllerTest extends TestCase
         Session::put("chart_images_{$this->plantId}_2024-01-15", $chartImages);
         
         $response = $this->get("/plants/{$this->plantId}/download-report-pdf?date=2024-01-15");
+        
+        // Debug output
+        if ($response->status() === 302) {
+            $this->fail('Got redirect to: ' . $response->headers->get('Location'));
+        }
         
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
@@ -192,6 +204,10 @@ class DownloadControllerTest extends TestCase
                     [
                         'label' => 'Grid Power',
                         'data' => [3.0, 4.0, 5.0]
+                    ],
+                    [
+                        'label' => 'Load Power',
+                        'data' => [4.5, 5.8, 7.2]
                     ]
                 ]
             ],
@@ -205,6 +221,10 @@ class DownloadControllerTest extends TestCase
                     [
                         'label' => 'Energy Price',
                         'data' => [0.15, 0.18, 0.20]
+                    ],
+                    [
+                        'label' => 'Price',
+                        'data' => [0.16, 0.19, 0.21]
                     ]
                 ]
             ]
@@ -476,6 +496,14 @@ class DownloadControllerTest extends TestCase
                     [
                         'label' => 'Battery Power',
                         'data' => [2.789, 3.012]
+                    ],
+                    [
+                        'label' => 'Grid Power',
+                        'data' => [1.555, 2.222]
+                    ],
+                    [
+                        'label' => 'Load Power',
+                        'data' => [4.444, 5.555]
                     ]
                 ]
             ]

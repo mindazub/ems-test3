@@ -116,7 +116,10 @@ class PlantDataCacheService
                 // Calculate savings if not stored
                 $batteryPower = abs($snapshot->battery_p);
                 $tariff = $snapshot->tariff ?? 0.15;
-                $savings = ($batteryPower / 1000) * $tariff * 0.2; // 20% efficiency gain
+                // Convert W to kW and multiply by time interval
+                // Assuming data points are every 30 minutes (0.5 hours)
+                $timeIntervalHours = 0.5; // 30 minutes = 0.5 hours
+                $savings = ($batteryPower / 1000) * $tariff * $timeIntervalHours;
             }
             
             $batterySavings[$timestamp] = [

@@ -464,11 +464,12 @@ class PlantController extends Controller
                                 $batteryPower = $snapshot->battery_p;
                                 $tariff = $snapshot->tariff ?? 0.15; // Default tariff if missing
                                 
-                                // For this example, let's handle both positive and negative battery power
-                                // Negative power (charging) also has economic value in some scenarios
-                                $powerForSavings = abs($batteryPower); // Use absolute value for demonstration
-                                if ($powerForSavings > 0) {
-                                    $savings = ($powerForSavings / 1000) * $tariff * 0.2; // Assuming 20% efficiency gain
+                                // Only calculate savings for discharging (positive power)
+                                if ($batteryPower > 0) {
+                                    // Convert W to kW and multiply by time interval
+                                    // Assuming data points are every 30 minutes (0.5 hours)
+                                    $timeIntervalHours = 0.5; // 30 minutes = 0.5 hours
+                                    $savings = ($batteryPower / 1000) * $tariff * $timeIntervalHours;
                                 }
                             }
                             
@@ -681,6 +682,14 @@ class PlantController extends Controller
         // Process raw data into chart format
         $aggregatedSnapshots = $data['aggregated_data_snapshots'] ?? [];
         
+        // Calculate the actual time interval between data points
+        $timeIntervalHours = $this->calculateTimeInterval($aggregatedSnapshots);
+        
+        \Log::info("Using time interval for battery savings", [
+            'time_interval_hours' => $timeIntervalHours,
+            'time_interval_minutes' => $timeIntervalHours * 60
+        ]);
+        
         foreach ($aggregatedSnapshots as $snapshot) {
             // Convert snapshot to object if it's an array
             if (is_array($snapshot)) {
@@ -720,7 +729,9 @@ class PlantController extends Controller
                     
                     // Battery discharging (positive) means saving money
                     if ($batteryPower > 0) {
-                        $batterySavings = ($batteryPower / 1000) * $tariff; // Convert W to kW
+                        // Convert W to kW and multiply by the actual time interval
+                        // This prevents over-inflating the total daily savings
+                        $batterySavings = ($batteryPower / 1000) * $tariff * $timeIntervalHours;
                     } else {
                         $batterySavings = 0; // No savings when charging
                     }
@@ -735,5 +746,60 @@ class PlantController extends Controller
         }
         
         return $result;
+    }
+    
+    /**
+     * Calculate the time interval in hours between data points
+     * This helps ensure accurate battery savings calculations
+     */
+    private function calculateTimeInterval($aggregatedSnapshots): float
+    {
+        if (count($aggregatedSnapshots) < 2) {
+            return 0.5; // Default to 30 minutes if we can't calculate
+        }
+        
+        $timestamps = [];
+        foreach ($aggregatedSnapshots as $snapshot) {
+            if (is_array($snapshot)) {
+                $snapshot = (object) $snapshot;
+            }
+            
+            if (!empty($snapshot->timestamp)) {
+                $timestamps[] = strtotime($snapshot->timestamp);
+            } elseif (!empty($snapshot->dt)) {
+                $timestamps[] = $snapshot->dt;
+            }
+        }
+        
+        if (count($timestamps) < 2) {
+            return 0.5; // Default to 30 minutes
+        }
+        
+        sort($timestamps);
+        $totalIntervals = 0;
+        $intervalCount = 0;
+        
+        for ($i = 1; $i < count($timestamps); $i++) {
+            $interval = $timestamps[$i] - $timestamps[$i-1];
+            if ($interval > 0 && $interval < 7200) { // Ignore intervals > 2 hours (likely data gaps)
+                $totalIntervals += $interval;
+                $intervalCount++;
+            }
+        }
+        
+        if ($intervalCount === 0) {
+            return 0.5; // Default to 30 minutes
+        }
+        
+        $averageIntervalSeconds = $totalIntervals / $intervalCount;
+        $averageIntervalHours = $averageIntervalSeconds / 3600;
+        
+        \Log::info("Calculated time interval", [
+            'interval_seconds' => $averageIntervalSeconds,
+            'interval_hours' => $averageIntervalHours,
+            'sample_size' => $intervalCount
+        ]);
+        
+        return round($averageIntervalHours, 3);
     }
 }

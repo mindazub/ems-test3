@@ -270,7 +270,7 @@
         @endif
         
         <div class="data-summary">
-            <strong>Chart Data Summary:</strong> This chart shows PV Power generation (blue), Battery Power flow (red), and Grid Power consumption (green) throughout the day. Positive battery values indicate charging, negative values indicate discharging.
+            <strong>Chart Data Summary:</strong> This chart shows PV Power generation (blue), Battery Power flow (red), Grid Power consumption (green), and Load Power consumption (orange) throughout the day. Positive battery values indicate charging, negative values indicate discharging.
         </div>
         
         <div class="section-title">Energy Live Table</div>
@@ -281,6 +281,7 @@
                     <th>PV (kW)</th>
                     <th>Battery (kW)</th>
                     <th>Grid (kW)</th>
+                    <th>Load (kW)</th>
                 </tr>
             </thead>
             <tbody>
@@ -296,6 +297,7 @@
                     <td>{{ number_format(($entry['pv_power'] ?? 0) / 1000, 2) }}</td>
                     <td>{{ number_format(($entry['battery_power'] ?? 0) / 1000, 2) }}</td>
                     <td>{{ number_format(($entry['grid_power'] ?? 0) / 1000, 2) }}</td>
+                    <td>{{ number_format(($entry['load_power'] ?? 0) / 1000, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -328,7 +330,7 @@
         @endif
         
         <div class="data-summary">
-            <strong>Chart Data Summary:</strong> This chart displays Battery Power flow throughout the day and the Energy Price (tariff) used for calculations. Positive battery values indicate discharging, negative values indicate charging.
+            <strong>Chart Data Summary:</strong> This chart displays Battery Power flow throughout the day, the Energy Price (tariff) used for calculations, and the actual Price data from the API.
         </div>
         
         <div class="section-title">Battery Power and Energy Price Table</div>
@@ -338,6 +340,7 @@
                     <th>Time</th>
                     <th>Battery Power (kW)</th>
                     <th>Energy Price (€ / kWh)</th>
+                    <th>Price (€ / kWh)</th>
                 </tr>
             </thead>
             <tbody>
@@ -352,6 +355,7 @@
                     </td>
                     <td>{{ number_format(($entry['battery_power'] ?? 0) / 1000, 2) }}</td>
                     <td>{{ number_format($entry['energy_price'] ?? 0.1500, 4) }}</td>
+                    <td>{{ number_format($entry['price'] ?? 0.1500, 4) }}</td>
                 </tr>
                 @endforeach
             </tbody>
