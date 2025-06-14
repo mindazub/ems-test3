@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dropdown Downloads</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            background-color: #10b981;
+        }
+
+        .notification.error {
+            background-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Test Dropdown Downloads</h1>
+
+        <!-- Energy Chart Dropdown -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Energy Chart Downloads</h2>
+            <div class="flex space-x-4">
+                <button id="downloadCSV-energy" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Download Energy CSV
+                </button>
+                <button id="downloadPDF-energy" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Download Energy PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Battery Chart Dropdown -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Battery Chart Downloads</h2>
+            <div class="flex space-x-4">
+                <button id="downloadCSV-battery" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Download Battery CSV
+                </button>
+                <button id="downloadPDF-battery" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Download Battery PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Savings Chart Dropdown -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Savings Chart Downloads</h2>
+            <div class="flex space-x-4">
+                <button id="downloadCSV-savings" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Download Savings CSV
+                </button>
+                <button id="downloadPDF-savings" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Download Savings PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="bg-gray-200 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Debug Info</h2>
+            <div id="debug-info">
+                <p><strong>Plant ID:</strong> <span id="plant-id-display">Loading...</span></p>
+                <p><strong>Current Date:</strong> <span id="current-date-display">Loading...</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mock canvas for chart generation -->
+    <canvas id="energyChart" width="400" height="300" style="display: none;"></canvas>
+    <canvas id="batteryChart" width="400" height="300" style="display: none;"></canvas>
+    <canvas id="savingsChart" width="400" height="300" style="display: none;"></canvas>
+
+    <script>
+        // Set up test environment
+        window.plantId = '65f20fa1-047a-4379-8464-59f1d94be3c7';
+        document.getElementById('plant-id-display').textContent = window.plantId;
+        document.getElementById('current-date-display').textContent = new Date().toISOString().split('T')[0];
+
+        // Mock chart data
+        window.energyData = { "test": "data" };
+        window.batteryPriceData = { "test": "data" };
+        window.batterySavingsData = { "test": "data" };
+
+        // Create simple mock charts on canvases
+        ['energyChart', 'batteryChart', 'savingsChart'].forEach(canvasId => {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(0, 0, 400, 300);
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Mock Chart', 200, 150);
+        });
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Download functions (simplified versions)
+        function downloadCSVDirect(chartName, plantId) {
+            console.log(`Downloading CSV for ${chartName} with plant ${plantId}`);
+            showNotification(`Downloading ${chartName} CSV...`, 'success');
+
+            const selectedDate = new Date().toISOString().split('T')[0];
+            const downloadUrl = `http://localhost:8000/plants/${plantId}/download/${chartName}/csv?date=${selectedDate}`;
+
+            // Create a temporary form for download
+            const form = document.createElement('form');
+            form.method = 'GET';
+            form.action = downloadUrl;
+            form.target = '_blank';
+            form.style.display = 'none';
+
+            document.body.appendChild(form);
+            form.submit();
+
+            setTimeout(() => {
+                if (form.parentNode) {
+                    form.parentNode.removeChild(form);
+                }
+            }, 1000);
+        }
+
+        function sendChartToBackend(chartId, chartName, plantId, type) {
+            console.log(`Downloading ${type} for ${chartName} with plant ${plantId}`);
+            showNotification(`Preparing ${type.toUpperCase()} download...`, 'success');
+
+            const canvas = document.getElementById(chartId);
+            const dataUrl = canvas.toDataURL('image/png');
+            const selectedDate = new Date().toISOString().split('T')[0];
+
+            // For testing, just trigger the file download directly
+            if (type === 'pdf') {
+                const downloadUrl = `http://localhost:8000/plants/${plantId}/download/${chartName}/pdf?date=${selectedDate}`;
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = downloadUrl;
+                form.target = '_blank';
+                form.style.display = 'none';
+
+                document.body.appendChild(form);
+                form.submit();
+
+                setTimeout(() => {
+                    if (form.parentNode) {
+                        form.parentNode.removeChild(form);
+                    }
+                }, 1000);
+            }
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            // Energy chart buttons
+            document.getElementById('downloadCSV-energy').addEventListener('click', function () {
+                downloadCSVDirect('energy', window.plantId);
+            });
+
+            document.getElementById('downloadPDF-energy').addEventListener('click', function () {
+                sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
+            });
+
+            // Battery chart buttons
+            document.getElementById('downloadCSV-battery').addEventListener('click', function () {
+                downloadCSVDirect('battery', window.plantId);
+            });
+
+            document.getElementById('downloadPDF-battery').addEventListener('click', function () {
+                sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
+            });
+
+            // Savings chart buttons
+            document.getElementById('downloadCSV-savings').addEventListener('click', function () {
+                downloadCSVDirect('savings', window.plantId);
+            });
+
+            document.getElementById('downloadPDF-savings').addEventListener('click', function () {
+                sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
+            });
+
+            console.log('All dropdown download buttons initialized');
+        });
+    </script>
+</body>
+
+</html>

@@ -60,24 +60,12 @@
                          </svg>
                          Download PNG
                      </a>
-                     @php
-                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
-                     @endphp
-                     @if(!empty($plantId))
-                         <a id="downloadCSV-energy" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'energy', 'csv']) }}">
-                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </a>
-                     @else
-                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
-                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </span>
-                     @endif
+                     <a id="downloadCSV-energy" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download CSV
+                     </a>
                      <a id="downloadPDF-energy" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                          <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
@@ -151,24 +139,12 @@
                          </svg>
                          Download PNG
                      </a>
-                     @php
-                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
-                     @endphp
-                     @if(!empty($plantId))
-                         <a id="downloadCSV-battery" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'battery', 'csv']) }}">
-                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </a>
-                     @else
-                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
-                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </span>
-                     @endif
+                     <a id="downloadCSV-battery" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download CSV
+                     </a>
                      <a id="downloadPDF-battery" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                          <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
@@ -238,24 +214,12 @@
                          </svg>
                          Download PNG
                      </a>
-                     @php
-                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
-                     @endphp
-                     @if(!empty($plantId))
-                         <a id="downloadCSV-savings" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'savings', 'csv']) }}">
-                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </a>
-                     @else
-                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
-                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
-                             </svg>
-                             Download CSV
-                         </span>
-                     @endif
+                     <a id="downloadCSV-savings" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download CSV
+                     </a>
                      <a id="downloadPDF-savings" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                          <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
@@ -440,6 +404,10 @@ window.batterySavingsData = {};
 window.chartInstances = {};
 window.availableDates = new Set(); // Store available data dates
 
+// Immediately set plant ID from backend to ensure it's available for downloads
+window.plantId = @json($plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null));
+console.log('Plant ID set immediately:', window.plantId);
+
 // Enhanced Plant ID detection with multiple fallback methods
 function detectPlantId() {
     let plantId = null;
@@ -503,7 +471,9 @@ function detectPlantId() {
 }
 
 // Initialize Plant ID and user preferences
-window.plantId = detectPlantId();
+if (!window.plantId) {
+    window.plantId = detectPlantId();
+}
 window.userTimeFormat = @json($user ? $user->getTimeFormat() : '24');
 window.userTimeOffset = @json($user ? $user->getTimeOffset() : 0);
 
@@ -2124,8 +2094,9 @@ function setupNavigationButtons(dateInput, todayStr) {
             form.method = 'GET';
             form.action = url;
             form.style.display = 'none';
+            form.target = '_blank'; // Open in new tab to avoid navigation issues
             
-            // Add CSRF token as hidden input
+            // Add CSRF token as hidden input if needed (though GET requests usually don't need it)
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             if (csrfToken) {
                 const csrfInput = document.createElement('input');
@@ -2231,35 +2202,58 @@ function setupNavigationButtons(dateInput, todayStr) {
 
     // Enhanced CSV download that uses current chart data
     function downloadCSVDirect(chartName, plantId) {
+        console.log(`=== CSV DOWNLOAD DIRECT START ===`);
+        console.log('Chart Name:', chartName);
+        console.log('Plant ID:', plantId);
+        
         const downloadButton = document.querySelector(`#downloadCSV-${chartName}`);
+        if (!downloadButton) {
+            console.error(`CSV download button not found for chart: ${chartName}`);
+            showNotification('Download button not found', 'error');
+            return;
+        }
+        
         const originalText = downloadButton.textContent;
         downloadButton.innerHTML = 'Preparing CSV...';
         downloadButton.style.pointerEvents = 'none';
 
-        // Get selected date from the date input
-        const dateInput = document.getElementById('energy-date');
-        const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+        try {
+            // Get selected date from the date input
+            const dateInput = document.getElementById('energy-date');
+            const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            console.log('Selected date:', selectedDate);
 
-        // Use current chart data instead of static files
-        const currentData = window[`${chartName === 'battery' ? 'batteryPrice' : chartName === 'savings' ? 'batterySavings' : 'energy'}Data`];
-        
-        if (!currentData || Object.keys(currentData).length === 0) {
-            showNotification('No data available for CSV download', 'error');
+            // Use current chart data instead of static files
+            const currentData = window[`${chartName === 'battery' ? 'batteryPrice' : chartName === 'savings' ? 'batterySavings' : 'energy'}Data`];
+            console.log('Current data available:', !!currentData, currentData ? Object.keys(currentData).length : 0);
+            
+            if (!currentData || Object.keys(currentData).length === 0) {
+                console.warn('No current data available, proceeding with API call anyway');
+            }
+
+            // Download CSV using the new robust download method
+            const downloadUrl = `/plants/${plantId}/download/${chartName}/csv?date=${selectedDate}`;
+            console.log('Download URL:', downloadUrl);
+            
+            downloadFileWithFetch(downloadUrl, `${plantId}_${chartName}_${selectedDate}.csv`);
+            
+            // Reset button after a delay
+            setTimeout(() => {
+                downloadButton.innerHTML = originalText;
+                downloadButton.style.pointerEvents = 'auto';
+                showNotification('CSV download initiated!', 'success');
+                console.log('=== CSV DOWNLOAD DIRECT END ===');
+            }, 1000);
+            
+        } catch (error) {
+            console.error('CSV download error:', error);
+            showNotification(`CSV download failed: ${error.message}`, 'error');
+            
+            // Reset button on error
             downloadButton.innerHTML = originalText;
             downloadButton.style.pointerEvents = 'auto';
-            return;
+            console.log('=== CSV DOWNLOAD DIRECT END (ERROR) ===');
         }
-
-        // Download CSV using the new robust download method
-        const downloadUrl = `/plants/${plantId}/download/${chartName}/csv?date=${selectedDate}`;
-        downloadFileWithFetch(downloadUrl, `${plantId}_${chartName}_${selectedDate}.csv`);
-        
-        // Reset button after a delay
-        setTimeout(() => {
-            downloadButton.innerHTML = originalText;
-            downloadButton.style.pointerEvents = 'auto';
-            showNotification('CSV download initiated!', 'success');
-        }, 1000);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -2293,27 +2287,47 @@ function setupNavigationButtons(dateInput, todayStr) {
 
         const energyPDFButton = document.getElementById('downloadPDF-energy');
         if (energyPDFButton) {
+            console.log('Energy PDF button found, adding click handler');
             energyPDFButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Energy PDF button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download chart: Plant ID is missing', 'error');
                     return;
                 }
-                sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
+                try {
+                    sendChartToBackend('energyChart', 'energy', window.plantId, 'pdf');
+                } catch (error) {
+                    console.error('Error in energy PDF download:', error);
+                    showNotification('PDF download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Energy PDF button not found!');
         }
 
         // Override CSV link behavior for energy (only if element exists)
         const energyCSVButton = document.getElementById('downloadCSV-energy');
         if (energyCSVButton) {
+            console.log('Energy CSV button found, adding click handler');
             energyCSVButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Energy CSV button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download CSV: Plant ID is missing', 'error');
                     return;
                 }
-                downloadCSVDirect('energy', window.plantId);
+                try {
+                    downloadCSVDirect('energy', window.plantId);
+                } catch (error) {
+                    console.error('Error in energy CSV download:', error);
+                    showNotification('CSV download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Energy CSV button not found!');
         }
 
         // BATTERY CHART DOWNLOADS
@@ -2331,27 +2345,47 @@ function setupNavigationButtons(dateInput, todayStr) {
 
         const batteryPDFButton = document.getElementById('downloadPDF-battery');
         if (batteryPDFButton) {
+            console.log('Battery PDF button found, adding click handler');
             batteryPDFButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Battery PDF button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download chart: Plant ID is missing', 'error');
                     return;
                 }
-                sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
+                try {
+                    sendChartToBackend('batteryChart', 'battery', window.plantId, 'pdf');
+                } catch (error) {
+                    console.error('Error in battery PDF download:', error);
+                    showNotification('PDF download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Battery PDF button not found!');
         }
 
         // Override CSV link behavior for battery (only if element exists)
         const batteryCSVButton = document.getElementById('downloadCSV-battery');
         if (batteryCSVButton) {
+            console.log('Battery CSV button found, adding click handler');
             batteryCSVButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Battery CSV button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download CSV: Plant ID is missing', 'error');
                     return;
                 }
-                downloadCSVDirect('battery', window.plantId);
+                try {
+                    downloadCSVDirect('battery', window.plantId);
+                } catch (error) {
+                    console.error('Error in battery CSV download:', error);
+                    showNotification('CSV download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Battery CSV button not found!');
         }
 
         // SAVINGS CHART DOWNLOADS
@@ -2369,27 +2403,47 @@ function setupNavigationButtons(dateInput, todayStr) {
 
         const savingsPDFButton = document.getElementById('downloadPDF-savings');
         if (savingsPDFButton) {
+            console.log('Savings PDF button found, adding click handler');
             savingsPDFButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Savings PDF button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download chart: Plant ID is missing', 'error');
                     return;
                 }
-                sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
+                try {
+                    sendChartToBackend('savingsChart', 'savings', window.plantId, 'pdf');
+                } catch (error) {
+                    console.error('Error in savings PDF download:', error);
+                    showNotification('PDF download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Savings PDF button not found!');
         }
 
         // Override CSV link behavior for savings (only if element exists)
         const savingsCSVButton = document.getElementById('downloadCSV-savings');
         if (savingsCSVButton) {
+            console.log('Savings CSV button found, adding click handler');
             savingsCSVButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('Savings CSV button clicked');
+                console.log('Plant ID available:', !!window.plantId, window.plantId);
                 if (!window.plantId) {
                     showNotification('Cannot download CSV: Plant ID is missing', 'error');
                     return;
                 }
-                downloadCSVDirect('savings', window.plantId);
+                try {
+                    downloadCSVDirect('savings', window.plantId);
+                } catch (error) {
+                    console.error('Error in savings CSV download:', error);
+                    showNotification('CSV download failed: ' + error.message, 'error');
+                }
             });
+        } else {
+            console.warn('Savings CSV button not found!');
         }
     });
 </script>
