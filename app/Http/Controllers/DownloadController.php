@@ -251,12 +251,35 @@ class DownloadController extends Controller
         try {
             $plant = $this->fetchPlantFromAPI($plantId);
             if (!$plant) {
-                throw new \Exception("Plant not found in API");
+                // Create fallback plant object if API fails
+                $plant = (object)[
+                    'uid' => $plantId,
+                    'name' => "Plant {$plantId}",
+                    'metadata_flat' => [
+                        'Plant ID' => $plantId,
+                        'Plant Name' => "Plant {$plantId}",
+                        'Status' => 'Unknown'
+                    ]
+                ];
+                Log::warning("Using fallback plant data for PDF generation");
             }
-            Log::info("Plant found", ['plant_name' => $plant->name ?? $plant->uid]);
+            Log::info("Plant found", [
+                'plant_name' => $plant->name ?? $plant->uid,
+                'has_metadata' => !empty($plant->metadata_flat),
+                'metadata_count' => count($plant->metadata_flat ?? [])
+            ]);
         } catch (\Exception $e) {
             Log::error("Plant not found", ['plant_id' => $plantId, 'error' => $e->getMessage()]);
-            throw $e;
+            // Create fallback plant object
+            $plant = (object)[
+                'uid' => $plantId,
+                'name' => "Plant {$plantId}",
+                'metadata_flat' => [
+                    'Plant ID' => $plantId,
+                    'Plant Name' => "Plant {$plantId}",
+                    'Status' => 'Unknown'
+                ]
+            ];
         }
         
         // Get dynamic data
@@ -1430,17 +1453,89 @@ class DownloadController extends Controller
                 $plant->owner_uuid = $specificOwner->uuid;
             }
             
-            // Normalize plant object
+            // Normalize plant object and process metadata (same logic as PlantController)
             if ($plant) {
                 $plant->uid = $plant->uid ?? null;
                 $plant->uuid = $plant->uuid ?? $plant->uid ?? null;
                 $plant->name = $plant->name ?? $plant->uid ?? 'Unknown Plant';
+                
+                // Process metadata_flat for PDF display (same logic as PlantController)
+                $plant->metadata_flat = [];
+                if (isset($plant->plant_metadata) && !empty($plant->plant_metadata)) {
+                    $flatten = function($data, $prefix = '') use (&$flatten) {
+                        $result = [];
+                        if (is_object($data)) $data = (array)$data;
+                        foreach ($data as $key => $value) {
+                            $label = $prefix ? $prefix . ' / ' . ucfirst(str_replace('_', ' ', $key)) : ucfirst(str_replace('_', ' ', $key));
+                            if (is_array($value) || is_object($value)) {
+                                $result += $flatten($value, $label);
+                            } else {
+                                $result[$label] = $value;
+                            }
+                        }
+                        return $result;
+                    };
+                    $plant->metadata_flat = $flatten($plant->plant_metadata);
+                }
+                
+                // Merge owner info from DB as the first entries
+                if (!empty($plant->owner_name) || !empty($plant->owner_email)) {
+                    $ownerArr = [];
+                    if (!empty($plant->owner_name)) {
+                        $ownerArr['Owner Name'] = $plant->owner_name;
+                    }
+                    if (!empty($plant->owner_email)) {
+                        $ownerArr['Owner Email'] = $plant->owner_email;
+                    }
+                    $plant->metadata_flat = $ownerArr + $plant->metadata_flat;
+                }
+                
+                // Only keep allowed keys for display
+                $allowedKeys = [
+                    'Owner Name',
+                    'Owner Email', 
+                    'Capacity',
+                    'Latitude',
+                    'Longitude',
+                    'Status',
+                    'Last Updated',
+                    'Updated At',
+                    'Last Updated At'
+                ];
+                $plant->metadata_flat = array_filter(
+                    $plant->metadata_flat,
+                    function($key) use ($allowedKeys) {
+                        foreach ($allowedKeys as $allowed) {
+                            if (stripos($key, $allowed) !== false) return true;
+                        }
+                        return false;
+                    },
+                    ARRAY_FILTER_USE_KEY
+                );
+                
+                // Format date fields
+                foreach (['Updated At', 'Last Updated', 'Last Updated At'] as $key) {
+                    foreach ($plant->metadata_flat as $metaKey => $metaValue) {
+                        if (stripos($metaKey, $key) !== false && !empty($metaValue)) {
+                            try {
+                                if (is_numeric($metaValue)) {
+                                    $plant->metadata_flat[$metaKey] = \Carbon\Carbon::createFromTimestamp((int)$metaValue)->format('Y-m-d H:i:s');
+                                } else {
+                                    $plant->metadata_flat[$metaKey] = \Carbon\Carbon::parse($metaValue)->format('Y-m-d H:i:s');
+                                }
+                            } catch (\Exception $e) {
+                                // Leave as is if parsing fails
+                            }
+                        }
+                    }
+                }
             }
             
             Log::info("Plant fetched from API successfully", [
                 'plant_id' => $plantId,
                 'plant_name' => $plant->name ?? 'Unknown',
-                'plant_uid' => $plant->uid ?? 'Unknown'
+                'plant_uid' => $plant->uid ?? 'Unknown',
+                'metadata_count' => count($plant->metadata_flat ?? [])
             ]);
             
             return $plant;

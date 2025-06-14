@@ -160,38 +160,49 @@
 </head>
 <body>
     <div class="header">
-        <h1>{{ ucfirst($chart) }} Report</h1>
-        <p class="subtitle">{{ $plant->name }} - {{ \Carbon\Carbon::parse($selectedDate)->format('F j, Y') }}</p>
+        <h1>Plant Report with Charts</h1>
+        <p class="subtitle">Plant ID: {{ $plant->uid ?? 'Unknown' }} | Date: {{ \Carbon\Carbon::parse($selectedDate)->format('Y-m-d') }} | Generated: {{ $generatedAt }}</p>
+        @if(!empty($chartImage))
+            <p style="font-size: 10px; color: #6b7280; margin: 5px 0 0 0;">Debug: {{ count($chartData ?? []) }} {{ $chart }} entries{{ empty($chartImage) ? ', no chart image' : ', chart image available' }}.</p>
+        @endif
     </div>
 
-    <div class="info-grid">
-        <div class="info-row">
-            <div class="info-cell info-label">Plant Name:</div>
-            <div class="info-cell">{{ $plant->name }}</div>
+    <!-- Plant Information Section -->
+    <div class="section-title">Plant Information</div>
+    @if(!empty($plant->metadata_flat))
+        <table style="margin-bottom: 20px;">
+            <tbody>
+                @foreach($plant->metadata_flat as $metaKey => $metaValue)
+                    <tr>
+                        <td style="background-color: #f9fafb; font-weight: bold; width: 35%;">{{ $metaKey }}</td>
+                        <td style="width: 65%;">
+                            @if($metaKey === 'Owner Email')
+                                {{ $metaValue }}
+                            @elseif($metaKey === 'Status')
+                                @if($metaValue === 'Working')
+                                    <span style="background-color: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $metaValue }}</span>
+                                @elseif($metaValue === 'Maintenance')
+                                    <span style="background-color: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $metaValue }}</span>
+                                @elseif($metaValue === 'Offline')
+                                    <span style="background-color: #fecaca; color: #991b1b; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $metaValue }}</span>
+                                @else
+                                    <span style="background-color: #f3f4f6; color: #374151; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $metaValue }}</span>
+                                @endif
+                            @elseif($metaKey === 'Capacity')
+                                <strong style="color: #4338ca;">{{ number_format($metaValue / 1000, 2) }} kWh</strong>
+                            @else
+                                {{ $metaValue }}
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        <div style="padding: 15px; text-align: center; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 20px;">
+            <p>No detailed plant information available</p>
         </div>
-        <div class="info-row">
-            <div class="info-cell info-label">Plant ID:</div>
-            <div class="info-cell">{{ $plant->uid }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-cell info-label">Report Date:</div>
-            <div class="info-cell">{{ \Carbon\Carbon::parse($selectedDate)->format('l, F j, Y') }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-cell info-label">Chart Type:</div>
-            <div class="info-cell">{{ ucfirst($chart) }} Chart</div>
-        </div>
-        <div class="info-row">
-            <div class="info-cell info-label">Generated:</div>
-            <div class="info-cell">
-                @if($user && $user->getTimeFormat() === '12')
-                    {{ date('Y-m-d g:i:s A', strtotime($generatedAt)) }}
-                @else
-                    {{ $generatedAt }}
-                @endif
-            </div>
-        </div>
-    </div>
+    @endif
 
     @if($chartImage)
         <div class="chart-container">
