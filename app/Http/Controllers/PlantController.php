@@ -728,28 +728,32 @@ class PlantController extends Controller
                     }
                 }
                 
-                // Energy chart data - now includes load_p with correct data access
+                // Energy chart data - now includes load_p and battery_soc with correct data access
                 $result['energy_chart'][$timestamp] = [
                     'pv_p' => $dataSource->pv_p ?? 0,
                     'battery_p' => $dataSource->battery_p ?? 0,
                     'grid_p' => $dataSource->grid_p ?? 0,
-                    'load_p' => $dataSource->load_p ?? 0  // Add load power from API with correct access
+                    'load_p' => $dataSource->load_p ?? 0,  // Add load power from API with correct access
+                    'battery_soc' => $dataSource->battery_soc ?? 0  // Add battery state of charge for Energy Live Chart
                 ];
                 
-                // Debug: Log first few energy chart entries to verify load_p is included
+                // Debug: Log first few energy chart entries to verify all fields are included
                 if ($debugCounter <= 3) {
                     \Log::info("PLANT CONTROLLER: Energy chart entry debug", [
                         'counter' => $debugCounter,
                         'timestamp' => $timestamp,
                         'load_p_from_data_source' => $dataSource->load_p ?? 'MISSING',
+                        'battery_soc_from_data_source' => $dataSource->battery_soc ?? 'MISSING',
+                        'price_from_data_source' => $dataSource->price ?? 'MISSING',
                         'energy_chart_entry' => $result['energy_chart'][$timestamp]
                     ]);
                 }
                 
-                // Battery price data - also update to use correct data access
+                // Battery price data - includes battery power, tariff, price, load, and soc
                 $result['battery_price'][$timestamp] = [
                     'battery_p' => $dataSource->battery_p ?? 0,
                     'tariff' => $dataSource->tariff ?? 0.15, // Default tariff if missing
+                    'price' => $dataSource->price ?? ($dataSource->tariff ?? 0.15), // Use price if available, fallback to tariff
                     'load_p' => $dataSource->load_p ?? 0, // Add load power for consistency
                     'battery_soc' => $dataSource->battery_soc ?? 0 // Add battery state of charge
                 ];
@@ -774,7 +778,9 @@ class PlantController extends Controller
                 
                 if ($batterySavings !== null) {
                     $result['battery_savings'][$timestamp] = [
-                        'battery_savings' => $batterySavings
+                        'battery_savings' => $batterySavings,
+                        'price' => $dataSource->price ?? ($dataSource->tariff ?? 0.15), // Include price in savings data
+                        'battery_p' => $dataSource->battery_p ?? 0 // Include battery power for reference
                     ];
                 }
             }

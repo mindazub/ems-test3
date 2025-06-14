@@ -1,7 +1,7 @@
 <!-- Calendar controls with complete day selection -->
 <div class="flex flex-col items-center justify-center mb-4 gap-2" 
     id="energy-calendar-controls" 
-    data-plant-id="{{ $plant->uid ?? $plant->uuid ?? $plant->id ?? '' }}">
+    data-plant-id="{{ $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : '') }}">
     <h3 class="text-lg font-semibold text-gray-700 mb-1">Select Date to View</h3>
     <div class="flex flex-col md:flex-row items-center gap-3">
         <div class="flex items-center gap-2 p-1 bg-gray-50 border rounded-lg">
@@ -52,15 +52,38 @@
                     <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
                 </button>
                 <div x-show="openMenu" @click.away="openMenu = false"
-                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     class="absolute right-0 mt-2 w-48 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     @if(!empty($plant->uid))
-                         <a id="downloadCSV-energy" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'energy', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPNG-energy" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PNG
+                     </a>
+                     @php
+                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
+                     @endphp
+                     @if(!empty($plantId))
+                         <a id="downloadCSV-energy" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'energy', 'csv']) }}">
+                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </a>
                      @else
-                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
+                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </span>
                      @endif
-                     <a id="downloadPDF-energy" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPDF-energy" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PDF
+                     </a>
 
                 </div>
             </div>
@@ -85,6 +108,7 @@
                             <th class="px-4 py-2 text-center">Battery (kW)</th>
                             <th class="px-4 py-2 text-center">Grid (kW)</th>
                             <th class="px-4 py-2 text-center">Load (kW)</th>
+                            <th class="px-4 py-2 text-center">Battery SOC (%)</th>
                         </tr>
                         </thead>
                         <tbody id="energyDataTableBody"></tbody>
@@ -119,15 +143,38 @@
                     <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
                 </button>
                 <div x-show="openMenu" @click.away="openMenu = false"
-                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     class="absolute right-0 mt-2 w-48 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     @if(!empty($plant->uid))
-                         <a id="downloadCSV-battery" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'battery', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPNG-battery" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PNG
+                     </a>
+                     @php
+                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
+                     @endphp
+                     @if(!empty($plantId))
+                         <a id="downloadCSV-battery" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'battery', 'csv']) }}">
+                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </a>
                      @else
-                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
+                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </span>
                      @endif
-                     <a id="downloadPDF-battery" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPDF-battery" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PDF
+                     </a>
                 </div>
             </div>
         </div>
@@ -183,15 +230,38 @@
                     <x-heroicon-o-arrow-down-tray class="w-5 h-5 text-gray-500" />
                 </button>
                 <div x-show="openMenu" @click.away="openMenu = false"
-                     class="absolute right-0 mt-2 w-40 bg-white rounded shadow border z-50 text-sm"
+                     class="absolute right-0 mt-2 w-48 bg-white rounded shadow border z-50 text-sm"
                      style="display: none;">
-                     <a id="downloadPNG-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PNG</a>
-                     @if(!empty($plant->uid))
-                         <a id="downloadCSV-savings" class="block px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plant->uid, 'savings', 'csv']) }}">Download CSV</a>
+                     <a id="downloadPNG-savings" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PNG
+                     </a>
+                     @php
+                         $plantId = $plant->uid ?? $plant->uuid ?? (property_exists($plant, 'id') ? $plant->id : null);
+                     @endphp
+                     @if(!empty($plantId))
+                         <a id="downloadCSV-savings" class="flex items-center px-4 py-2 hover:bg-gray-50" href="{{ route('plants.download', [$plantId, 'savings', 'csv']) }}">
+                             <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </a>
                      @else
-                         <span class="block px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">Download CSV</span>
+                         <span class="flex items-center px-4 py-2 text-gray-400 cursor-not-allowed" title="Plant ID missing">
+                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path>
+                             </svg>
+                             Download CSV
+                         </span>
                      @endif
-                     <a id="downloadPDF-savings" class="block px-4 py-2 hover:bg-gray-50 cursor-pointer">Download PDF</a>
+                     <a id="downloadPDF-savings" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                         <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                         </svg>
+                         Download PDF
+                     </a>
                 </div>
             </div>
         </div>
@@ -897,7 +967,8 @@ function mapDataToTimeline(energyData, timeline) {
         pv: new Array(timeline.length).fill(null),
         battery: new Array(timeline.length).fill(null),
         grid: new Array(timeline.length).fill(null),
-        load: new Array(timeline.length).fill(null)  // Add load data mapping
+        load: new Array(timeline.length).fill(null),  // Add load data mapping
+        batterySoc: new Array(timeline.length).fill(null)  // Add battery SOC mapping for Energy Live Chart
     };
     
     if (!energyData || Object.keys(energyData).length === 0) {
@@ -946,12 +1017,21 @@ function mapDataToTimeline(energyData, timeline) {
                     console.log(`📊 mapDataToTimeline load[${timeIndex}]: ${values.load_p}W -> ${mappedData.load[timeIndex]}kW`);
                 }
             }
+            
+            // Add battery SOC data processing
+            if (values.battery_soc !== undefined && values.battery_soc !== null) {
+                mappedData.batterySoc[timeIndex] = values.battery_soc;  // SOC is already in percentage
+                if (timeIndex < 5) {
+                    console.log(`📊 mapDataToTimeline batterySoc[${timeIndex}]: ${values.battery_soc}%`);
+                }
+            }
         }
     });
     
-    // Debug: Check load data in mappedData
+    // Debug: Check load and SOC data in mappedData
     const loadDataCount = mappedData.load.filter(v => v !== null).length;
-    console.log(`📊 mapDataToTimeline: Mapped ${loadDataCount} load data points`);
+    const socDataCount = mappedData.batterySoc.filter(v => v !== null).length;
+    console.log(`📊 mapDataToTimeline: Mapped ${loadDataCount} load data points and ${socDataCount} SOC data points`);
     
     return mappedData;
 }
@@ -1022,7 +1102,20 @@ function renderChartsAndTables() {
                         pointRadius: 1, 
                         pointHoverRadius: 8,
                         spanGaps: false,
-                        tension: 0.1
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Battery SOC (%)', 
+                        data: mappedData.batterySoc,
+                        borderColor: 'rgba(138,43,226,1)', 
+                        backgroundColor: 'rgba(138,43,226,0.12)', 
+                        fill: false, 
+                        pointRadius: 1, 
+                        pointHoverRadius: 8,
+                        spanGaps: false,
+                        tension: 0.1,
+                        yAxisID: 'y1'  // Use second Y-axis for percentage values
                     }
                 ]
             },
@@ -1041,9 +1134,29 @@ function renderChartsAndTables() {
                 elements: { point: { radius: 2, hoverRadius: 8 } },
                 scales: {
                     y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
                         title: { display: true, text: 'Power (kW)' },
                         ticks: { font: { size: 12 } },
                         grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#e5e7eb' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Battery SOC (%)' },
+                        ticks: { 
+                            font: { size: 12 },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false, // Don't draw grid lines for secondary axis
+                        },
+                        min: 0,
+                        max: 100
                     },
                     x: { 
                         ticks: { 
@@ -1093,6 +1206,14 @@ function renderChartsAndTables() {
                     }
                 }
                 
+                // Get battery SOC data
+                let socValue = 0;
+                if (val.battery_soc !== undefined && val.battery_soc !== null) {
+                    socValue = val.battery_soc;
+                } else if (window.batteryPriceData && window.batteryPriceData[ts] && window.batteryPriceData[ts].battery_soc !== undefined) {
+                    socValue = window.batteryPriceData[ts].battery_soc;
+                }
+                
                 if (loadValue > 0) {
                     tableLoadDataCount++;
                     if (index < 3) {
@@ -1104,12 +1225,12 @@ function renderChartsAndTables() {
                     }
                 }
                 
-                energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${loadValue.toFixed(2)}</td></tr>`;
+                energyTable.innerHTML += `<tr><td class="px-4 py-2 text-center">${formatLabelDate(ts)}</td><td class="px-4 py-2 text-center">${(val.pv_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.battery_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${(val.grid_p / 1000).toFixed(2)}</td><td class="px-4 py-2 text-center">${loadValue.toFixed(2)}</td><td class="px-4 py-2 text-center">${socValue.toFixed(1)}%</td></tr>`;
             });
             console.log(`Table processed ${tableLoadDataCount} non-zero load data points out of ${energyEntries.length} entries`);
             console.log('=== END TABLE DATA PROCESSING ===');
         } else if (energyTable) {
-            energyTable.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">No energy data available for the selected date</td></tr>';
+            energyTable.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No energy data available for the selected date</td></tr>';
         }
     }
     

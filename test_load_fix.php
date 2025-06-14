@@ -25,7 +25,7 @@ try {
     $response = $controller->getData('65f20fa1-047a-4379-8464-59f1d94be3c7', $request);
     $data = json_decode($response->getContent(), true);
     
-    echo "=== LOAD DATA FIX TEST RESULTS ===\n";
+    echo "=== ENHANCED DATA FIX TEST RESULTS ===\n";
     echo "Response status: " . $response->getStatusCode() . "\n";
     
     if (isset($data['energy_chart'])) {
@@ -37,36 +37,66 @@ try {
         if ($firstEntry) {
             echo "First entry fields: " . implode(', ', array_keys($firstEntry)) . "\n";
             echo "First entry load_p: " . ($firstEntry['load_p'] ?? 'MISSING') . "\n";
+            echo "First entry battery_soc: " . ($firstEntry['battery_soc'] ?? 'MISSING') . "\n";
             
-            // Check if load_p exists in any entries
+            // Check if all new fields exist
             $hasLoadData = false;
+            $hasSocData = false;
             $loadValues = [];
+            $socValues = [];
             
             foreach ($data['energy_chart'] as $timestamp => $entry) {
                 if (isset($entry['load_p']) && $entry['load_p'] != 0) {
                     $hasLoadData = true;
                     $loadValues[] = $entry['load_p'];
                 }
+                if (isset($entry['battery_soc']) && $entry['battery_soc'] != 0) {
+                    $hasSocData = true;
+                    $socValues[] = $entry['battery_soc'];
+                }
             }
             
             echo "Has non-zero load data: " . ($hasLoadData ? 'YES' : 'NO') . "\n";
+            echo "Has non-zero SOC data: " . ($hasSocData ? 'YES' : 'NO') . "\n";
             
-            if ($hasLoadData) {
-                echo "Load values sample: " . implode(', ', array_slice($loadValues, 0, 5)) . "\n";
-                echo "Min load: " . min($loadValues) . "W\n";
-                echo "Max load: " . max($loadValues) . "W\n";
-                echo "Average load: " . round(array_sum($loadValues) / count($loadValues), 2) . "W\n";
+            if ($hasSocData) {
+                echo "SOC values sample: " . implode(', ', array_slice($socValues, 0, 5)) . "\n";
+                echo "Min SOC: " . min($socValues) . "%\n";
+                echo "Max SOC: " . max($socValues) . "%\n";
             }
         }
-    } else {
-        echo "ERROR: No energy_chart data in response\n";
     }
     
-    // Show sample of raw response
-    echo "\nFirst 3 energy_chart entries:\n";
+    // Check battery_price data
+    if (isset($data['battery_price'])) {
+        $firstBatteryEntry = array_values($data['battery_price'])[0] ?? null;
+        echo "\nBattery Price Data:\n";
+        echo "Total battery_price entries: " . count($data['battery_price']) . "\n";
+        
+        if ($firstBatteryEntry) {
+            echo "Battery price fields: " . implode(', ', array_keys($firstBatteryEntry)) . "\n";
+            echo "First entry price: " . ($firstBatteryEntry['price'] ?? 'MISSING') . "\n";
+            echo "First entry tariff: " . ($firstBatteryEntry['tariff'] ?? 'MISSING') . "\n";
+        }
+    }
+    
+    // Check battery_savings data
+    if (isset($data['battery_savings'])) {
+        $firstSavingsEntry = array_values($data['battery_savings'])[0] ?? null;
+        echo "\nBattery Savings Data:\n";
+        echo "Total battery_savings entries: " . count($data['battery_savings']) . "\n";
+        
+        if ($firstSavingsEntry) {
+            echo "Battery savings fields: " . implode(', ', array_keys($firstSavingsEntry)) . "\n";
+            echo "First entry price: " . ($firstSavingsEntry['price'] ?? 'MISSING') . "\n";
+        }
+    }
+    
+    // Show sample of raw response with new fields
+    echo "\nFirst 3 energy_chart entries with new fields:\n";
     $sample = array_slice($data['energy_chart'] ?? [], 0, 3, true);
     foreach ($sample as $timestamp => $entry) {
-        echo "$timestamp: PV={$entry['pv_p']}, Battery={$entry['battery_p']}, Grid={$entry['grid_p']}, Load={$entry['load_p']}\n";
+        echo "$timestamp: PV={$entry['pv_p']}, Battery={$entry['battery_p']}, Grid={$entry['grid_p']}, Load={$entry['load_p']}, SOC={$entry['battery_soc']}%\n";
     }
     
 } catch (Exception $e) {
