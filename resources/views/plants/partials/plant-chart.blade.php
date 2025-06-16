@@ -1107,7 +1107,7 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'Power (kW)' },
+                        title: { display: true, text: 'Power (kW)', rotation: -90 },
                         ticks: { font: { size: 12 } },
                         grid: { lineWidth: 1, color: context => context.tick && context.tick.value === 0 ? '#000' : '#e5e7eb' }
                     },
@@ -1115,7 +1115,11 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'Battery SOC (%)' },
+                        title: { 
+                            display: true, 
+                            text: 'Battery SOC (%)',
+                            rotation: 90
+                        },
                         ticks: { 
                             font: { size: 12 },
                             callback: function(value) {
@@ -1310,7 +1314,7 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'Battery Power (kW)' },
+                        title: { display: true, text: 'Battery Power (kW)', rotation: -90 },
                         grid: { color: '#e5e7eb' },
                         ticks: { font: { size: 12 } }
                     },
@@ -1318,7 +1322,11 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { text: 'Energy Price (€/MWh)' },
+                        title: { 
+                            display: true,
+                            text: 'Energy Price (€/MWh)',
+                            rotation: 90
+                        },
                         grid: { display: false },
                         ticks: { font: { size: 12 } }
                     },
@@ -1554,7 +1562,7 @@ function renderChartsAndTables() {
             data: {
                 labels: hourlyTimeline,
                 datasets: [{
-                    label: 'Battery Savings (€) - Hourly Sum',
+                    label: 'Battery Savings (€)',
                     data: hourlySavingsData,
                     backgroundColor: hourlySavingsData.map(val => 
                         val === null ? 'transparent' : 
@@ -1567,7 +1575,7 @@ function renderChartsAndTables() {
                     borderSkipped: false,
                     yAxisID: 'y'
                 }, {
-                    label: 'Energy Price (€/MWh) - Hourly Average',
+                    label: 'Energy Price (€/MWh)',
                     type: 'line',
                     data: hourlyPriceData,
                     borderColor: 'rgba(255,159,64,1)',
@@ -1598,7 +1606,7 @@ function renderChartsAndTables() {
                 scales: {
                     y: { 
                         beginAtZero: true,
-                        title: { display: true, text: 'Savings (€)' },
+                        title: { display: true, text: 'Savings (€)', rotation: -90 },
                         ticks: { font: { size: 12 } },
                         grid: { color: '#e5e7eb' },
                         position: 'left'
@@ -1607,7 +1615,11 @@ function renderChartsAndTables() {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'Energy Price (€/MWh)' },
+                        title: { 
+                            display: true, 
+                            text: 'Energy Price (€/MWh)',
+                            rotation: 90
+                        },
                         grid: { display: false },
                         ticks: { font: { size: 12 } }
                     },
